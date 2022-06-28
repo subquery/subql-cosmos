@@ -36,11 +36,7 @@ import { delay } from '../utils/promise';
 import { getYargsOption } from '../yargs';
 import { ApiService, CosmosClient } from './api.service';
 import { BlockedQueue } from './BlockedQueue';
-import {
-  Dictionary,
-  DictionaryService,
-  SpecVersion,
-} from './dictionary.service';
+import { Dictionary, DictionaryService } from './dictionary.service';
 import { DsProcessorService } from './ds-processor.service';
 import { DynamicDsService } from './dynamic-ds.service';
 import { IndexerEvent } from './events';
