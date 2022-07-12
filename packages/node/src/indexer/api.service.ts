@@ -78,6 +78,7 @@ export class ApiService {
 
       const keepAliveClient = new KeepAliveClient(endpoint);
       const tendermint = await Tendermint34Client.create(keepAliveClient);
+      logger.info(`Connecting to ${network.endpoint}`);
       this.registry = new Registry([...defaultRegistryTypes, ...wasmTypes]);
 
       const chaintypes = await this.getChainType(network);
@@ -92,6 +93,7 @@ export class ApiService {
       };
 
       const chainId = await this.api.getChainId();
+      logger.info(chainId);
       if (network.chainId !== chainId) {
         const err = new Error(
           `The given chainId does not match with client: "${network.chainId}"`,
@@ -152,7 +154,7 @@ export class ApiService {
 export class CosmosClient extends CosmWasmClient {
   constructor(
     private readonly tendermintClient: Tendermint34Client,
-    private registry: Registry,
+    public registry: Registry,
   ) {
     super(tendermintClient);
   }
@@ -183,7 +185,13 @@ export class CosmosClient extends CosmWasmClient {
   decodeMsg<T = unknown>(msg: DecodeObject): T {
     try {
       const decodedMsg = this.registry.decode(msg);
-      if (msg.typeUrl === '/cosmwasm.wasm.v1.MsgExecuteContract') {
+      if (
+        [
+          '/cosmwasm.wasm.v1.MsgExecuteContract',
+          '/cosmwasm.wasm.v1.MsgMigrateContract',
+          '/cosmwasm.wasm.v1.MsgInstantiateContract',
+        ].includes(msg.typeUrl)
+      ) {
         decodedMsg.msg = JSON.parse(new TextDecoder().decode(decodedMsg.msg));
       }
       return decodedMsg;

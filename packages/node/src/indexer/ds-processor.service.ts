@@ -181,7 +181,7 @@ export class DsProcessorService {
 
     for (const [name, { file }] of ds.assets) {
       try {
-        res[name] = fs.readFileSync(path.join(this.project.root, file), {
+        res[name] = fs.readFileSync(file, {
           encoding: 'utf8',
         });
       } catch (e) {
