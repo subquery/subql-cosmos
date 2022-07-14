@@ -143,9 +143,9 @@ export class DsProcessorService {
     );
   }
 
-  getDsProcessor<D extends string>(
+  getDsProcessor<D extends string, F>(
     ds: SubqlCosmosCustomDatasource<string>,
-  ): SubqlCosmosDatasourceProcessor<D, undefined> {
+  ): SubqlCosmosDatasourceProcessor<D, F> {
     if (!isCustomCosmosDs(ds)) {
       throw new Error(`data source is not a custom data source`);
     }
@@ -164,7 +164,7 @@ export class DsProcessorService {
     }
     return this.processorCache[
       ds.processor.file
-    ] as unknown as SubqlCosmosDatasourceProcessor<D, undefined>;
+    ] as unknown as SubqlCosmosDatasourceProcessor<D, F>;
   }
   // eslint-disable-next-line @typescript-eslint/require-await
   async getAssets(

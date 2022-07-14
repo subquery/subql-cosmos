@@ -374,7 +374,7 @@ export class IndexerManager {
   }
 
   private async transformAndExecuteCustomDs<K extends SubqlCosmosHandlerKind>(
-    ds: SubqlCosmosCustomDataSource<string>,
+    ds: SubqlCosmosCustomDataSource<string, any>,
     vm: IndexerSandbox,
     handler: SubqlCosmosCustomHandler,
     data: CosmosRuntimeHandlerInputMap[K],
@@ -391,6 +391,7 @@ export class IndexerManager {
         input: data,
         ds,
         api: this.api,
+        filter: handler.filter,
         assets,
       })
       .catch((e) => {
