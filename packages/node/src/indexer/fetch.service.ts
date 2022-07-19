@@ -342,6 +342,25 @@ export class FetchService implements OnApplicationShutdown {
     ]);
   }
 
+  getModulos(): number[] {
+    const modulos: number[] = [];
+    for (const ds of this.project.dataSources) {
+      if (isCustomCosmosDs(ds)) {
+        continue;
+      }
+      for (const handler of ds.mapping.handlers) {
+        if (
+          handler.kind === SubqlCosmosHandlerKind.Block &&
+          handler.filter &&
+          handler.filter.modulo
+        ) {
+          modulos.push(handler.filter.modulo);
+        }
+      }
+    }
+    return modulos;
+  }
+
   async fillNextBlockBuffer(initBlockHeight: number): Promise<void> {
     let startBlockHeight: number;
     let scaledBatchSize: number;
@@ -369,6 +388,13 @@ export class FetchService implements OnApplicationShutdown {
       }
       if (this.useDictionary) {
         const queryEndBlock = startBlockHeight + DICTIONARY_MAX_QUERY_SIZE;
+        const modulos = this.getModulos();
+        const moduloBlocks: number[] = [];
+        for (let i = startBlockHeight; i < queryEndBlock; i++) {
+          if (modulos.find((m) => i % m === 0)) {
+            moduloBlocks.push(i);
+          }
+        }
         try {
           const dictionary = await this.dictionaryService.getDictionary(
             startBlockHeight,
@@ -388,7 +414,8 @@ export class FetchService implements OnApplicationShutdown {
             dictionary &&
             (await this.dictionaryValidation(dictionary, startBlockHeight))
           ) {
-            const { batchBlocks } = dictionary;
+            let { batchBlocks } = dictionary;
+            batchBlocks = batchBlocks.concat(moduloBlocks);
             if (batchBlocks.length === 0) {
               this.setLatestBufferedHeight(
                 Math.min(

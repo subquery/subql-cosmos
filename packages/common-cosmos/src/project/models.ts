@@ -19,11 +19,18 @@ import {
   SubqlCosmosTransactionHandler,
   SubqlCosmosMessageHandler,
   CustomModule,
+  SubqlCosmosBlockFilter,
 } from '@subql/types-cosmos';
 
 import {plainToClass, Transform, Type} from 'class-transformer';
 
 import {IsArray, IsEnum, IsInt, IsOptional, IsString, IsObject, ValidateNested, ValidateIf} from 'class-validator';
+
+export class CosmosBlockFilter implements SubqlCosmosBlockFilter {
+  @IsOptional()
+  @IsInt()
+  modulo?: number;
+}
 
 export class CosmosMessageFilter implements SubqlCosmosMessageFilter {
   @IsString()
@@ -50,6 +57,9 @@ export class CosmosBlockHandler implements SubqlCosmosBlockHandler {
   kind: SubqlCosmosHandlerKind.Block;
   @IsString()
   handler: string;
+  @IsOptional()
+  @Type(() => CosmosBlockFilter)
+  filter?: SubqlCosmosBlockFilter;
 }
 
 export class CosmosTransactionHandler implements SubqlCosmosTransactionHandler {
