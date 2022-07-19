@@ -415,7 +415,9 @@ export class FetchService implements OnApplicationShutdown {
             (await this.dictionaryValidation(dictionary, startBlockHeight))
           ) {
             let { batchBlocks } = dictionary;
-            batchBlocks = batchBlocks.concat(moduloBlocks);
+            batchBlocks = batchBlocks
+              .concat(moduloBlocks)
+              .sort((a, b) => a - b);
             if (batchBlocks.length === 0) {
               this.setLatestBufferedHeight(
                 Math.min(
@@ -424,6 +426,11 @@ export class FetchService implements OnApplicationShutdown {
                 ),
               );
             } else {
+              const maxBlockSize = Math.min(
+                batchBlocks.length,
+                this.blockNumberBuffer.freeSize,
+              );
+              batchBlocks = batchBlocks.slice(0, maxBlockSize);
               this.blockNumberBuffer.putAll(batchBlocks);
               this.setLatestBufferedHeight(batchBlocks[batchBlocks.length - 1]);
             }
