@@ -342,6 +342,36 @@ export class FetchService implements OnApplicationShutdown {
     ]);
   }
 
+  getModulos(): number[] {
+    const modulos: number[] = [];
+    for (const ds of this.project.dataSources) {
+      if (isCustomCosmosDs(ds)) {
+        continue;
+      }
+      for (const handler of ds.mapping.handlers) {
+        if (
+          handler.kind === SubqlCosmosHandlerKind.Block &&
+          handler.filter &&
+          handler.filter.modulo
+        ) {
+          modulos.push(handler.filter.modulo);
+        }
+      }
+    }
+    return modulos;
+  }
+
+  getModuloBlocks(startHeight: number, endHeight: number): number[] {
+    const modulos = this.getModulos();
+    const moduloBlocks: number[] = [];
+    for (let i = startHeight; i < endHeight; i++) {
+      if (modulos.find((m) => i % m === 0)) {
+        moduloBlocks.push(i);
+      }
+    }
+    return moduloBlocks;
+  }
+
   async fillNextBlockBuffer(initBlockHeight: number): Promise<void> {
     let startBlockHeight: number;
     let scaledBatchSize: number;
@@ -369,6 +399,10 @@ export class FetchService implements OnApplicationShutdown {
       }
       if (this.useDictionary) {
         const queryEndBlock = startBlockHeight + DICTIONARY_MAX_QUERY_SIZE;
+        const moduloBlocks = this.getModuloBlocks(
+          startBlockHeight,
+          queryEndBlock,
+        );
         try {
           const dictionary = await this.dictionaryService.getDictionary(
             startBlockHeight,
@@ -388,7 +422,10 @@ export class FetchService implements OnApplicationShutdown {
             dictionary &&
             (await this.dictionaryValidation(dictionary, startBlockHeight))
           ) {
-            const { batchBlocks } = dictionary;
+            let { batchBlocks } = dictionary;
+            batchBlocks = batchBlocks
+              .concat(moduloBlocks)
+              .sort((a, b) => a - b);
             if (batchBlocks.length === 0) {
               this.setLatestBufferedHeight(
                 Math.min(
@@ -397,6 +434,11 @@ export class FetchService implements OnApplicationShutdown {
                 ),
               );
             } else {
+              const maxBlockSize = Math.min(
+                batchBlocks.length,
+                this.blockNumberBuffer.freeSize,
+              );
+              batchBlocks = batchBlocks.slice(0, maxBlockSize);
               this.blockNumberBuffer.putAll(batchBlocks);
               this.setLatestBufferedHeight(batchBlocks[batchBlocks.length - 1]);
             }

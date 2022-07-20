@@ -17,6 +17,7 @@ import {
   CosmosTransaction,
   CosmosMessage,
   SubqlCosmosHandlerKind,
+  SubqlCosmosBlockFilter,
 } from '@subql/types-cosmos';
 import { transpileModule } from 'typescript';
 import { SubqlProjectDs } from '../configure/SubqueryProject';
@@ -25,6 +26,19 @@ import { BlockContent } from '../indexer/types';
 import { getLogger } from './logger';
 
 const logger = getLogger('fetch');
+
+export function filterBlock(
+  data: CosmosBlock,
+  filter?: SubqlCosmosBlockFilter,
+) {
+  if (!filter) {
+    return true;
+  }
+  if (filter.modulo && data.block.header.height % filter.modulo !== 0) {
+    return false;
+  }
+  return true;
+}
 
 export function filterMessageData(
   data: CosmosMessage,
