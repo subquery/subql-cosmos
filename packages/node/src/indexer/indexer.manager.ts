@@ -420,7 +420,7 @@ const ProcessorTypeMap = {
 };
 
 const FilterTypeMap = {
-  [SubqlCosmosHandlerKind.Block]: () => CosmosUtil.filterBlock,
+  [SubqlCosmosHandlerKind.Block]: CosmosUtil.filterBlock,
   [SubqlCosmosHandlerKind.Transaction]: () => true,
   [SubqlCosmosHandlerKind.Event]: CosmosUtil.filterEvent,
   [SubqlCosmosHandlerKind.Message]: CosmosUtil.filterMessageData,
