@@ -287,9 +287,12 @@ Priority: high for projects use dictionary
 
 ## [Unreleased]
 
+### Changed
+- Sync with latest development from origin (#44)
+
 ## [0.2.0] - 2022-07-08
 
-## Changed
+### Changed
 
 - Decode buffer to json for `cosmwasm.wasm.v1.MsgMigrateContract` and `cosmwasm.wasm.v1.MsgInstantiateContract` messages (#38)
 
