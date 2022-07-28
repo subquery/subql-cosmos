@@ -16,7 +16,8 @@ All logs must start with the format: [x.y.z] - yyyy-mm-dd
   - Added `dictionary-timeout` flag
 
 ### Fixed
-- Custom datasource processors (#42)
+- Custom datasource processors. (#42)
+- Fixed `chainId` instead of `chain` being in metadata reponse. (#48)
 
 ## [0.2.0] - 2022-07-08
 
