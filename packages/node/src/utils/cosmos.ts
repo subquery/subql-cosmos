@@ -18,6 +18,7 @@ import {
   CosmosMessage,
   SubqlCosmosHandlerKind,
   SubqlCosmosBlockFilter,
+  SubqlCosmosTxFilter,
 } from '@subql/types-cosmos';
 import { transpileModule } from 'typescript';
 import { SubqlProjectDs } from '../configure/SubqueryProject';
@@ -40,11 +41,27 @@ export function filterBlock(
   return true;
 }
 
+export function filterTx(
+  data: CosmosTransaction,
+  filter?: SubqlCosmosTxFilter,
+): boolean {
+  if ((!filter || !filter.keepFailedTx) && data.tx.code !== 0) {
+    return false;
+  }
+  if (filter.keepFailedTx) {
+    return true;
+  }
+  return true;
+}
+
 export function filterMessageData(
   data: CosmosMessage,
   filter?: SubqlCosmosMessageFilter,
 ): boolean {
   if (!filter) return true;
+  if (filter.txFilter) {
+    return filterTx(data.tx, filter.txFilter);
+  }
   if (filter.type !== data.msg.typeUrl) {
     return false;
   }
@@ -99,6 +116,9 @@ export function filterEvent(
   filter?: SubqlCosmosEventFilter,
 ): boolean {
   if (!filter) return true;
+  if (filter.txFilter) {
+    return filterTx(event.tx, filter.txFilter);
+  }
   if (filter.type !== event.event.type) {
     return false;
   }

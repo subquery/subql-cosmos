@@ -20,6 +20,7 @@ import {
   SubqlCosmosTransactionHandler,
   SubqlCosmosMessageHandler,
   CustomModule,
+  SubqlCosmosTxFilter,
 } from '@subql/types-cosmos';
 
 import {plainToClass, Transform, Type} from 'class-transformer';
@@ -34,12 +35,19 @@ import {
   ValidateNested,
   ValidateIf,
   IsNumber,
+  IsBoolean,
 } from 'class-validator';
 
 export class CosmosBlockFilter implements SubqlCosmosBlockFilter {
   @IsOptional()
   @IsInt()
   modulo?: number;
+}
+
+export class CosmosTxFilter implements SubqlCosmosTxFilter {
+  @IsOptional()
+  @IsBoolean()
+  keepFailedTx?: boolean;
 }
 
 export class CosmosMessageFilter implements SubqlCosmosMessageFilter {
@@ -52,6 +60,9 @@ export class CosmosMessageFilter implements SubqlCosmosMessageFilter {
   @IsOptional()
   @IsString()
   contractCall?: string;
+  @IsOptional()
+  @Type(() => CosmosTxFilter)
+  txFilter?: CosmosTxFilter;
 }
 
 export class CosmosEventFilter implements SubqlCosmosEventFilter {
@@ -60,6 +71,9 @@ export class CosmosEventFilter implements SubqlCosmosEventFilter {
   @IsOptional()
   @Type(() => CosmosMessageFilter)
   messageFilter?: SubqlCosmosMessageFilter;
+  @IsOptional()
+  @Type(() => CosmosTxFilter)
+  txFilter?: SubqlCosmosTxFilter;
 }
 
 export class CosmosBlockHandler implements SubqlCosmosBlockHandler {
@@ -77,6 +91,9 @@ export class CosmosTransactionHandler implements SubqlCosmosTransactionHandler {
   kind: SubqlCosmosHandlerKind.Transaction;
   @IsString()
   handler: string;
+  @IsOptional()
+  @Type(() => CosmosTxFilter)
+  filter?: SubqlCosmosTxFilter;
 }
 
 export class CosmosMessageHandler implements SubqlCosmosMessageHandler {

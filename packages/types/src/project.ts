@@ -69,17 +69,23 @@ export interface SubqlCosmosBlockFilter {
   modulo?: number;
 }
 
+export interface SubqlCosmosTxFilter {
+  keepFailedTx?: boolean;
+}
+
 export interface SubqlCosmosMessageFilter {
   type: string;
   contractCall?: string;
   values?: {
     [key: string]: string;
   };
+  txFilter?: SubqlCosmosTxFilter;
 }
 
 export interface SubqlCosmosEventFilter {
   type: string;
   messageFilter?: SubqlCosmosMessageFilter;
+  txFilter?: SubqlCosmosTxFilter;
 }
 
 export type SubqlCosmosHandlerFilter = SubqlCosmosEventFilter | SubqlCosmosMessageFilter;
@@ -93,7 +99,7 @@ export interface SubqlCosmosBlockHandler {
 export interface SubqlCosmosTransactionHandler {
   handler: string;
   kind: SubqlCosmosHandlerKind.Transaction;
-  filter?: undefined;
+  filter?: SubqlCosmosTxFilter;
 }
 
 export interface SubqlCosmosMessageHandler {
