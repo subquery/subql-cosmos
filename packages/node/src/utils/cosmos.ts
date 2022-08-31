@@ -59,8 +59,8 @@ export function filterMessageData(
   filter?: SubqlCosmosMessageFilter,
 ): boolean {
   if (!filter) return true;
-  if (filter.txFilter) {
-    return filterTx(data.tx, filter.txFilter);
+  if (filter.txFilter && !filterTx(data.tx, filter.txFilter)) {
+    return false;
   }
   if (filter.type !== data.msg.typeUrl) {
     return false;
@@ -116,8 +116,8 @@ export function filterEvent(
   filter?: SubqlCosmosEventFilter,
 ): boolean {
   if (!filter) return true;
-  if (filter.txFilter) {
-    return filterTx(event.tx, filter.txFilter);
+  if (filter.txFilter && !filterTx(event.tx, filter.txFilter)) {
+    return false;
   }
   if (filter.type !== event.event.type) {
     return false;
