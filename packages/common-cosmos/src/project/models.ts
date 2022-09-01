@@ -47,7 +47,7 @@ export class CosmosBlockFilter implements SubqlCosmosBlockFilter {
 export class CosmosTxFilter implements SubqlCosmosTxFilter {
   @IsOptional()
   @IsBoolean()
-  keepFailedTx?: boolean;
+  includeFailedTx?: boolean;
 }
 
 export class CosmosMessageFilter implements SubqlCosmosMessageFilter {
@@ -71,9 +71,6 @@ export class CosmosEventFilter implements SubqlCosmosEventFilter {
   @IsOptional()
   @Type(() => CosmosMessageFilter)
   messageFilter?: SubqlCosmosMessageFilter;
-  @IsOptional()
-  @Type(() => CosmosTxFilter)
-  txFilter?: SubqlCosmosTxFilter;
 }
 
 export class CosmosBlockHandler implements SubqlCosmosBlockHandler {

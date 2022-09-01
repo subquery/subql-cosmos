@@ -70,7 +70,7 @@ export interface SubqlCosmosBlockFilter {
 }
 
 export interface SubqlCosmosTxFilter {
-  keepFailedTx?: boolean;
+  includeFailedTx?: boolean;
 }
 
 export interface SubqlCosmosMessageFilter {
@@ -85,7 +85,6 @@ export interface SubqlCosmosMessageFilter {
 export interface SubqlCosmosEventFilter {
   type: string;
   messageFilter?: SubqlCosmosMessageFilter;
-  txFilter?: SubqlCosmosTxFilter;
 }
 
 export type SubqlCosmosHandlerFilter = SubqlCosmosEventFilter | SubqlCosmosMessageFilter;

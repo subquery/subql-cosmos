@@ -38,6 +38,7 @@ export function filterBlock(
   if (filter.modulo && data.block.header.height % filter.modulo !== 0) {
     return false;
   }
+
   return true;
 }
 
@@ -45,10 +46,11 @@ export function filterTx(
   data: CosmosTransaction,
   filter?: SubqlCosmosTxFilter,
 ): boolean {
-  if ((!filter || !filter.keepFailedTx) && data.tx.code !== 0) {
+  if ((!filter || !filter.includeFailedTx) && data.tx.code !== 0) {
+    logger.error(`filter out failed tx {${data.hash}}`);
     return false;
   }
-  if (filter.keepFailedTx) {
+  if (filter?.includeFailedTx) {
     return true;
   }
   return true;
@@ -59,7 +61,7 @@ export function filterMessageData(
   filter?: SubqlCosmosMessageFilter,
 ): boolean {
   if (!filter) return true;
-  if (filter.txFilter && !filterTx(data.tx, filter.txFilter)) {
+  if (!filterTx(data.tx, filter.txFilter)) {
     return false;
   }
   if (filter.type !== data.msg.typeUrl) {
@@ -116,9 +118,6 @@ export function filterEvent(
   filter?: SubqlCosmosEventFilter,
 ): boolean {
   if (!filter) return true;
-  if (filter.txFilter && !filterTx(event.tx, filter.txFilter)) {
-    return false;
-  }
   if (filter.type !== event.event.type) {
     return false;
   }
