@@ -35,6 +35,7 @@ import {
   ValidateNested,
   ValidateIf,
   IsNumber,
+  IsBoolean,
 } from 'class-validator';
 
 export class CosmosBlockFilter implements SubqlCosmosBlockFilter {
@@ -45,7 +46,7 @@ export class CosmosBlockFilter implements SubqlCosmosBlockFilter {
 
 export class CosmosTxFilter implements SubqlCosmosTxFilter {
   @IsOptional()
-  @IsString()
+  @IsBoolean()
   includeFailedTx?: boolean;
 }
 
