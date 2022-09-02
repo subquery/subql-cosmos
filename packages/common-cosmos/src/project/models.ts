@@ -20,6 +20,7 @@ import {
   SubqlCosmosTransactionHandler,
   SubqlCosmosMessageHandler,
   CustomModule,
+  SubqlCosmosTxFilter,
 } from '@subql/types-cosmos';
 
 import {plainToClass, Transform, Type} from 'class-transformer';
@@ -42,7 +43,13 @@ export class CosmosBlockFilter implements SubqlCosmosBlockFilter {
   modulo?: number;
 }
 
-export class CosmosMessageFilter implements SubqlCosmosMessageFilter {
+export class CosmosTxFilter implements SubqlCosmosTxFilter {
+  @IsOptional()
+  @IsString()
+  includeFailedTx?: boolean;
+}
+
+export class CosmosMessageFilter extends CosmosTxFilter implements SubqlCosmosMessageFilter {
   @IsString()
   type: string;
   @IsOptional()
