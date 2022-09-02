@@ -12,7 +12,7 @@ All logs must start with the format: [x.y.z] - yyyy-mm-dd
 
 ### Changed
 Sync changes from main SDK:
-- Updated `store.getByField` to have limit and offset options. `getByField(entity: string, field: string, value: any, options?: {offset?: number; limit?: number}): Promise<Entity[]>;`.
+- Updated `store.getByField` to have limit and offset options: `getByField(entity: string, field: string, value: any, options?: {offset?: number; limit?: number}): Promise<Entity[]>;`.
 - Added `bulkUpdate` and `bulkGet` to the injected store. This can be used to optimise handlers and speed up indexing.
 
 

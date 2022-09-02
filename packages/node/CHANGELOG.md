@@ -14,7 +14,7 @@ All logs must start with the format: [x.y.z] - yyyy-mm-dd
 - Update to same version numbering as Substrate SDK.
 - Sync with latest changes on Substrate SDK:
   - Use `@subql/node-core` package.
-  - Updated `store.getByField` to have limit and offset options. `getByField(entity: string, field: string, value: any, options?: {offset?: number; limit?: number}): Promise<Entity[]>`;.
+  - Updated `store.getByField` to have limit and offset options: `getByField(entity: string, field: string, value: any, options?: {offset?: number; limit?: number}): Promise<Entity[]>`;.
   - Improved performance logging.
   - Added `bulkUpdate` and `bulkGet` to the injected store. This can be used to optimise handlers and speed up indexing.
   - Fixed indexing stop processing blocks.
