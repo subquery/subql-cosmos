@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.9.2] - 2022-09-15
+### Fixed
+- Removed Substrate and Algorand specific types and added custom DataSource support. (#7)
+
 ## [1.9.1] - 2022-09-08
 ### Fixed
 - Fix issue with chain id being compared to genesis hash. (#8)
