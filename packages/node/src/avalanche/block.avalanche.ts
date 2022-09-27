@@ -64,6 +64,7 @@ export class AvalancheBlockWrapped implements AvalancheBlockWrapper {
   static filterBlocksProcessor(
     block: AvalancheBlock,
     filter: AvalancheBlockFilter,
+    address?: string, // Not used just to maintain filter compatibility
   ): boolean {
     if (filter?.modulo && block.number % filter.modulo !== 0) {
       return false;

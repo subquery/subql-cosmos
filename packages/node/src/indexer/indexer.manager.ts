@@ -35,6 +35,7 @@ import {
   AvalancheBlockWrapper,
 } from '@subql/types-avalanche';
 import { Sequelize } from 'sequelize';
+import { AvalancheApi } from '../avalanche/api.avalanche';
 import { AvalancheBlockWrapped } from '../avalanche/block.avalanche';
 import { SubqlProjectDs, SubqueryProject } from '../configure/SubqueryProject';
 import {
@@ -52,7 +53,7 @@ const { argv } = getYargsOption();
 
 @Injectable()
 export class IndexerManager {
-  private api: ApiWrapper;
+  private api: AvalancheApi;
   private filteredDataSources: SubqlProjectDs[];
 
   constructor(
@@ -254,18 +255,25 @@ export class IndexerManager {
     if (isRuntimeDs(ds)) {
       const handlers = (ds.mapping.handlers as SubqlRuntimeHandler[]).filter(
         (h) =>
-          h.kind === kind && FilterTypeMap[kind](data as any, h.filter as any),
+          h.kind === kind &&
+          FilterTypeMap[kind](data as any, h.filter as any, ds.options.address),
       );
+
+      if (!handlers.length) {
+        return;
+      }
+      const parsedData = await DataAbiParser[kind](this.api)(data, ds);
 
       for (const handler of handlers) {
         vm = vm ?? (await getVM(ds));
+
         argv.profiler
           ? await profilerWrap(
               vm.securedExec.bind(vm),
               'handlerPerformance',
               handler.handler,
-            )(handler.handler, [data])
-          : await vm.securedExec(handler.handler, [data]);
+            )(handler.handler, [parsedData])
+          : await vm.securedExec(handler.handler, [parsedData]);
       }
     } else if (isCustomDs(ds)) {
       const handlers = this.filterCustomDsHandlers<K>(
@@ -295,9 +303,15 @@ export class IndexerManager {
         },
       );
 
+      if (!handlers.length) {
+        return;
+      }
+
+      const parsedData = await DataAbiParser[kind](this.api)(data, ds);
+
       for (const handler of handlers) {
         vm = vm ?? (await getVM(ds));
-        await this.transformAndExecuteCustomDs(ds, vm, handler, data);
+        await this.transformAndExecuteCustomDs(ds, vm, handler, parsedData);
       }
     }
   }
@@ -392,4 +406,11 @@ const FilterTypeMap = {
   [AvalancheHandlerKind.Event]: AvalancheBlockWrapped.filterLogsProcessor,
   [AvalancheHandlerKind.Call]:
     AvalancheBlockWrapped.filterTransactionsProcessor,
+};
+
+const DataAbiParser = {
+  [AvalancheHandlerKind.Block]: () => (data: AvalancheBlock) => data,
+  [AvalancheHandlerKind.Event]: (api: AvalancheApi) => api.parseLog.bind(api),
+  [AvalancheHandlerKind.Call]: (api: AvalancheApi) =>
+    api.parseTransaction.bind(api),
 };

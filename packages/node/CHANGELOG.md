@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## Fixed
+- Fix abi parsing not being applied to data. (#13)
+- Fix address not being applied to filters. (#13)
+
 ## [1.9.2] - 2022-09-15
 ### Fixed
 - Removed Substrate and Algorand specific types and added custom DataSource support. (#7)

@@ -258,6 +258,7 @@ export class AvalancheApi implements ApiWrapper<AvalancheBlockWrapper> {
   ): Promise<AvalancheLog<T> | AvalancheLog> {
     try {
       if (!ds?.options?.abi) {
+        logger.warn('No ABI provided for datasource');
         return log;
       }
       const iface = this.buildInterface(ds.options.abi, await loadAssets(ds));
@@ -277,6 +278,7 @@ export class AvalancheApi implements ApiWrapper<AvalancheBlockWrapper> {
   ): Promise<AvalancheTransaction<T> | AvalancheTransaction> {
     try {
       if (!ds?.options?.abi) {
+        logger.warn('No ABI provided for datasource');
         return transaction;
       }
       const assets = await loadAssets(ds);
