@@ -6,8 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [1.9.3] - 2022-09-27
+## [1.9.4] - 2022-09-29
+### Fixed
+- Fix unable initialize due to missing sequelize in `node-core` package (#15)
 
+## [1.9.3] - 2022-09-27
 ## Fixed
 - Fix abi parsing not being applied to data. (#13)
 - Fix address not being applied to filters. (#13)
