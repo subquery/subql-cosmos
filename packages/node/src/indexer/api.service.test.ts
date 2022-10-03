@@ -37,7 +37,7 @@ function testCosmosProject(): SubqueryProject {
 
 jest.setTimeout(200000);
 
-describe.skip('ApiService', () => {
+describe('ApiService', () => {
   let app: INestApplication;
   let apiService: ApiService;
   const prepareApiService = async () => {
