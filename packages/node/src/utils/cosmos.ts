@@ -42,7 +42,7 @@ export function filterTx(
   filter?: SubqlCosmosTxFilter,
 ): boolean {
   if ((!filter || !filter.includeFailedTx) && data.tx.code !== 0) {
-    logger.error(`filter out failed tx {${data.hash}}`);
+    logger.debug(`filtered out failed tx {${data.hash}}`);
     return false;
   }
   if (filter?.includeFailedTx) {
