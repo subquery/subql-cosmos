@@ -120,6 +120,12 @@ export class FetchService implements OnApplicationShutdown {
   }
 
   onApplicationShutdown(): void {
+    try {
+      this.schedulerRegistry.deleteInterval('getFinalizedBlockHead');
+      this.schedulerRegistry.deleteInterval('getBestBlockHead');
+    } catch (e) {
+      //ignore if interval not exist
+    }
     this.isShutdown = true;
   }
 
@@ -198,7 +204,14 @@ export class FetchService implements OnApplicationShutdown {
       BLOCK_TIME_VARIANCE = Math.min(BLOCK_TIME_VARIANCE, CHAIN_INTERVAL);
 
       this.schedulerRegistry.addInterval(
-        'getLatestBlockHead',
+        'getFinalizedBlockHead',
+        setInterval(
+          () => void this.getFinalizedBlockHead(),
+          BLOCK_TIME_VARIANCE,
+        ),
+      );
+      this.schedulerRegistry.addInterval(
+        'getBestBlockHead',
         setInterval(() => void this.getBestBlockHead(), BLOCK_TIME_VARIANCE),
       );
     }
