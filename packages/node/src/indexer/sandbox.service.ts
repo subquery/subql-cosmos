@@ -7,13 +7,7 @@ import {
   isDatasourceV0_2_0,
   SubqlAvalancheDataSource,
 } from '@subql/common-avalanche';
-import {
-  timeout,
-  NodeConfig,
-  StoreService,
-  getYargsOption,
-  getLogger,
-} from '@subql/node-core';
+import { timeout, NodeConfig, StoreService, getLogger } from '@subql/node-core';
 import {
   ApiWrapper,
   AvalancheBlockWrapper,
@@ -25,8 +19,6 @@ import { NodeVM, NodeVMOptions, VMScript } from 'vm2';
 import { SubqlProjectDs, SubqueryProject } from '../configure/SubqueryProject';
 import { getProjectEntry } from '../utils/project';
 
-const { argv } = getYargsOption();
-
 export interface SandboxOption {
   store?: Store;
   script: string;
@@ -34,27 +26,33 @@ export interface SandboxOption {
   entry: string;
 }
 
-const DEFAULT_OPTION: NodeVMOptions = {
-  console: 'redirect',
-  wasm: argv.unsafe,
-  sandbox: {},
-  require: {
-    builtin: argv.unsafe
-      ? ['*']
-      : ['assert', 'buffer', 'crypto', 'util', 'path'],
-    external: true,
-    context: 'sandbox',
-  },
-  wrapper: 'commonjs',
-  sourceExtensions: ['js', 'cjs'],
+const DEFAULT_OPTION = (nodeConfig: NodeConfig): NodeVMOptions => {
+  return {
+    console: 'redirect',
+    wasm: nodeConfig?.unsafe,
+    sandbox: {},
+    require: {
+      builtin: nodeConfig.unsafe
+        ? ['*']
+        : ['assert', 'buffer', 'crypto', 'util', 'path'],
+      external: true,
+      context: 'sandbox',
+    },
+    wrapper: 'commonjs',
+    sourceExtensions: ['js', 'cjs'],
+  };
 };
 
 const logger = getLogger('sandbox');
 
 export class Sandbox extends NodeVM {
-  constructor(option: SandboxOption, protected readonly script: VMScript) {
+  constructor(
+    option: SandboxOption,
+    protected readonly script: VMScript,
+    protected config: NodeConfig,
+  ) {
     super(
-      merge(DEFAULT_OPTION, {
+      merge(DEFAULT_OPTION(config), {
         require: {
           root: option.root,
           resolve: (moduleName: string) => {
@@ -71,7 +69,7 @@ export class Sandbox extends NodeVM {
 }
 
 export class IndexerSandbox extends Sandbox {
-  constructor(option: SandboxOption, private readonly config: NodeConfig) {
+  constructor(option: SandboxOption, config: NodeConfig) {
     super(
       option,
       new VMScript(
@@ -80,6 +78,7 @@ export class IndexerSandbox extends Sandbox {
     `,
         path.join(option.root, 'sandbox'),
       ),
+      config,
     );
     this.injectGlobals(option);
   }

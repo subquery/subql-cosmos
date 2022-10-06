@@ -21,13 +21,11 @@ import {
   PoiService,
   SubqueryRepo,
   NodeConfig,
-  getYargsOption,
   getLogger,
   profiler,
   profilerWrap,
 } from '@subql/node-core';
 import {
-  ApiWrapper,
   AvalancheTransaction,
   AvalancheLog,
   AvalancheBlock,
@@ -38,6 +36,7 @@ import { Sequelize } from 'sequelize';
 import { AvalancheApi } from '../avalanche/api.avalanche';
 import { AvalancheBlockWrapped } from '../avalanche/block.avalanche';
 import { SubqlProjectDs, SubqueryProject } from '../configure/SubqueryProject';
+import { yargsOptions } from '../yargs';
 import {
   asSecondLayerHandlerProcessor_1_0_0,
   DsProcessorService,
@@ -49,7 +48,6 @@ import { IndexerSandbox, SandboxService } from './sandbox.service';
 const NULL_MERKEL_ROOT = hexToU8a('0x00');
 
 const logger = getLogger('indexer');
-const { argv } = getYargsOption();
 
 @Injectable()
 export class IndexerManager {
@@ -74,7 +72,7 @@ export class IndexerManager {
     this.api = this.apiService.api;
   }
 
-  @profiler(argv.profiler)
+  @profiler(yargsOptions.argv.profiler)
   async indexBlock(
     blockContent: AvalancheBlockWrapper,
   ): Promise<{ dynamicDsCreated: boolean; operationHash: Uint8Array }> {
@@ -266,8 +264,7 @@ export class IndexerManager {
 
       for (const handler of handlers) {
         vm = vm ?? (await getVM(ds));
-
-        argv.profiler
+        this.nodeConfig.profiler
           ? await profilerWrap(
               vm.securedExec.bind(vm),
               'handlerPerformance',

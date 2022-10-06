@@ -14,7 +14,6 @@ import {
   IndexerEvent,
   Worker,
   delay,
-  getYargsOption,
   profilerWrap,
 } from '@subql/node-core';
 import { AvalancheBlockWrapper } from '@subql/types-avalanche';
@@ -117,12 +116,10 @@ export class BlockDispatcherService
     this.fetchQueue = new Queue(nodeConfig.batchSize * 3);
     this.processQueue = new AutoQueue(nodeConfig.batchSize * 3);
 
-    const { argv } = getYargsOption();
-
     const fetchBlocks = this.apiService.api.fetchBlocks.bind(
       this.apiService.api,
     );
-    if (argv.profiler) {
+    if (this.nodeConfig.profiler) {
       this.fetchBlocksBatches = profilerWrap(
         fetchBlocks,
         'AvalancheUtil',

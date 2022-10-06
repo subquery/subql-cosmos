@@ -9,7 +9,7 @@ import {
   gql,
 } from '@apollo/client/core';
 import { Injectable, OnApplicationShutdown } from '@nestjs/common';
-import { getYargsOption, getLogger, profiler } from '@subql/node-core';
+import { getLogger, profiler } from '@subql/node-core';
 import {
   DictionaryQueryCondition,
   DictionaryQueryEntry,
@@ -17,13 +17,13 @@ import {
 import { buildQuery, GqlNode, GqlQuery, GqlVar, MetaData } from '@subql/utils';
 import fetch from 'node-fetch';
 import { SubqueryProject } from '../configure/SubqueryProject';
+import { yargsOptions } from '../yargs';
 
 export type Dictionary = {
   _metadata: MetaData;
   batchBlocks: number[];
 };
 const logger = getLogger('dictionary');
-const { argv } = getYargsOption();
 
 function extractVar(name: string, cond: DictionaryQueryCondition): GqlVar {
   return {
@@ -50,14 +50,18 @@ function extractVars(
         and: i.map((j, innerIdx) => {
           const v = extractVar(`${entity}_${outerIdx}_${innerIdx}`, j);
           gqlVars.push(v);
-          return { [sanitizeArgField(j.field)]: { equalTo: `$${v.name}` } };
+          return {
+            // Use case insensitive here due to go-dictionary generate name is in lower cases
+            // Origin dictionary still using camelCase
+            [sanitizeArgField(j.field)]: { equalToInsensitive: `$${v.name}` },
+          };
         }),
       };
     } else if (i.length === 1) {
       const v = extractVar(`${entity}_${outerIdx}_0`, i[0]);
       gqlVars.push(v);
       filter.or[outerIdx] = {
-        [sanitizeArgField(i[0].field)]: { equalTo: `$${v.name}` },
+        [sanitizeArgField(i[0].field)]: { equalToInsensitive: `$${v.name}` },
       };
     }
   });
@@ -127,7 +131,7 @@ export class DictionaryService implements OnApplicationShutdown {
    * @param conditions
    */
 
-  @profiler(argv.profiler)
+  @profiler(yargsOptions.argv.profiler)
   async getDictionary(
     startBlock: number,
     queryEndBlock: number,
