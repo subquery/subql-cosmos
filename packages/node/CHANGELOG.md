@@ -6,6 +6,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.10.0] - 2022-10-06
+### Updated
+- `@subql/common` dependency updated.
+### Fixed
+- Finalized head not updating correctly for new blocks. (#18)
+### Changed
+- Sync with latest changes on Substrate SDK:
+  - New `reindex` and `force-clean` subcommands.
+  - Enable historical feature by default.
+
 ## [1.9.4] - 2022-09-29
 ### Fixed
 - Fix unable initialize due to missing sequelize in `node-core` package (#15)

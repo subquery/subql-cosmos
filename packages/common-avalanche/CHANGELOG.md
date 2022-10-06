@@ -9,6 +9,10 @@ All logs must start with the format: [x.y.z] - yyyy-mm-dd
 
 ## [Unreleased]
 
+## [0.2.1] - 2022-10-06
+### Updated
+- `@subql/common` dependency updated.
+
 ## [0.2.0] - 2022-09-07
 
 ### Updated
