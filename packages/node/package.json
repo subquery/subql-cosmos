@@ -73,6 +73,5 @@
   "files": [
     "/dist",
     "/bin"
-  ],
-  "stableVersion": "1.10.3-0"
+  ]
 }
