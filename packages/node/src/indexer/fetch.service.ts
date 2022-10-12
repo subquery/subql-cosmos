@@ -8,6 +8,8 @@ import {
   isCustomDs,
   AvalancheHandlerKind,
   SubqlHandlerFilter,
+  SubqlAvalancheDataSource,
+  isRuntimeDs,
 } from '@subql/common-avalanche';
 import {
   ApiService,
@@ -22,12 +24,16 @@ import {
   ApiWrapper,
   AvalancheLogFilter,
   AvalancheTransactionFilter,
+  SubqlCustomHandler,
+  SubqlHandler,
 } from '@subql/types-avalanche';
 import { range, sortBy, uniqBy } from 'lodash';
 import { calcInterval } from '../avalanche/utils.avalanche';
 import { SubqlProjectDs, SubqueryProject } from '../configure/SubqueryProject';
+import { isBaseHandler, isCustomHandler } from '../utils/project';
 import { eventToTopic, functionToSighash } from '../utils/string';
 import { Dictionary, DictionaryService } from './dictionary.service';
+import { DsProcessorService } from './ds-processor.service';
 import { DynamicDsService } from './dynamic-ds.service';
 import { IBlockDispatcher } from './worker/block-dispatcher.service';
 
@@ -107,6 +113,7 @@ export class FetchService implements OnApplicationShutdown {
     private nodeConfig: NodeConfig,
     private project: SubqueryProject,
     @Inject('IBlockDispatcher') private blockDispatcher: IBlockDispatcher,
+    private dsProcessorService: DsProcessorService,
     private dictionaryService: DictionaryService,
     private dynamicDsService: DynamicDsService,
     private eventEmitter: EventEmitter2,
@@ -140,12 +147,34 @@ export class FetchService implements OnApplicationShutdown {
 
     const dataSources = this.project.dataSources;
     for (const ds of dataSources.concat(this.templateDynamicDatasouces)) {
+      const plugin = isCustomDs(ds)
+        ? this.dsProcessorService.getDsProcessor(ds)
+        : undefined;
       for (const handler of ds.mapping.handlers) {
+        const baseHandlerKind = this.getBaseHandlerKind(ds, handler);
         let filterList: SubqlHandlerFilter[];
-        filterList = [handler.filter];
+        if (isCustomDs(ds)) {
+          const processor = plugin.handlerProcessors[handler.kind];
+          if (processor.dictionaryQuery) {
+            const queryEntry = processor.dictionaryQuery(
+              (handler as SubqlCustomHandler).filter,
+              ds,
+            );
+            if (queryEntry) {
+              queryEntries.push(queryEntry);
+              continue;
+            }
+          }
+          filterList = this.getBaseHandlerFilters<SubqlHandlerFilter>(
+            ds,
+            handler.kind,
+          );
+        } else {
+          filterList = [handler.filter];
+        }
         filterList = filterList.filter((f) => f);
         if (!filterList.length) return [];
-        switch (handler.kind) {
+        switch (baseHandlerKind) {
           case AvalancheHandlerKind.Block:
             return [];
           case AvalancheHandlerKind.Call: {
@@ -435,5 +464,39 @@ export class FetchService implements OnApplicationShutdown {
     await this.syncDynamicDatascourcesFromMeta();
     this.updateDictionary();
     this.blockDispatcher.flushQueue(blockHeight);
+  }
+
+  private getBaseHandlerKind(
+    ds: SubqlAvalancheDataSource,
+    handler: SubqlHandler,
+  ): AvalancheHandlerKind {
+    if (isRuntimeDs(ds) && isBaseHandler(handler)) {
+      return handler.kind;
+    } else if (isCustomDs(ds) && isCustomHandler(handler)) {
+      const plugin = this.dsProcessorService.getDsProcessor(ds);
+      const baseHandler =
+        plugin.handlerProcessors[handler.kind]?.baseHandlerKind;
+      if (!baseHandler) {
+        throw new Error(
+          `handler type ${handler.kind} not found in processor for ${ds.kind}`,
+        );
+      }
+      return baseHandler;
+    }
+  }
+
+  private getBaseHandlerFilters<T extends SubqlHandlerFilter>(
+    ds: SubqlAvalancheDataSource,
+    handlerKind: string,
+  ): T[] {
+    if (isCustomDs(ds)) {
+      const plugin = this.dsProcessorService.getDsProcessor(ds);
+      const processor = plugin.handlerProcessors[handlerKind];
+      return processor.baseFilter instanceof Array
+        ? (processor.baseFilter as T[])
+        : ([processor.baseFilter] as T[]);
+    } else {
+      throw new Error(`expect custom datasource here`);
+    }
   }
 }

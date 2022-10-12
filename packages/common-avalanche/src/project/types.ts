@@ -27,4 +27,5 @@ export interface AvalancheProjectNetworkConfig extends ProjectNetworkConfig {
   genesisHash?: string;
   chainId?: string;
   subnet?: string;
+  dictionary?: string;
 }
