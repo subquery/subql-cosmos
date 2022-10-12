@@ -17,6 +17,7 @@ import {
   checkMemoryUsage,
   NodeConfig,
   IndexerEvent,
+  Dictionary,
   getLogger,
 } from '@subql/node-core';
 import {
@@ -32,7 +33,7 @@ import { calcInterval } from '../avalanche/utils.avalanche';
 import { SubqlProjectDs, SubqueryProject } from '../configure/SubqueryProject';
 import { isBaseHandler, isCustomHandler } from '../utils/project';
 import { eventToTopic, functionToSighash } from '../utils/string';
-import { Dictionary, DictionaryService } from './dictionary.service';
+import { DictionaryService } from './dictionary.service';
 import { DsProcessorService } from './ds-processor.service';
 import { DynamicDsService } from './dynamic-ds.service';
 import { IBlockDispatcher } from './worker/block-dispatcher.service';

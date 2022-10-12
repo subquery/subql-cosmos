@@ -11,7 +11,7 @@ import {
   SubqlAvalancheDataSource,
   SubqlDatasourceProcessor,
 } from '@subql/common-avalanche';
-import { getLogger, NodeConfig } from '@subql/node-core';
+import { getLogger, NodeConfig, Sandbox } from '@subql/node-core';
 import {
   SecondLayerHandlerProcessor_0_0_0,
   SecondLayerHandlerProcessor_1_0_0,
@@ -20,7 +20,6 @@ import {
 
 import { VMScript } from 'vm2';
 import { SubqueryProject } from '../configure/SubqueryProject';
-import { Sandbox } from './sandbox.service';
 
 export interface DsPluginSandboxOption {
   root: string;

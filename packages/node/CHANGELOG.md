@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.10.0] - 2022-10-06
 ### Updated
 - `@subql/common` dependency updated.
+
 ### Fixed
 - Finalized head not updating correctly for new blocks. (#18)
 ### Changed

@@ -9,6 +9,8 @@ import { Interval } from '@nestjs/schedule';
 import { hexToU8a, u8aEq } from '@polkadot/util';
 import {
   ApiService,
+  AutoQueue,
+  Queue,
   getLogger,
   NodeConfig,
   IndexerEvent,
@@ -19,7 +21,6 @@ import {
 import { AvalancheBlockWrapper } from '@subql/types-avalanche';
 import chalk from 'chalk';
 import { last } from 'lodash';
-import { AutoQueue, Queue } from '../../utils/autoQueue';
 import { IndexerManager } from '../indexer.manager';
 import { ProjectService } from '../project.service';
 import {

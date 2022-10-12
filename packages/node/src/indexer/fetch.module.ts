@@ -8,7 +8,6 @@ import {
   MmrService,
   StoreService,
   PoiService,
-  DbModule,
   ApiService,
   NodeConfig,
 } from '@subql/node-core';
@@ -27,7 +26,6 @@ import {
 } from './worker/block-dispatcher.service';
 
 @Module({
-  imports: [DbModule.forFeature(['Subquery'])],
   providers: [
     StoreService,
     {
