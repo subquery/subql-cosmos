@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.10.1] - 2022-10-11
+### Changed
+- Sync with latest changes on Substrate SDK:
+  - Remove deprecated subqueries table
+
 ## [1.10.0] - 2022-10-06
 ### Updated
 - `@subql/common` dependency updated.

@@ -10,6 +10,11 @@ All logs must start with the format: [x.y.z] - yyyy-mm-dd
 
 ## [Unreleased]
 
+## [0.4.1] - 2022-10-12
+
+### Changed
+- Remove unused import (#20)
+
 ## [0.4.0] - 2022-09-07
 ### Changed
 - Sync with Substrate SDK.
