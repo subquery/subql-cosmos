@@ -254,7 +254,7 @@ export function wrapEvent(
       logs = parseRawLog(tx.tx.log) as Log[];
     } catch (e) {
       //parsing fails if transaction had failed.
-      logger.warn('Failed to parse raw log, most likely a failed transaction');
+      // logger.warn('Failed to parse raw log, most likely a failed transaction');
       continue;
     }
     for (const log of logs) {
