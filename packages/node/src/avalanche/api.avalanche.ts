@@ -73,7 +73,6 @@ export class AvalancheApi implements ApiWrapper<AvalancheBlockWrapper> {
   private cchain: EVMAPI;
   private contractInterfaces: Record<string, Interface> = {};
   private chainId: string;
-  // private retryCount = 25;
 
   constructor(private options: AvalancheOptions) {
     this.encoding = 'cb58';
@@ -177,8 +176,8 @@ export class AvalancheApi implements ApiWrapper<AvalancheBlockWrapper> {
 
   async callMethod(
     method: string,
-    params: object[] | object,
-    retries: number,
+    params: any[],
+    retries = RETRY_COUNT,
   ): Promise<RequestResponseData> {
     try {
       return await this.cchain.callMethod(
@@ -196,10 +195,10 @@ export class AvalancheApi implements ApiWrapper<AvalancheBlockWrapper> {
         logger.warn(`Retrying request (${retries}), due to 429 status code`);
         --retries;
         await delay(10);
-        return this.callMethod(method, params, retries);
+        return this.callMethod(method, params);
       } else {
         const error = new Error(e.message);
-        logger.error(error, `Retry: ${retries} failed`);
+        logger.error(error, `Rate limit retires failed after ${RETRY_COUNT}`);
         throw e;
       }
     }
@@ -214,11 +213,7 @@ export class AvalancheApi implements ApiWrapper<AvalancheBlockWrapper> {
       const transaction = formatTransaction(tx);
 
       const receipt = (
-        await this.callMethod(
-          'eth_getTransactionReceipt',
-          [tx.hash],
-          RETRY_COUNT,
-        )
+        await this.callMethod('eth_getTransactionReceipt', [tx.hash])
       ).data.result;
       transaction.receipt = formatReceipt(receipt, block);
       return transaction;
@@ -231,11 +226,10 @@ export class AvalancheApi implements ApiWrapper<AvalancheBlockWrapper> {
 
   async fetchBlock(num: number): Promise<any> {
     try {
-      const block_promise = await this.callMethod(
-        'eth_getBlockByNumber',
-        [`0x${num.toString(16)}`, true],
-        RETRY_COUNT,
-      );
+      const block_promise = await this.callMethod('eth_getBlockByNumber', [
+        `0x${num.toString(16)}`,
+        true,
+      ]);
 
       const block = formatBlock(block_promise.data.result);
 
