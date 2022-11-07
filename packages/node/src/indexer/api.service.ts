@@ -14,7 +14,7 @@ import {
   BlockResultsResponse,
 } from '@cosmjs/tendermint-rpc';
 import { Injectable } from '@nestjs/common';
-import { getLogger, NetworkMetadataPayload } from '@subql/node-core';
+import { delay, getLogger, NetworkMetadataPayload } from '@subql/node-core';
 import {
   MsgClearAdmin,
   MsgExecuteContract,
@@ -33,6 +33,7 @@ import { HttpClient, WebsocketClient } from './rpc-clients';
 const { version: packageVersion } = require('../../package.json');
 
 const logger = getLogger('api');
+const RETRY_COUNT = 5;
 
 @Injectable()
 export class ApiService {
@@ -157,17 +158,70 @@ export class CosmosClient extends CosmWasmClient {
   }
   */
 
-  async blockInfo(height?: number): Promise<Block> {
-    return this.getBlock(height);
+  async blockInfo(height?: number, retries = RETRY_COUNT): Promise<Block> {
+    try {
+      return await this.getBlock(height);
+    } catch (e) {
+      if (e.response.status < 429 && e.response.status > 502) throw e;
+
+      if (retries > 0) {
+        logger.warn(
+          `Failed to fetch blockInfo at ${height}, retry attempt: (${retries})`,
+        );
+        --retries;
+        await delay(10);
+        return this.blockInfo(height);
+      } else {
+        logger.error(e, `Rate limit retires failed after ${RETRY_COUNT}`);
+        throw e;
+      }
+    }
   }
 
-  async txInfoByHeight(height: number): Promise<readonly IndexedTx[]> {
-    return this.searchTx({ height: height });
+  async txInfoByHeight(
+    height: number,
+    retries = RETRY_COUNT,
+  ): Promise<readonly IndexedTx[]> {
+    try {
+      return await this.searchTx({ height: height });
+    } catch (e) {
+      if (e.response.status < 429 && e.response.status > 502) throw e;
+
+      if (retries > 0) {
+        logger.warn(
+          `Failed to fetch txInfoByHeight at ${height}, retry attempt: (${retries})`,
+        );
+        --retries;
+        await delay(10);
+        return this.txInfoByHeight(height);
+      } else {
+        logger.error(e, `Rate limit retires failed after ${RETRY_COUNT}`);
+        throw e;
+      }
+    }
   }
 
-  async blockResults(height: number): Promise<BlockResultsResponse> {
-    const blockRes = await this.tendermintClient.blockResults(height);
-    return blockRes;
+  async blockResults(
+    height: number,
+    retries = RETRY_COUNT,
+  ): Promise<BlockResultsResponse> {
+    try {
+      return await this.tendermintClient.blockResults(height);
+    } catch (e) {
+      if (e.response.status < 429 && e.response.status > 502) throw e;
+
+      if (retries > 0) {
+        logger.warn(
+          `Failed to fetch blockResults at ${height}, retry attempt: (${retries})`,
+        );
+        --retries;
+        await delay(10);
+        return this.blockResults(height);
+      } else {
+        logger.error(e, `Rate limit retires failed after ${RETRY_COUNT}`);
+        throw e;
+      }
+    }
   }
 
   decodeMsg<T = unknown>(msg: DecodeObject): T {
