@@ -16,6 +16,7 @@ import {
   AvalancheTransaction,
   AvalancheResult,
   BlockWrapper,
+  AvalancheBlock,
 } from '@subql/types-avalanche';
 import { Avalanche } from 'avalanche';
 import { EVMAPI } from 'avalanche/dist/apis/evm';
@@ -61,6 +62,8 @@ async function loadAssets(
   return res;
 }
 
+const RETRY_COUNT = 5;
+
 export class AvalancheApi implements ApiWrapper<AvalancheBlockWrapper> {
   private client: Avalanche;
   private indexApi: IndexAPI;
@@ -70,7 +73,7 @@ export class AvalancheApi implements ApiWrapper<AvalancheBlockWrapper> {
   private cchain: EVMAPI;
   private contractInterfaces: Record<string, Interface> = {};
   private chainId: string;
-  private retryCount = 25;
+  // private retryCount = 25;
 
   constructor(private options: AvalancheOptions) {
     this.encoding = 'cb58';
@@ -172,96 +175,94 @@ export class AvalancheApi implements ApiWrapper<AvalancheBlockWrapper> {
     return BigNumber.from(res.data.result).toNumber();
   }
 
+  async callMethod(
+    method: string,
+    params: object[] | object,
+    retries: number,
+  ): Promise<RequestResponseData> {
+    try {
+      return await this.cchain.callMethod(
+        method,
+        params,
+        `/ext/bc/${this.options.subnet}/rpc`,
+      );
+    } catch (e) {
+      if (e.response.status !== 429) {
+        throw e;
+      }
+
+      // If callMethod failed due to 429, retry the request
+      if (retries > 0) {
+        logger.warn(`Retrying request (${retries}), due to 429 status code`);
+        --retries;
+        await delay(10);
+        return this.callMethod(method, params, retries);
+      } else {
+        const error = new Error(e.message);
+        logger.error(error, `Retry: ${retries} failed`);
+        throw e;
+      }
+    }
+  }
+
+  async transactionReceipts(
+    tx: AvalancheTransaction,
+    num: number,
+    block: AvalancheBlock,
+  ): Promise<AvalancheTransaction<AvalancheResult>> {
+    try {
+      const transaction = formatTransaction(tx);
+
+      const receipt = (
+        await this.callMethod(
+          'eth_getTransactionReceipt',
+          [tx.hash],
+          RETRY_COUNT,
+        )
+      ).data.result;
+      transaction.receipt = formatReceipt(receipt, block);
+      return transaction;
+    } catch (e) {
+      const error = new Error(e.message);
+      logger.error(error, `Failed to fetch blockTransaction at ${num}`);
+      throw e;
+    }
+  }
+
   async fetchBlock(num: number): Promise<any> {
     try {
-      const block_promise = await this.cchain.callMethod(
+      const block_promise = await this.callMethod(
         'eth_getBlockByNumber',
         [`0x${num.toString(16)}`, true],
-        `/ext/bc/${this.options.subnet}/rpc`,
+        RETRY_COUNT,
       );
 
       const block = formatBlock(block_promise.data.result);
 
       // Get transaction receipts
       block.transactions = await Promise.all(
-        block.transactions.map(async (tx) => {
-          const transaction = formatTransaction(tx);
-          const receipt = (
-            await this.cchain.callMethod(
-              'eth_getTransactionReceipt',
-              [tx.hash],
-              `/ext/bc/${this.options.subnet}/rpc`,
-            )
-          ).data.result;
-          transaction.receipt = formatReceipt(receipt, block);
-          return transaction;
-        }),
+        block.transactions.map(async (tx) =>
+          this.transactionReceipts(tx, num, block),
+        ),
       );
-      logger.info(`Block: ${num} success`);
       return new AvalancheBlockWrapped(block);
     } catch (e) {
-      if (this.retryCount > 0) {
-        console.log('retryCount: ', this.retryCount);
-        --this.retryCount;
-        await delay(10);
-        logger.error(e, `retrying at block ${num}`);
-        return this.fetchBlock(num);
-      } else {
-        logger.error(e, `oh no something fucked up at block: ${num}`);
-        throw e;
-      }
+      const error = new Error(e.message);
+      logger.error(error, `Failed to fetch block at height ${num}`);
+      throw e;
     }
   }
 
   async fetchBlocks(bufferBlocks: number[]): Promise<AvalancheBlockWrapper[]> {
-    console.log('args bufferBlocks: ', bufferBlocks);
     return Promise.all(
       bufferBlocks.map(async (num) => {
         try {
-          // console.log('hi')
-          // Fetch Block
-          // const block_promise = await this.cchain.callMethod(
-          //   'eth_getBlockByNumber',
-          //   [`0x${num.toString(16)}`, true],
-          //   `/ext/bc/${this.options.subnet}/rpc`,
-          // );
-          //
-          // const block = formatBlock(block_promise.data.result);
-          //
-          // // Get transaction receipts
-          // block.transactions = await Promise.all(
-          //   block.transactions.map(async (tx) => {
-          //     const transaction = formatTransaction(tx);
-          //     const receipt = (
-          //       await this.cchain.callMethod(
-          //         'eth_getTransactionReceipt',
-          //         [tx.hash],
-          //         `/ext/bc/${this.options.subnet}/rpc`,
-          //       )
-          //     ).data.result;
-          //     transaction.receipt = formatReceipt(receipt, block);
-          //     return transaction;
-          //   }),
-          // );
-          // return new AvalancheBlockWrapped(block);
           return this.fetchBlock(num);
         } catch (e) {
           // Wrap error from an axios error to fix issue with error being undefined
           const error = new Error(e.message);
-          // if (this.retryCount > 0 ) {
-          //   console.log('delay at: ', Date.now())
-          //   console.log('retry func failed at: ', this.retryCount)
-          //   --this.retryCount
-          //   await delay(10)
-          //   await this.fetchBlocks(bufferBlocks)
-          // } else {
-          //   console.log('current retries left: ', this.retryCount
-          //   )
-          // if(this.retryCount === 0) {
           logger.error(error, `Failed to fetch block at height ${num}`);
           throw error;
-          // }
-          // }
         }
       }),
     );
