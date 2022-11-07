@@ -14,7 +14,7 @@ import {
   BlockResultsResponse,
 } from '@cosmjs/tendermint-rpc';
 import { Injectable } from '@nestjs/common';
-import { delay, getLogger, NetworkMetadataPayload } from '@subql/node-core';
+import { getLogger, NetworkMetadataPayload } from '@subql/node-core';
 import {
   MsgClearAdmin,
   MsgExecuteContract,
@@ -27,13 +27,13 @@ import {
   CosmosProjectNetConfig,
   SubqueryProject,
 } from '../configure/SubqueryProject';
+import { retryRequest } from '../utils/cosmos';
 import { DsProcessorService } from './ds-processor.service';
 import { HttpClient, WebsocketClient } from './rpc-clients';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const { version: packageVersion } = require('../../package.json');
 
 const logger = getLogger('api');
-const RETRY_COUNT = 5;
 
 @Injectable()
 export class ApiService {
@@ -158,69 +158,42 @@ export class CosmosClient extends CosmWasmClient {
   }
   */
 
-  async blockInfo(height?: number, retries = RETRY_COUNT): Promise<Block> {
+  async blockInfo(height?: number): Promise<Block> {
     try {
       return await this.getBlock(height);
     } catch (e) {
-      if (e.response.status < 429 && e.response.status > 502) throw e;
-
-      if (retries > 0) {
-        logger.warn(
-          `Failed to fetch blockInfo at ${height}, retry attempt: (${retries})`,
-        );
-        --retries;
-        await delay(10);
-        return this.blockInfo(height);
-      } else {
-        logger.error(e, `Rate limit retires failed after ${RETRY_COUNT}`);
-        throw e;
-      }
+      return retryRequest(
+        e,
+        `Failed to fetch blockInfo at ${height}`,
+        height,
+        this.blockInfo.bind(this),
+      );
     }
   }
 
-  async txInfoByHeight(
-    height: number,
-    retries = RETRY_COUNT,
-  ): Promise<readonly IndexedTx[]> {
+  async txInfoByHeight(height: number): Promise<readonly IndexedTx[]> {
     try {
       return await this.searchTx({ height: height });
     } catch (e) {
-      if (e.response.status < 429 && e.response.status > 502) throw e;
-
-      if (retries > 0) {
-        logger.warn(
-          `Failed to fetch txInfoByHeight at ${height}, retry attempt: (${retries})`,
-        );
-        --retries;
-        await delay(10);
-        return this.txInfoByHeight(height);
-      } else {
-        logger.error(e, `Rate limit retires failed after ${RETRY_COUNT}`);
-        throw e;
-      }
+      return retryRequest(
+        e,
+        `txInfoByHeight`,
+        height,
+        this.txInfoByHeight.bind(this),
+      );
     }
   }
 
-  async blockResults(
-    height: number,
-    retries = RETRY_COUNT,
-  ): Promise<BlockResultsResponse> {
+  async blockResults(height: number): Promise<BlockResultsResponse> {
     try {
       return await this.tendermintClient.blockResults(height);
     } catch (e) {
-      if (e.response.status < 429 && e.response.status > 502) throw e;
-
-      if (retries > 0) {
-        logger.warn(
-          `Failed to fetch blockResults at ${height}, retry attempt: (${retries})`,
-        );
-        --retries;
-        await delay(10);
-        return this.blockResults(height);
-      } else {
-        logger.error(e, `Rate limit retires failed after ${RETRY_COUNT}`);
-        throw e;
-      }
+      return retryRequest(
+        e,
+        `txInfoByHeight`,
+        height,
+        this.blockResults.bind(this),
+      );
     }
   }
 
