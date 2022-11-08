@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.10.2] - 2022-11-08
+### Changed
+- Sync with the latest changes with @subql/node-core, remove sequelize alter table
+
 ## [1.10.1] - 2022-10-11
 ### Changed
 - Sync with latest changes on Substrate SDK:
