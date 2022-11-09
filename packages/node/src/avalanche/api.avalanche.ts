@@ -179,16 +179,15 @@ export class AvalancheApi implements ApiWrapper<AvalancheBlockWrapper> {
     method: string,
     params: any[],
   ): Promise<RequestResponseData> {
-    try {
-      return await this.cchain.callMethod(method, params);
-      // return await retryOnFailAxios<RequestResponseData>(
-      //     this.cchain.callMethod.bind(this.cchain, method, params),
-      //     RETRY_STATUS_CODE
-      // )
-    } catch (e) {
-      logger.warn(e, 'callMethod fucked');
-      throw e;
-    }
+    return retryOnFailAxios<RequestResponseData>(
+      this.cchain.callMethod.bind(
+        this.cchain,
+        method,
+        params,
+        `/ext/bc/${this.options.subnet}/rpc`,
+      ),
+      RETRY_STATUS_CODE,
+    );
   }
 
   async transactionReceipts(
@@ -211,27 +210,21 @@ export class AvalancheApi implements ApiWrapper<AvalancheBlockWrapper> {
     }
   }
 
-  async fetchBlock(num: number): Promise<any> {
-    try {
-      const block_promise = await this.getCallMethod('eth_getBlockByNumber', [
-        `0x${num.toString(16)}`,
-        true,
-      ]);
+  async fetchBlock(num: number): Promise<AvalancheBlockWrapper> {
+    const block_promise = await this.getCallMethod('eth_getBlockByNumber', [
+      `0x${num.toString(16)}`,
+      true,
+    ]);
 
-      const block = formatBlock(block_promise.data.result);
+    const block = formatBlock(block_promise.data.result);
 
-      // Get transaction receipts
-      block.transactions = await Promise.all(
-        block.transactions.map(async (tx) =>
-          this.transactionReceipts(tx, num, block),
-        ),
-      );
-      return new AvalancheBlockWrapped(block);
-    } catch (e) {
-      const error = new Error(e.message);
-      logger.error(error, `Failed to fetch block at height ${num}`);
-      throw e;
-    }
+    // Get transaction receipts
+    block.transactions = await Promise.all(
+      block.transactions.map(async (tx) =>
+        this.transactionReceipts(tx, num, block),
+      ),
+    );
+    return new AvalancheBlockWrapped(block);
   }
 
   async fetchBlocks(bufferBlocks: number[]): Promise<AvalancheBlockWrapper[]> {
