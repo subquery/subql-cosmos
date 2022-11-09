@@ -195,19 +195,12 @@ export class AvalancheApi implements ApiWrapper<AvalancheBlockWrapper> {
     num: number,
     block: AvalancheBlock,
   ): Promise<AvalancheTransaction<AvalancheResult>> {
-    try {
-      const transaction = formatTransaction(tx);
-
-      const receipt = (
-        await this.getCallMethod('eth_getTransactionReceipt', [tx.hash])
-      ).data.result;
-      transaction.receipt = formatReceipt(receipt, block);
-      return transaction;
-    } catch (e) {
-      const error = new Error(e.message);
-      logger.error(error, `Failed to fetch blockTransaction at ${num}`);
-      throw e;
-    }
+    const transaction = formatTransaction(tx);
+    const receipt = (
+      await this.getCallMethod('eth_getTransactionReceipt', [tx.hash])
+    ).data.result;
+    transaction.receipt = formatReceipt(receipt, block);
+    return transaction;
   }
 
   async fetchBlock(num: number): Promise<AvalancheBlockWrapper> {
