@@ -348,32 +348,3 @@ export function calcInterval(api: CosmosClient): number {
   // TODO find a way to get this from the blockchain
   return 6000;
 }
-const RETRY_COUNT = 5;
-export async function retryRequest(
-  e: any,
-  eMessage: string,
-  height: number,
-  requestFunction: (height: number) => Promise<any>,
-  retries = RETRY_COUNT,
-): Promise<any> {
-  if (e.response.status < 429 && e.response.status >= 504) throw e;
-
-  if (retries > 0) {
-    logger.warn(
-      `Failed to fetch ${eMessage} at height, retry attempt: ${retries}`,
-    );
-    --retries;
-    await delay(10);
-    return requestFunction(height);
-  } else {
-    logger.error(
-      e,
-      `${
-        e.response.status === 502 || e.response.status === 504
-          ? 'Bad gateway'
-          : 'Rate limit'
-      } retries failed after: ${RETRY_COUNT}`,
-    );
-    throw e;
-  }
-}

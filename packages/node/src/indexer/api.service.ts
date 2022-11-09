@@ -14,7 +14,11 @@ import {
   BlockResultsResponse,
 } from '@cosmjs/tendermint-rpc';
 import { Injectable } from '@nestjs/common';
-import { getLogger, NetworkMetadataPayload } from '@subql/node-core';
+import {
+  getLogger,
+  NetworkMetadataPayload,
+  retryOnFailAxios,
+} from '@subql/node-core';
 import {
   MsgClearAdmin,
   MsgExecuteContract,
@@ -27,13 +31,13 @@ import {
   CosmosProjectNetConfig,
   SubqueryProject,
 } from '../configure/SubqueryProject';
-import { retryRequest } from '../utils/cosmos';
 import { DsProcessorService } from './ds-processor.service';
 import { HttpClient, WebsocketClient } from './rpc-clients';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const { version: packageVersion } = require('../../package.json');
 
 const logger = getLogger('api');
+const RETRY_STATUS_CODES = [429, 502];
 
 @Injectable()
 export class ApiService {
@@ -159,42 +163,27 @@ export class CosmosClient extends CosmWasmClient {
   */
 
   async blockInfo(height?: number): Promise<Block> {
-    try {
-      return await this.getBlock(height);
-    } catch (e) {
-      return retryRequest(
-        e,
-        `Failed to fetch blockInfo at ${height}`,
-        height,
-        this.blockInfo.bind(this),
-      );
-    }
+    const result = await retryOnFailAxios<Block>(
+      this.getBlock.bind(this, height),
+      RETRY_STATUS_CODES,
+    );
+    return result;
   }
 
   async txInfoByHeight(height: number): Promise<readonly IndexedTx[]> {
-    try {
-      return await this.searchTx({ height: height });
-    } catch (e) {
-      return retryRequest(
-        e,
-        `txInfoByHeight`,
-        height,
-        this.txInfoByHeight.bind(this),
-      );
-    }
+    const result = await retryOnFailAxios<IndexedTx[]>(
+      this.searchTx.bind(this, height),
+      RETRY_STATUS_CODES,
+    );
+    return result;
   }
 
   async blockResults(height: number): Promise<BlockResultsResponse> {
-    try {
-      return await this.tendermintClient.blockResults(height);
-    } catch (e) {
-      return retryRequest(
-        e,
-        `txInfoByHeight`,
-        height,
-        this.blockResults.bind(this),
-      );
-    }
+    const result = await retryOnFailAxios<BlockResultsResponse>(
+      this.tendermintClient.blockResults.bind(this.tendermintClient, height),
+      RETRY_STATUS_CODES,
+    );
+    return result;
   }
 
   decodeMsg<T = unknown>(msg: DecodeObject): T {
