@@ -8,7 +8,7 @@ import https from 'https';
 import { Interface } from '@ethersproject/abi';
 import { hexDataSlice } from '@ethersproject/bytes';
 import { RuntimeDataSourceV0_2_0 } from '@subql/common-avalanche';
-import { delay, getLogger } from '@subql/node-core';
+import { delay, getLogger, retryOnFailAxios } from '@subql/node-core';
 import {
   ApiWrapper,
   AvalancheLog,
@@ -62,7 +62,7 @@ async function loadAssets(
   return res;
 }
 
-const RETRY_COUNT = 5;
+const RETRY_STATUS_CODE = [429];
 
 export class AvalancheApi implements ApiWrapper<AvalancheBlockWrapper> {
   private client: Avalanche;
@@ -174,33 +174,20 @@ export class AvalancheApi implements ApiWrapper<AvalancheBlockWrapper> {
     return BigNumber.from(res.data.result).toNumber();
   }
 
-  async callMethod(
+  // eslint-disable-next-line @typescript-eslint/require-await
+  async getCallMethod(
     method: string,
     params: any[],
-    retries = RETRY_COUNT,
   ): Promise<RequestResponseData> {
     try {
-      return await this.cchain.callMethod(
-        method,
-        params,
-        `/ext/bc/${this.options.subnet}/rpc`,
-      );
+      return await this.cchain.callMethod(method, params);
+      // return await retryOnFailAxios<RequestResponseData>(
+      //     this.cchain.callMethod.bind(this.cchain, method, params),
+      //     RETRY_STATUS_CODE
+      // )
     } catch (e) {
-      if (e.response.status !== 429) {
-        throw e;
-      }
-
-      // If callMethod failed due to 429, retry the request
-      if (retries > 0) {
-        logger.warn(`Retrying request (${retries}), due to 429 status code`);
-        --retries;
-        await delay(10);
-        return this.callMethod(method, params);
-      } else {
-        const error = new Error(e.message);
-        logger.error(error, `Rate limit retires failed after ${RETRY_COUNT}`);
-        throw e;
-      }
+      logger.warn(e, 'callMethod fucked');
+      throw e;
     }
   }
 
@@ -213,7 +200,7 @@ export class AvalancheApi implements ApiWrapper<AvalancheBlockWrapper> {
       const transaction = formatTransaction(tx);
 
       const receipt = (
-        await this.callMethod('eth_getTransactionReceipt', [tx.hash])
+        await this.getCallMethod('eth_getTransactionReceipt', [tx.hash])
       ).data.result;
       transaction.receipt = formatReceipt(receipt, block);
       return transaction;
@@ -226,7 +213,7 @@ export class AvalancheApi implements ApiWrapper<AvalancheBlockWrapper> {
 
   async fetchBlock(num: number): Promise<any> {
     try {
-      const block_promise = await this.callMethod('eth_getBlockByNumber', [
+      const block_promise = await this.getCallMethod('eth_getBlockByNumber', [
         `0x${num.toString(16)}`,
         true,
       ]);
