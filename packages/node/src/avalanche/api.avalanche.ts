@@ -8,7 +8,7 @@ import https from 'https';
 import { Interface } from '@ethersproject/abi';
 import { hexDataSlice } from '@ethersproject/bytes';
 import { RuntimeDataSourceV0_2_0 } from '@subql/common-avalanche';
-import { delay, getLogger, retryOnFailAxios } from '@subql/node-core';
+import { getLogger, retryOnFailAxios } from '@subql/node-core';
 import {
   ApiWrapper,
   AvalancheLog,
@@ -204,33 +204,33 @@ export class AvalancheApi implements ApiWrapper<AvalancheBlockWrapper> {
   }
 
   async fetchBlock(num: number): Promise<AvalancheBlockWrapper> {
-    const block_promise = await this.getCallMethod('eth_getBlockByNumber', [
-      `0x${num.toString(16)}`,
-      true,
-    ]);
+    try {
+      const block_promise = await this.getCallMethod('eth_getBlockByNumber', [
+        `0x${num.toString(16)}`,
+        true,
+      ]);
 
-    const block = formatBlock(block_promise.data.result);
+      const block = formatBlock(block_promise.data.result);
 
-    // Get transaction receipts
-    block.transactions = await Promise.all(
-      block.transactions.map(async (tx) =>
-        this.transactionReceipts(tx, num, block),
-      ),
-    );
-    return new AvalancheBlockWrapped(block);
+      // Get transaction receipts
+      block.transactions = await Promise.all(
+        block.transactions.map(async (tx) =>
+          this.transactionReceipts(tx, num, block),
+        ),
+      );
+      return new AvalancheBlockWrapped(block);
+    } catch (e) {
+      // Wrap error from an axios error to fix issue with error being undefined
+      const error = new Error(e.message);
+      logger.error(error, `Failed to fetch block at height ${num}`);
+      throw error;
+    }
   }
 
   async fetchBlocks(bufferBlocks: number[]): Promise<AvalancheBlockWrapper[]> {
     return Promise.all(
       bufferBlocks.map(async (num) => {
-        try {
-          return this.fetchBlock(num);
-        } catch (e) {
-          // Wrap error from an axios error to fix issue with error being undefined
-          const error = new Error(e.message);
-          logger.error(error, `Failed to fetch block at height ${num}`);
-          throw error;
-        }
+        return this.fetchBlock(num);
       }),
     );
   }
