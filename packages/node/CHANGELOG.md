@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.10.3] - 2022-11-10
+### Added
+- Retry request when encountering timeout/rate limit behaviours. (#25)
+
 ## [1.10.2] - 2022-11-08
 ### Changed
 - Sync with the latest changes with @subql/node-core, remove sequelize alter table
