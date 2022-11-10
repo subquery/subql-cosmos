@@ -8,7 +8,7 @@ import https from 'https';
 import { Interface } from '@ethersproject/abi';
 import { hexDataSlice } from '@ethersproject/bytes';
 import { RuntimeDataSourceV0_2_0 } from '@subql/common-avalanche';
-import { getLogger } from '@subql/node-core';
+import { getLogger, retryOnFailAxios } from '@subql/node-core';
 import {
   ApiWrapper,
   AvalancheLog,
@@ -16,10 +16,12 @@ import {
   AvalancheTransaction,
   AvalancheResult,
   BlockWrapper,
+  AvalancheBlock,
 } from '@subql/types-avalanche';
 import { Avalanche } from 'avalanche';
 import { EVMAPI } from 'avalanche/dist/apis/evm';
 import { IndexAPI } from 'avalanche/dist/apis/index';
+import { RequestResponseData } from 'avalanche/typings/src/common';
 import { BigNumber } from 'ethers';
 import { AvalancheBlockWrapped } from './block.avalanche';
 import { CChainProvider } from './provider';
@@ -59,6 +61,8 @@ async function loadAssets(
 
   return res;
 }
+
+const RETRY_STATUS_CODE = [429];
 
 export class AvalancheApi implements ApiWrapper<AvalancheBlockWrapper> {
   private client: Avalanche;
@@ -170,35 +174,53 @@ export class AvalancheApi implements ApiWrapper<AvalancheBlockWrapper> {
     return BigNumber.from(res.data.result).toNumber();
   }
 
+  // eslint-disable-next-line @typescript-eslint/require-await
+  async getCallMethod(
+    method: string,
+    params: any[],
+  ): Promise<RequestResponseData> {
+    return this.cchain.callMethod(
+      method,
+      params,
+      `/ext/bc/${this.options.subnet}/rpc`,
+    );
+  }
+
+  async transactionReceipts(
+    tx: AvalancheTransaction,
+    num: number,
+    block: AvalancheBlock,
+  ): Promise<AvalancheTransaction<AvalancheResult>> {
+    const transaction = formatTransaction(tx);
+    const receipt = (
+      await this.getCallMethod('eth_getTransactionReceipt', [tx.hash])
+    ).data.result;
+    transaction.receipt = formatReceipt(receipt, block);
+    return transaction;
+  }
+
+  async fetchBlock(num: number): Promise<AvalancheBlockWrapper> {
+    const block_promise = await this.getCallMethod('eth_getBlockByNumber', [
+      `0x${num.toString(16)}`,
+      true,
+    ]);
+
+    const block = formatBlock(block_promise.data.result);
+
+    // Get transaction receipts
+    block.transactions = await Promise.all(
+      block.transactions.map(async (tx) =>
+        this.transactionReceipts(tx, num, block),
+      ),
+    );
+    return new AvalancheBlockWrapped(block);
+  }
+
   async fetchBlocks(bufferBlocks: number[]): Promise<AvalancheBlockWrapper[]> {
     return Promise.all(
       bufferBlocks.map(async (num) => {
         try {
-          // Fetch Block
-          const block_promise = await this.cchain.callMethod(
-            'eth_getBlockByNumber',
-            [`0x${num.toString(16)}`, true],
-            `/ext/bc/${this.options.subnet}/rpc`,
-          );
-
-          const block = formatBlock(block_promise.data.result);
-
-          // Get transaction receipts
-          block.transactions = await Promise.all(
-            block.transactions.map(async (tx) => {
-              const transaction = formatTransaction(tx);
-              const receipt = (
-                await this.cchain.callMethod(
-                  'eth_getTransactionReceipt',
-                  [tx.hash],
-                  `/ext/bc/${this.options.subnet}/rpc`,
-                )
-              ).data.result;
-              transaction.receipt = formatReceipt(receipt, block);
-              return transaction;
-            }),
-          );
-          return new AvalancheBlockWrapped(block);
+          return await this.fetchBlock(num);
         } catch (e) {
           // Wrap error from an axios error to fix issue with error being undefined
           const error = new Error(e.message);
