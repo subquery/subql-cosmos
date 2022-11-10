@@ -162,28 +162,28 @@ export class CosmosClient extends CosmWasmClient {
   }
   */
 
+  // eslint-disable-next-line @typescript-eslint/require-await
   async blockInfo(height?: number): Promise<Block> {
-    const result = await retryOnFailAxios<Block>(
+    return retryOnFailAxios<Block>(
       this.getBlock.bind(this, height),
       RETRY_STATUS_CODES,
     );
-    return result;
   }
 
+  // eslint-disable-next-line @typescript-eslint/require-await
   async txInfoByHeight(height: number): Promise<readonly IndexedTx[]> {
-    const result = await retryOnFailAxios<IndexedTx[]>(
+    return retryOnFailAxios<IndexedTx[]>(
       this.searchTx.bind(this, height),
       RETRY_STATUS_CODES,
     );
-    return result;
   }
 
+  // eslint-disable-next-line @typescript-eslint/require-await
   async blockResults(height: number): Promise<BlockResultsResponse> {
-    const result = await retryOnFailAxios<BlockResultsResponse>(
+    return retryOnFailAxios<BlockResultsResponse>(
       this.tendermintClient.blockResults.bind(this.tendermintClient, height),
       RETRY_STATUS_CODES,
     );
-    return result;
   }
 
   decodeMsg<T = unknown>(msg: DecodeObject): T {

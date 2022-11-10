@@ -8,7 +8,7 @@ import { decodeTxRaw } from '@cosmjs/proto-signing';
 import { Block } from '@cosmjs/stargate';
 import { Log, parseRawLog } from '@cosmjs/stargate/build/logs';
 import { BlockResultsResponse, TxData } from '@cosmjs/tendermint-rpc';
-import { delay, getLogger } from '@subql/node-core';
+import { getLogger } from '@subql/node-core';
 import {
   SubqlCosmosEventFilter,
   SubqlCosmosMessageFilter,
