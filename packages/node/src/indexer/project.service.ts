@@ -318,6 +318,7 @@ export class ProjectService {
       targetBlockHeight,
       lastProcessedHeight,
       this.storeService,
+      this.dynamicDsService,
       this.mmrService,
       this.sequelize,
       /* Not providing force clean service, it should never be needed */

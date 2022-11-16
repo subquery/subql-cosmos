@@ -4,11 +4,26 @@
 import { Module } from '@nestjs/common';
 import { DbModule, MmrService, StoreService } from '@subql/node-core';
 import { ConfigureModule } from '../configure/configure.module';
+import { ApiService } from '../indexer/api.service';
+import { DsProcessorService } from '../indexer/ds-processor.service';
+import { DynamicDsService } from '../indexer/dynamic-ds.service';
 import { ForceCleanService } from './forceClean.service';
 import { ReindexService } from './reindex.service';
 
 @Module({
-  providers: [StoreService, ReindexService, MmrService, ForceCleanService],
+  providers: [
+    StoreService,
+    ReindexService,
+    MmrService,
+    ForceCleanService,
+    DynamicDsService,
+    DsProcessorService,
+    {
+      // Used to work with DI for unfinalizedBlocksService but not used with reindex
+      provide: ApiService,
+      useFactory: () => undefined,
+    },
+  ],
   controllers: [],
 })
 export class ReindexFeatureModule {}

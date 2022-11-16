@@ -14,6 +14,7 @@ import {
 } from '@subql/node-core';
 import { Sequelize } from 'sequelize';
 import { SubqueryProject } from '../configure/SubqueryProject';
+import { DynamicDsService } from '../indexer/dynamic-ds.service';
 import { initDbSchema } from '../utils/project';
 import { reindex } from '../utils/reindex';
 
@@ -33,6 +34,7 @@ export class ReindexService {
     private readonly mmrService: MmrService,
     private readonly project: SubqueryProject,
     private readonly forceCleanService: ForceCleanService,
+    private readonly dynamicDsService: DynamicDsService,
   ) {}
 
   async init(): Promise<void> {
@@ -43,8 +45,8 @@ export class ReindexService {
       throw new Error('Schema does not exist.');
     }
     await this.initDbSchema();
-
     this.metadataRepo = MetadataFactory(this.sequelize, this.schema);
+    this.dynamicDsService.init(this.metadataRepo);
   }
 
   private async getExistingProjectSchema(): Promise<string> {
@@ -97,6 +99,7 @@ export class ReindexService {
       targetBlockHeight,
       lastProcessedHeight,
       this.storeService,
+      this.dynamicDsService,
       this.mmrService,
       this.sequelize,
       this.forceCleanService,
