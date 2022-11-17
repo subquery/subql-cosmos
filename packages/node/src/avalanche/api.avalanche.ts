@@ -179,10 +179,14 @@ export class AvalancheApi implements ApiWrapper<AvalancheBlockWrapper> {
     method: string,
     params: any[],
   ): Promise<RequestResponseData> {
-    return this.cchain.callMethod(
-      method,
-      params,
-      `/ext/bc/${this.options.subnet}/rpc`,
+    return retryOnFailAxios<RequestResponseData>(
+      this.cchain.callMethod.bind(
+        this.cchain,
+        method,
+        params,
+        `/ext/bc/${this.options.subnet}/rpc`,
+      ),
+      RETRY_STATUS_CODE,
     );
   }
 
