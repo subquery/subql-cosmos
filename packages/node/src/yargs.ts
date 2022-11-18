@@ -14,7 +14,7 @@ export const yargsOptions = yargs(hideBin(process.argv))
     handler: (argv) => {
       initLogger(
         argv.debug as boolean,
-        argv.outputFormat as 'json' | 'colored',
+        argv.outputFmt as 'json' | 'colored',
         argv.logLevel as string | undefined,
       );
 
@@ -37,7 +37,7 @@ export const yargsOptions = yargs(hideBin(process.argv))
     handler: (argv) => {
       initLogger(
         argv.debug as boolean,
-        argv.outputFormat as 'json' | 'colored',
+        argv.outputFmt as 'json' | 'colored',
         argv.logLevel as string | undefined,
       );
       // lazy import to make sure logger is instantiated before all other services
@@ -199,5 +199,11 @@ export const yargsOptions = yargs(hideBin(process.argv))
         'The limit of items a project can query with store.getByField at once',
       type: 'number',
       default: 100,
+    },
+    'unfinalized-blocks': {
+      demandOption: false,
+      default: false,
+      describe: 'Enable to fetch and index unfinalized blocks',
+      type: 'boolean',
     },
   });
