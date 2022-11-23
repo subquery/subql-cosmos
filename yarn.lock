@@ -3119,7 +3119,7 @@ __metadata:
     "@nestjs/testing": ^8.2.6
     "@subql/common": latest
     "@subql/common-avalanche": "workspace:*"
-    "@subql/node-core": 1.3.3
+    "@subql/node-core": 1.4.2-0
     "@subql/types-avalanche": "workspace:*"
     "@subql/utils": latest
     "@subql/x-merkle-mountain-range": 2.0.0-0.1.2
@@ -3135,6 +3135,7 @@ __metadata:
     algosdk: ^1.13.1
     app-module-path: ^2.2.0
     avalanche: ^3.12.0
+    cron-converter: ^1.0.2
     dayjs: ^1.10.7
     dotenv: ^15.0.1
     ethers: ^5.6.1
@@ -3152,15 +3153,16 @@ __metadata:
     supertest: ^6.2.2
     tar: ^6.1.11
     typescript: ^4.4.4
+    vm2: ^3.9.9
     yargs: ^16.2.0
   bin:
     subql-node-avalanche: ./bin/run
   languageName: unknown
   linkType: soft
 
-"@subql/node-core@npm:1.3.3":
-  version: 1.3.3
-  resolution: "@subql/node-core@npm:1.3.3"
+"@subql/node-core@npm:1.4.2-0":
+  version: 1.4.2-0
+  resolution: "@subql/node-core@npm:1.4.2-0"
   dependencies:
     "@nestjs/common": ^8.2.6
     "@nestjs/event-emitter": ^1.3.0
@@ -3176,7 +3178,7 @@ __metadata:
     sequelize: 6.23.0
     vm2: ^3.9.9
     yargs: ^16.2.0
-  checksum: ceca0574732c236c69223488047c2d16825f9d47e1d173947bf90b36471efd1a2b670aa7200e8955f573d8cc6f1f4319c8e0cd52b83e6f3e91622c74c3cf11ce
+  checksum: d5723394b07313fdf8496e6bd2a986992b0b370ba108f83ab7274a4e48243cddb28526e02af4d9d99b2ac5a12f381fb8bb0cd30b88ab2f2ef417c12b668bc0b5
   languageName: node
   linkType: hard
 
@@ -5509,6 +5511,16 @@ __metadata:
   version: 1.1.1
   resolution: "create-require@npm:1.1.1"
   checksum: a9a1503d4390d8b59ad86f4607de7870b39cad43d929813599a23714831e81c520bddf61bcdd1f8e30f05fd3a2b71ae8538e946eb2786dc65c2bbc520f692eff
+  languageName: node
+  linkType: hard
+
+"cron-converter@npm:^1.0.2":
+  version: 1.0.2
+  resolution: "cron-converter@npm:1.0.2"
+  dependencies:
+    moment-timezone: ~0.5
+    sprintf-js: ~1
+  checksum: 7bbd01f29a6fc5a8a8c8dabda3a6468b7040acd374beadbf103d6c86f9e85c961a0937cfa2a997e4bfcdcd6bd07cde658a3009b899130e69e6c9ceb5f0a82ac3
   languageName: node
   linkType: hard
 
@@ -9661,6 +9673,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"moment-timezone@npm:~0.5":
+  version: 0.5.39
+  resolution: "moment-timezone@npm:0.5.39"
+  dependencies:
+    moment: ">= 2.9.0"
+  checksum: 9f972d3a29b2726d4fd1464df27738b756441fe57575f087cda91b7716a5a31d2cfd274255e3edfb15eb60af3ccf33fd339527b456092cac1a2a4124e4369c8b
+  languageName: node
+  linkType: hard
+
 "moment@npm:>= 2.9.0, moment@npm:^2.29.1":
   version: 2.29.3
   resolution: "moment@npm:2.29.3"
@@ -11727,6 +11748,13 @@ __metadata:
   version: 4.1.0
   resolution: "split2@npm:4.1.0"
   checksum: ec581597cb74c13cdfb5e2047543dd40cb1e8e9803c7b1e0c29ede05f2b4f049b2d6e7f2788a225d544549375719658b8f38e9366364dec35dc7a12edfda5ee5
+  languageName: node
+  linkType: hard
+
+"sprintf-js@npm:~1":
+  version: 1.1.2
+  resolution: "sprintf-js@npm:1.1.2"
+  checksum: d4bb46464632b335e5faed381bd331157e0af64915a98ede833452663bc672823db49d7531c32d58798e85236581fb7342fd0270531ffc8f914e186187bf1c90
   languageName: node
   linkType: hard
 
