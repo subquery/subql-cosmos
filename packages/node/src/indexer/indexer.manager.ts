@@ -62,8 +62,8 @@ export class IndexerManager {
     private project: SubqueryProject,
     private nodeConfig: NodeConfig,
     private sandboxService: SandboxService,
-    private dynamicDsService: DynamicDsService,
     private dsProcessorService: DsProcessorService,
+    private dynamicDsService: DynamicDsService,
     private projectService: ProjectService,
   ) {
     logger.info('indexer manager start');
@@ -72,11 +72,14 @@ export class IndexerManager {
   }
 
   @profiler(yargsOptions.argv.profiler)
-  async indexBlock(
-    blockContent: AvalancheBlockWrapper,
-  ): Promise<{ dynamicDsCreated: boolean; operationHash: Uint8Array }> {
+  async indexBlock(blockContent: AvalancheBlockWrapper): Promise<{
+    dynamicDsCreated: boolean;
+    operationHash: Uint8Array;
+    reindexBlockHeight: null;
+  }> {
     const { blockHeight } = blockContent;
     let dynamicDsCreated = false;
+
     const tx = await this.sequelize.transaction();
     this.storeService.setTransaction(tx);
     this.storeService.setBlockHeight(blockHeight);
@@ -132,7 +135,7 @@ export class IndexerManager {
         { transaction: tx },
       );
       // Db Metadata increase BlockCount, in memory ref to block-dispatcher _processedBlockCount
-      await this.storeService.incrementBlockCount(tx);
+      await this.storeService.incrementJsonbCount('processedBlockCount', tx);
 
       // Need calculate operationHash to ensure correct offset insert all time
       operationHash = this.storeService.getOperationMerkleRoot();
@@ -165,25 +168,23 @@ export class IndexerManager {
     return {
       dynamicDsCreated,
       operationHash,
+      reindexBlockHeight: null,
     };
   }
 
   async start(): Promise<void> {
     await this.projectService.init();
+    logger.info('indexer manager started');
   }
 
-  private filterDataSources(processedHeight: number): SubqlProjectDs[] {
-    let filteredDs = this.project.dataSources;
+  private filterDataSources(nextProcessingHeight: number): SubqlProjectDs[] {
+    const filteredDs = this.projectService.dataSources.filter(
+      (ds) => ds.startBlock <= nextProcessingHeight,
+    );
+
     if (filteredDs.length === 0) {
       logger.error(
-        `Did not find any dataSource match with network specName ${this.api.getSpecName()}`,
-      );
-      process.exit(1);
-    }
-    filteredDs = filteredDs.filter((ds) => ds.startBlock <= processedHeight);
-    if (filteredDs.length === 0) {
-      logger.error(
-        `Your start block is greater than the current indexed block height in your database. Either change your startBlock (project.yaml) to <= ${processedHeight}
+        `Your start block is greater than the current indexed block height in your database. Either change your startBlock (project.yaml) to <= ${nextProcessingHeight}
          or delete your database and start again from the currently specified startBlock`,
       );
       process.exit(1);

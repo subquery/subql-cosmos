@@ -19,6 +19,7 @@ import {
   IndexerEvent,
   Dictionary,
   getLogger,
+  profiler,
 } from '@subql/node-core';
 import {
   DictionaryQueryEntry,
@@ -33,10 +34,10 @@ import { calcInterval } from '../avalanche/utils.avalanche';
 import { SubqlProjectDs, SubqueryProject } from '../configure/SubqueryProject';
 import { isBaseHandler, isCustomHandler } from '../utils/project';
 import { eventToTopic, functionToSighash } from '../utils/string';
+import { IBlockDispatcher } from './blockDispatcher';
 import { DictionaryService } from './dictionary.service';
 import { DsProcessorService } from './ds-processor.service';
 import { DynamicDsService } from './dynamic-ds.service';
-import { IBlockDispatcher } from './worker/block-dispatcher.service';
 
 const logger = getLogger('fetch');
 let BLOCK_TIME_VARIANCE = 5000;
@@ -104,10 +105,10 @@ export class FetchService implements OnApplicationShutdown {
   private latestBestHeight: number;
   private latestFinalizedHeight: number;
   private isShutdown = false;
-  private useDictionary: boolean;
-  private dictionaryQueryEntries?: DictionaryQueryEntry[];
+  private parentSpecVersion: number;
   private batchSizeScale: number;
   private templateDynamicDatasouces: SubqlProjectDs[];
+  private dictionaryGenesisMatches = true;
 
   constructor(
     private apiService: ApiService,
@@ -142,12 +143,19 @@ export class FetchService implements OnApplicationShutdown {
       await this.dynamicDsService.getDynamicDatasources();
   }
 
-  // TODO: if custom ds doesn't support dictionary, use baseFilter, if yes, let
-  getDictionaryQueryEntries(): DictionaryQueryEntry[] {
+  buildDictionaryQueryEntries(startBlock: number): DictionaryQueryEntry[] {
     const queryEntries: DictionaryQueryEntry[] = [];
 
     const dataSources = this.project.dataSources;
-    for (const ds of dataSources.concat(this.templateDynamicDatasouces)) {
+
+    // Only run the ds that is equal or less than startBlock
+    // sort array from lowest ds.startBlock to highest
+    const filteredDs = dataSources
+      .concat(this.templateDynamicDatasouces)
+      .filter((ds) => ds.startBlock <= startBlock)
+      .sort((a, b) => a.startBlock - b.startBlock);
+
+    for (const ds of filteredDs) {
       const plugin = isCustomDs(ds)
         ? this.dsProcessorService.getDsProcessor(ds)
         : undefined;
@@ -173,7 +181,8 @@ export class FetchService implements OnApplicationShutdown {
         } else {
           filterList = [handler.filter];
         }
-        filterList = filterList.filter((f) => f);
+        // Filter out any undefined
+        filterList = filterList.filter(Boolean);
         if (!filterList.length) return [];
         switch (baseHandlerKind) {
           case AvalancheHandlerKind.Block:
@@ -217,10 +226,21 @@ export class FetchService implements OnApplicationShutdown {
   }
 
   updateDictionary(): void {
-    this.dictionaryQueryEntries = this.getDictionaryQueryEntries();
-    this.useDictionary =
-      !!this.dictionaryQueryEntries?.length &&
-      !!this.project.network.dictionary;
+    this.dictionaryService.buildDictionaryEntryMap<SubqlProjectDs>(
+      this.project.dataSources.concat(this.templateDynamicDatasouces),
+      this.buildDictionaryQueryEntries.bind(this),
+    );
+  }
+
+  private get useDictionary(): boolean {
+    return (
+      !!this.project.network.dictionary &&
+      this.dictionaryGenesisMatches &&
+      !!this.dictionaryService.getDictionaryQueryEntries(
+        this.blockDispatcher.latestBufferedHeight ??
+          Math.min(...this.project.dataSources.map((ds) => ds.startBlock)),
+      ).length
+    );
   }
 
   async init(startHeight: number): Promise<void> {
@@ -275,9 +295,11 @@ export class FetchService implements OnApplicationShutdown {
       const currentFinalizedHeight = await this.api.getFinalizedBlockHeight();
       if (this.latestFinalizedHeight !== currentFinalizedHeight) {
         this.latestFinalizedHeight = currentFinalizedHeight;
-        this.eventEmitter.emit(IndexerEvent.BlockTarget, {
-          height: this.latestFinalizedHeight,
-        });
+        if (!this.nodeConfig.unfinalizedBlocks) {
+          this.eventEmitter.emit(IndexerEvent.BlockTarget, {
+            height: this.latestFinalizedHeight,
+          });
+        }
       }
     } catch (e) {
       logger.warn(e, `Having a problem when get finalized block`);
@@ -297,13 +319,18 @@ export class FetchService implements OnApplicationShutdown {
         this.eventEmitter.emit(IndexerEvent.BlockBest, {
           height: this.latestBestHeight,
         });
+
+        if (this.nodeConfig.unfinalizedBlocks) {
+          this.eventEmitter.emit(IndexerEvent.BlockTarget, {
+            height: this.latestBestHeight,
+          });
+        }
       }
     } catch (e) {
       logger.warn(e, `Having a problem when get best block`);
     }
   }
-
-  async startLoop(initBlockHeight: number): Promise<void> {
+  private async startLoop(initBlockHeight: number): Promise<void> {
     await this.fillNextBlockBuffer(initBlockHeight);
   }
 
@@ -337,9 +364,20 @@ export class FetchService implements OnApplicationShutdown {
     return moduloBlocks;
   }
 
+  getEnqueuedModuloBlocks(startBlockHeight: number): number[] {
+    return this.getModuloBlocks(
+      startBlockHeight,
+      this.nodeConfig.batchSize * Math.max(...this.getModulos()) +
+        startBlockHeight,
+    ).slice(0, this.nodeConfig.batchSize);
+  }
+
   async fillNextBlockBuffer(initBlockHeight: number): Promise<void> {
     let startBlockHeight: number;
     let scaledBatchSize: number;
+    const handlers = [].concat(
+      ...this.project.dataSources.map((ds) => ds.mapping.handlers),
+    );
 
     const getStartBlockHeight = (): number => {
       return this.blockDispatcher.latestBufferedHeight
@@ -354,27 +392,32 @@ export class FetchService implements OnApplicationShutdown {
         Math.round(this.batchSizeScale * this.nodeConfig.batchSize),
         Math.min(MINIMUM_BATCH_SIZE, this.nodeConfig.batchSize * 3),
       );
+      const latestHeight = this.nodeConfig.unfinalizedBlocks
+        ? this.latestBestHeight
+        : this.latestFinalizedHeight;
 
       if (
         this.blockDispatcher.freeSize < scaledBatchSize ||
-        startBlockHeight > this.latestFinalizedHeight
+        startBlockHeight > latestHeight
       ) {
         await delay(1);
         continue;
       }
+
       if (this.useDictionary) {
         const queryEndBlock = startBlockHeight + DICTIONARY_MAX_QUERY_SIZE;
         const moduloBlocks = this.getModuloBlocks(
           startBlockHeight,
           queryEndBlock,
         );
+
         try {
-          const dictionary = await this.dictionaryService.getDictionary(
-            startBlockHeight,
-            queryEndBlock,
-            scaledBatchSize,
-            this.dictionaryQueryEntries,
-          );
+          const dictionary =
+            await this.dictionaryService.scopedDictionaryEntries(
+              startBlockHeight,
+              queryEndBlock,
+              scaledBatchSize,
+            );
 
           if (startBlockHeight !== getStartBlockHeight()) {
             logger.debug(
@@ -388,6 +431,7 @@ export class FetchService implements OnApplicationShutdown {
             this.dictionaryValidation(dictionary, startBlockHeight)
           ) {
             let { batchBlocks } = dictionary;
+
             batchBlocks = batchBlocks
               .concat(moduloBlocks)
               .sort((a, b) => a - b);
@@ -413,14 +457,21 @@ export class FetchService implements OnApplicationShutdown {
           this.eventEmitter.emit(IndexerEvent.SkipDictionary);
         }
       }
-      // the original method: fill next batch size of blocks
+
       const endHeight = this.nextEndBlockHeight(
         startBlockHeight,
         scaledBatchSize,
       );
-      this.blockDispatcher.enqueueBlocks(
-        range(startBlockHeight, endHeight + 1),
-      );
+
+      if (handlers.length && this.getModulos().length === handlers.length) {
+        this.blockDispatcher.enqueueBlocks(
+          this.getEnqueuedModuloBlocks(startBlockHeight),
+        );
+      } else {
+        this.blockDispatcher.enqueueBlocks(
+          range(startBlockHeight, endHeight + 1),
+        );
+      }
     }
   }
 
@@ -431,9 +482,22 @@ export class FetchService implements OnApplicationShutdown {
     let endBlockHeight = startBlockHeight + scaledBatchSize - 1;
 
     if (endBlockHeight > this.latestFinalizedHeight) {
-      endBlockHeight = this.latestFinalizedHeight;
+      if (this.nodeConfig.unfinalizedBlocks) {
+        if (endBlockHeight >= this.latestBestHeight) {
+          endBlockHeight = this.latestBestHeight;
+        }
+      } else {
+        endBlockHeight = this.latestFinalizedHeight;
+      }
     }
     return endBlockHeight;
+  }
+
+  async resetForNewDs(blockHeight: number): Promise<void> {
+    await this.syncDynamicDatascourcesFromMeta();
+    this.dynamicDsService.deleteTempDsRecords(blockHeight);
+    this.updateDictionary();
+    this.blockDispatcher.flushQueue(blockHeight);
   }
 
   private dictionaryValidation(
@@ -444,27 +508,24 @@ export class FetchService implements OnApplicationShutdown {
       logger.error(
         'The dictionary that you have specified does not match the chain you are indexing, it will be ignored. Please update your project manifest to reference the correct dictionary',
       );
-      this.useDictionary = false;
+      this.dictionaryGenesisMatches = false;
       this.eventEmitter.emit(IndexerEvent.UsingDictionary, {
         value: Number(this.useDictionary),
       });
       this.eventEmitter.emit(IndexerEvent.SkipDictionary);
       return false;
     }
-    if (metaData.lastProcessedHeight < startBlockHeight) {
-      logger.warn(
-        `Dictionary indexed block is behind current indexing block height`,
-      );
-      this.eventEmitter.emit(IndexerEvent.SkipDictionary);
-      return false;
+
+    if (startBlockHeight !== undefined) {
+      if (metaData.lastProcessedHeight < startBlockHeight) {
+        logger.warn(
+          `Dictionary indexed block is behind current indexing block height`,
+        );
+        this.eventEmitter.emit(IndexerEvent.SkipDictionary);
+        return false;
+      }
     }
     return true;
-  }
-
-  async resetForNewDs(blockHeight: number): Promise<void> {
-    await this.syncDynamicDatascourcesFromMeta();
-    this.updateDictionary();
-    this.blockDispatcher.flushQueue(blockHeight);
   }
 
   private getBaseHandlerKind(

@@ -5,6 +5,7 @@ import {BlockWrapper} from '../interfaces';
 
 export interface AvalancheBlockFilter {
   modulo?: number;
+  timestamp?: string;
 }
 
 export interface AvalancheTransactionFilter {

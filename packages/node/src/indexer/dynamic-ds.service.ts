@@ -5,6 +5,7 @@ import assert from 'assert';
 import { Injectable } from '@nestjs/common';
 import { isCustomDs, isRuntimeDs } from '@subql/common-avalanche';
 import { getLogger, MetadataRepo } from '@subql/node-core';
+import { cloneDeep, isEqual, unionWith } from 'lodash';
 import { Transaction } from 'sequelize/types';
 import { SubqlProjectDs, SubqueryProject } from '../configure/SubqueryProject';
 import { DsProcessorService } from './ds-processor.service';
@@ -12,6 +13,7 @@ import { DsProcessorService } from './ds-processor.service';
 const logger = getLogger('dynamic-ds');
 
 const METADATA_KEY = 'dynamicDatasources';
+const TEMP_DS_PREFIX = 'ds_';
 
 interface DatasourceParams {
   templateName: string;
@@ -22,6 +24,7 @@ interface DatasourceParams {
 @Injectable()
 export class DynamicDsService {
   private metaDataRepo: MetadataRepo;
+  private tempDsRecords: Record<string, string>;
 
   constructor(
     private readonly dsProcessorService: DsProcessorService,
@@ -33,6 +36,20 @@ export class DynamicDsService {
   }
 
   private _datasources: SubqlProjectDs[];
+
+  async resetDynamicDatasource(targetHeight: number, tx: Transaction) {
+    const dynamicDs = await this.getDynamicDatasourceParams();
+    if (dynamicDs.length !== 0) {
+      const filteredDs = dynamicDs.filter(
+        (ds) => ds.startBlock <= targetHeight,
+      );
+      const dsRecords = JSON.stringify(filteredDs);
+      await this.metaDataRepo.upsert(
+        { key: METADATA_KEY, value: dsRecords },
+        { transaction: tx },
+      );
+    }
+  }
 
   async createDynamicDatasource(
     params: DatasourceParams,
@@ -74,36 +91,60 @@ export class DynamicDsService {
     return this._datasources;
   }
 
-  private async getDynamicDatasourceParams(): Promise<DatasourceParams[]> {
+  deleteTempDsRecords(blockHeight: number) {
+    delete this.tempDsRecords[TEMP_DS_PREFIX + blockHeight];
+  }
+
+  private async getDynamicDatasourceParams(
+    blockHeight?: number,
+  ): Promise<DatasourceParams[]> {
     assert(this.metaDataRepo, `Model _metadata does not exist`);
     const record = await this.metaDataRepo.findByPk(METADATA_KEY);
-    const results = record?.value;
 
-    if (!results || typeof results !== 'string') {
-      return [];
+    let results: DatasourceParams[] = [];
+
+    const metaResults: DatasourceParams[] = JSON.parse(
+      (record?.value as string) ?? '[]',
+    );
+    if (metaResults.length) {
+      results = [...metaResults];
     }
 
-    return JSON.parse(results);
+    if (blockHeight !== undefined) {
+      const tempResults: DatasourceParams[] = JSON.parse(
+        this.tempDsRecords?.[TEMP_DS_PREFIX + blockHeight] ?? '[]',
+      );
+      if (tempResults.length) {
+        results = unionWith(results, tempResults, isEqual);
+      }
+    }
+
+    return results;
   }
 
   private async saveDynamicDatasourceParams(
     dsParams: DatasourceParams,
     tx: Transaction,
   ): Promise<void> {
-    const existing = await this.getDynamicDatasourceParams();
+    const existing = await this.getDynamicDatasourceParams(dsParams.startBlock);
 
     assert(this.metaDataRepo, `Model _metadata does not exist`);
-    await this.metaDataRepo.upsert(
-      { key: METADATA_KEY, value: JSON.stringify([...existing, dsParams]) },
-      { transaction: tx },
-    );
+    const dsRecords = JSON.stringify([...existing, dsParams]);
+    await this.metaDataRepo
+      .upsert({ key: METADATA_KEY, value: dsRecords }, { transaction: tx })
+      .then(() => {
+        this.tempDsRecords = {
+          ...this.tempDsRecords,
+          [TEMP_DS_PREFIX + dsParams.startBlock]: dsRecords,
+        };
+      });
   }
 
   private async getDatasource(
     params: DatasourceParams,
   ): Promise<SubqlProjectDs> {
-    const template = this.project.templates.find(
-      (t) => t.name === params.templateName,
+    const template = cloneDeep(
+      this.project.templates.find((t) => t.name === params.templateName),
     );
 
     if (!template) {
