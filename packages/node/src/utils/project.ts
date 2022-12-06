@@ -17,6 +17,7 @@ import {
   SubqlHandler,
   AvalancheHandlerKind,
   RuntimeDataSourceV0_0_1,
+  RuntimeDataSourceV0_2_0,
 } from '@subql/common-avalanche';
 import { StoreService } from '@subql/node-core';
 import { getAllEntitiesRelations } from '@subql/utils';
@@ -105,6 +106,8 @@ export async function updateDataSourcesV0_2_0(
         root,
         entryScript,
       );
+
+      // What is the purpose of this
       if (dataSource.assets) {
         for (const [, asset] of Object.entries(dataSource.assets)) {
           if (reader instanceof LocalReader) {

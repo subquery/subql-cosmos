@@ -7,13 +7,12 @@ import {
   InMemoryCache,
   NormalizedCacheObject,
   gql,
+  ApolloLink,
 } from '@apollo/client/core';
 import { Injectable, OnApplicationShutdown } from '@nestjs/common';
-import { getLogger, profiler } from '@subql/node-core';
-import {
-  DictionaryQueryCondition,
-  DictionaryQueryEntry,
-} from '@subql/types-avalanche';
+import { authHttpLink } from '@subql/apollo-links';
+import { getLogger, NodeConfig, profiler, timeout } from '@subql/node-core';
+import { DictionaryQueryCondition, DictionaryQueryEntry } from '@subql/types';
 import { buildQuery, GqlNode, GqlQuery, GqlVar, MetaData } from '@subql/utils';
 import fetch from 'node-fetch';
 import { SubqueryProject } from '../configure/SubqueryProject';
@@ -25,10 +24,30 @@ export type Dictionary = {
 };
 const logger = getLogger('dictionary');
 
+const distinctErrorEscaped = `Unknown argument \\"distinct\\"`;
+
 function extractVar(name: string, cond: DictionaryQueryCondition): GqlVar {
+  let gqlType: string;
+  switch (typeof cond.value) {
+    case 'number':
+      gqlType = 'BigFloat!';
+      break;
+    case 'boolean':
+      gqlType = 'Boolean!';
+      break;
+    default:
+    case 'string':
+      gqlType = 'String!';
+      break;
+  }
+
+  if (cond.matcher === 'contains') {
+    gqlType = 'JSON';
+  }
+
   return {
     name,
-    gqlType: 'String!',
+    gqlType,
     value: cond.value,
   };
 }
@@ -38,12 +57,14 @@ function sanitizeArgField(input: string): string {
   return input.replace(ARG_FIELD_REGX, '');
 }
 
+type Filter = { or: any[] };
+
 function extractVars(
   entity: string,
   conditions: DictionaryQueryCondition[][],
-): [GqlVar[], Record<string, unknown>] {
+): [GqlVar[], Filter] {
   const gqlVars: GqlVar[] = [];
-  const filter = { or: [] };
+  const filter: Filter = { or: [] };
   conditions.forEach((i, outerIdx) => {
     if (i.length > 1) {
       filter.or[outerIdx] = {
@@ -53,7 +74,9 @@ function extractVars(
           return {
             // Use case insensitive here due to go-dictionary generate name is in lower cases
             // Origin dictionary still using camelCase
-            [sanitizeArgField(j.field)]: { equalToInsensitive: `$${v.name}` },
+            [sanitizeArgField(j.field)]: {
+              [j.matcher || 'equalToInsensitive']: `$${v.name}`,
+            },
           };
         }),
       };
@@ -61,7 +84,9 @@ function extractVars(
       const v = extractVar(`${entity}_${outerIdx}_0`, i[0]);
       gqlVars.push(v);
       filter.or[outerIdx] = {
-        [sanitizeArgField(i[0].field)]: { equalToInsensitive: `$${v.name}` },
+        [sanitizeArgField(i[0].field)]: {
+          [i[0].matcher || 'equalToInsensitive']: `$${v.name}`,
+        },
       };
     }
   });
@@ -74,8 +99,10 @@ function buildDictQueryFragment(
   queryEndBlock: number,
   conditions: DictionaryQueryCondition[][],
   batchSize: number,
+  useDistinct: boolean,
 ): [GqlVar[], GqlNode] {
   const [gqlVars, filter] = extractVars(entity, conditions);
+
   const node: GqlNode = {
     entity,
     project: [
@@ -96,6 +123,11 @@ function buildDictQueryFragment(
       first: batchSize.toString(),
     },
   };
+
+  if (useDistinct) {
+    node.args.distinct = ['BLOCK_HEIGHT'];
+  }
+
   return [gqlVars, node];
 }
 
@@ -104,11 +136,53 @@ export class DictionaryService implements OnApplicationShutdown {
   private client: ApolloClient<NormalizedCacheObject>;
   private isShutdown = false;
   private mappedDictionaryQueryEntries: Map<number, DictionaryQueryEntry[]>;
+  private useDistinct = true;
+  readonly dictionaryEndpoint: string;
+  readonly chainId: string;
 
-  constructor(protected project: SubqueryProject) {
+  constructor(
+    protected project: SubqueryProject,
+    protected readonly nodeConfig: NodeConfig,
+    protected readonly metadataKeys = ['lastProcessedHeight', 'genesisHash'], // Cosmos uses chain instead of genesisHash
+  ) {
     this.client = new ApolloClient({
       cache: new InMemoryCache({ resultCaching: true }),
       link: new HttpLink({ uri: this.project.network.dictionary, fetch }),
+      defaultOptions: {
+        watchQuery: {
+          fetchPolicy: 'no-cache',
+        },
+        query: {
+          fetchPolicy: 'no-cache',
+        },
+      },
+    });
+
+    this.chainId = this.project.network.chainId;
+    this.dictionaryEndpoint = this.project.network.dictionary;
+  }
+
+  async init(): Promise<void> {
+    let link: ApolloLink;
+
+    if (this.nodeConfig.sponsoredDictionary) {
+      try {
+        link = await authHttpLink({
+          authUrl: this.nodeConfig.sponsoredDictionary,
+          chainId: this.chainId,
+          httpOptions: { fetch },
+        });
+      } catch (e) {
+        logger.error(e.message);
+        process.exit(1);
+      }
+    } else {
+      link = new HttpLink({ uri: this.dictionaryEndpoint, fetch });
+    }
+
+    this.client = new ApolloClient({
+      cache: new InMemoryCache({ resultCaching: true }),
+      link,
       defaultOptions: {
         watchQuery: {
           fetchPolicy: 'no-cache',
@@ -147,17 +221,20 @@ export class DictionaryService implements OnApplicationShutdown {
     );
 
     try {
-      const resp = await this.client.query({
-        query: gql(query),
-        variables,
-      });
+      const resp = await timeout(
+        this.client.query({
+          query: gql(query),
+          variables,
+        }),
+        this.nodeConfig.dictionaryTimeout,
+      );
       const blockHeightSet = new Set<number>();
       const entityEndBlock: { [entity: string]: number } = {};
       for (const entity of Object.keys(resp.data)) {
         if (entity !== '_metadata' && resp.data[entity].nodes.length >= 0) {
           for (const node of resp.data[entity].nodes) {
             blockHeightSet.add(Number(node.blockHeight));
-            entityEndBlock[entity] = Number(node.blockHeight);
+            entityEndBlock[entity] = Number(node.blockHeight); //last added event blockHeight
           }
         }
       }
@@ -175,6 +252,18 @@ export class DictionaryService implements OnApplicationShutdown {
         batchBlocks,
       };
     } catch (err) {
+      // Check if the error is about distinct argument and disable distinct if so
+      if (JSON.stringify(err).includes(distinctErrorEscaped)) {
+        this.useDistinct = false;
+        logger.warn(`Dictionary doesn't support distinct query.`);
+        // Rerun the qeury now with distinct disabled
+        return this.getDictionary(
+          startBlock,
+          queryEndBlock,
+          batchSize,
+          conditions,
+        );
+      }
       logger.warn(err, `failed to fetch dictionary result`);
       return undefined;
     }
@@ -199,7 +288,7 @@ export class DictionaryService implements OnApplicationShutdown {
     const nodes: GqlNode[] = [
       {
         entity: '_metadata',
-        project: ['lastProcessedHeight', 'genesisHash'],
+        project: this.metadataKeys,
       },
     ];
     for (const entity of Object.keys(mapped)) {
@@ -209,6 +298,7 @@ export class DictionaryService implements OnApplicationShutdown {
         queryEndBlock,
         mapped[entity],
         batchSize,
+        this.useDistinct,
       );
       nodes.push(node);
       vars.push(...pVars);

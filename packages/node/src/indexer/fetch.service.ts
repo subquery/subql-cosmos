@@ -29,6 +29,7 @@ import {
   SubqlCustomHandler,
   SubqlHandler,
 } from '@subql/types-avalanche';
+import { MetaData } from '@subql/utils';
 import { range, sortBy, uniqBy } from 'lodash';
 import { calcInterval } from '../avalanche/utils.avalanche';
 import { SubqlProjectDs, SubqueryProject } from '../configure/SubqueryProject';
@@ -105,10 +106,7 @@ export class FetchService implements OnApplicationShutdown {
   private latestBestHeight: number;
   private latestFinalizedHeight: number;
   private isShutdown = false;
-  private parentSpecVersion: number;
   private batchSizeScale: number;
-  private specVersionMap: SpecVersion[];
-  private currentRuntimeVersion: RuntimeVersion;
   private templateDynamicDatasouces: SubqlProjectDs[];
   private dictionaryGenesisMatches = true;
 
