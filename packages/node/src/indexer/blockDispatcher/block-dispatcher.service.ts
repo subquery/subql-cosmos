@@ -3,7 +3,6 @@
 
 import { Injectable, OnApplicationShutdown } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { RuntimeVersion } from '@polkadot/types/interfaces';
 import {
   getLogger,
   NodeConfig,
@@ -14,13 +13,10 @@ import {
   Queue,
   ApiService,
 } from '@subql/node-core';
-import { SubstrateBlock } from '@subql/types';
 import { last } from 'lodash';
 import { IndexerManager } from '../indexer.manager';
 import { ProjectService } from '../project.service';
 import { BaseBlockDispatcher } from './base-block-dispatcher';
-
-type GetRuntimeVersion = (block: SubstrateBlock) => Promise<RuntimeVersion>;
 
 const logger = getLogger('BlockDispatcherService');
 
@@ -36,7 +32,6 @@ export class BlockDispatcherService
 
   private fetching = false;
   private isShutdown = false;
-  private getRuntimeVersion: GetRuntimeVersion;
   private fetchBlocksBatches: ApiService['api']['fetchBlocks'];
 
   constructor(

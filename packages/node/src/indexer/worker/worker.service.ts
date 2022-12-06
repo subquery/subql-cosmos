@@ -6,6 +6,7 @@ import { Injectable } from '@nestjs/common';
 import { ApiService, NodeConfig, getLogger, AutoQueue } from '@subql/node-core';
 import { AvalancheBlockWrapper, BlockWrapper } from '@subql/types-avalanche';
 import { IndexerManager } from '../indexer.manager';
+import { BlockContent } from '../types';
 
 export type FetchBlockResponse = { parentHash: string } | undefined;
 

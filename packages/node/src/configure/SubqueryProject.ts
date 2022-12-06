@@ -1,6 +1,7 @@
 // Copyright 2020-2022 OnFinality Limited authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
+import { Injectable } from '@nestjs/common';
 import { RegisteredTypes } from '@polkadot/types/types';
 import {
   ReaderFactory,
@@ -48,6 +49,7 @@ const NOT_SUPPORT = (name: string) => {
   throw new Error(`Manifest specVersion ${name}() is not supported`);
 };
 
+@Injectable()
 export class SubqueryProject {
   id: string;
   root: string;
@@ -142,9 +144,6 @@ async function loadProjectFromManifestBase(
     reader,
     root,
   );
-
-  const templates = await loadProjectTemplates(projectManifest, root, reader);
-
   return {
     id: reader.root ? reader.root : path, //TODO, need to method to get project_id
     root,
@@ -152,7 +151,7 @@ async function loadProjectFromManifestBase(
     dataSources,
     schema,
     chainTypes,
-    templates,
+    templates: [],
   };
 }
 
@@ -172,6 +171,11 @@ async function loadProjectFromManifest1_0_0(
     reader,
     path,
     networkOverrides,
+  );
+  project.templates = await loadProjectTemplates(
+    projectManifest,
+    project.root,
+    reader,
   );
   project.runner = projectManifest.runner;
   if (packageName !== project.runner.node.name) {

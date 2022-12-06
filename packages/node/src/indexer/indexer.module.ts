@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { Module } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import {
   ApiService,
   StoreService,
@@ -24,12 +25,15 @@ import { WorkerService } from './worker/worker.service';
     StoreService,
     {
       provide: ApiService,
-      useFactory: async (project: SubqueryProject) => {
-        const apiService = new AvalancheApiService(project);
+      useFactory: async (
+        project: SubqueryProject,
+        eventEmitter: EventEmitter2,
+      ) => {
+        const apiService = new AvalancheApiService(project, eventEmitter);
         await apiService.init();
         return apiService;
       },
-      inject: [SubqueryProject],
+      inject: ['ISubqueryProject', EventEmitter2],
     },
     DictionaryService,
     SandboxService,

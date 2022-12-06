@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import assert from 'assert';
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { isCustomDs, isRuntimeDs } from '@subql/common-avalanche';
 import { getLogger, MetadataRepo } from '@subql/node-core';
 import { cloneDeep, isEqual, unionWith } from 'lodash';
@@ -28,7 +28,7 @@ export class DynamicDsService {
 
   constructor(
     private readonly dsProcessorService: DsProcessorService,
-    private readonly project: SubqueryProject,
+    @Inject('ISubqueryProject') private readonly project: SubqueryProject,
   ) {}
 
   init(metaDataRepo: MetadataRepo): void {
@@ -69,7 +69,7 @@ export class DynamicDsService {
 
       return ds;
     } catch (e) {
-      logger.error(e.message);
+      logger.error(e, 'Failed to create dynamic ds');
       process.exit(1);
     }
   }
@@ -83,7 +83,7 @@ export class DynamicDsService {
           params.map((params) => this.getDatasource(params)),
         );
       } catch (e) {
-        logger.error(`Unable to get dynamic datasources:\n${e.message}`);
+        logger.error(e, `Unable to get dynamic datasources`);
         process.exit(1);
       }
     }

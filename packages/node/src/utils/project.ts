@@ -12,7 +12,6 @@ import {
   loadChainTypes,
   loadChainTypesFromJs,
   parseChainTypes,
-  RuntimeDataSourceV0_2_0,
   SubqlRuntimeHandler,
   SubqlCustomHandler,
   SubqlHandler,

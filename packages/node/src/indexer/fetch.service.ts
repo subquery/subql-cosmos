@@ -107,13 +107,15 @@ export class FetchService implements OnApplicationShutdown {
   private isShutdown = false;
   private parentSpecVersion: number;
   private batchSizeScale: number;
+  private specVersionMap: SpecVersion[];
+  private currentRuntimeVersion: RuntimeVersion;
   private templateDynamicDatasouces: SubqlProjectDs[];
   private dictionaryGenesisMatches = true;
 
   constructor(
     private apiService: ApiService,
     private nodeConfig: NodeConfig,
-    private project: SubqueryProject,
+    @Inject('ISubqueryProject') private project: SubqueryProject,
     @Inject('IBlockDispatcher') private blockDispatcher: IBlockDispatcher,
     private dsProcessorService: DsProcessorService,
     private dictionaryService: DictionaryService,
@@ -274,6 +276,10 @@ export class FetchService implements OnApplicationShutdown {
     void this.startLoop(startHeight);
   }
 
+  getUseDictionary(): boolean {
+    return this.useDictionary;
+  }
+
   @Interval(CHECK_MEMORY_INTERVAL)
   checkBatchScale(): void {
     if (this.nodeConfig['scale-batch-size']) {
@@ -302,7 +308,7 @@ export class FetchService implements OnApplicationShutdown {
         }
       }
     } catch (e) {
-      logger.warn(e, `Having a problem when get finalized block`);
+      logger.warn(e, `Having a problem when getting finalized block`);
     }
   }
 
@@ -501,9 +507,11 @@ export class FetchService implements OnApplicationShutdown {
   }
 
   private dictionaryValidation(
-    { _metadata: metaData }: Dictionary,
-    startBlockHeight: number,
+    dictionary: { _metadata: MetaData },
+    startBlockHeight?: number,
   ): boolean {
+    if (!dictionary) return false;
+    const { _metadata: metaData } = dictionary;
     if (metaData.genesisHash !== this.api.getGenesisHash()) {
       logger.error(
         'The dictionary that you have specified does not match the chain you are indexing, it will be ignored. Please update your project manifest to reference the correct dictionary',

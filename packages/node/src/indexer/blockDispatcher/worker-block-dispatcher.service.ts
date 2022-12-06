@@ -30,8 +30,6 @@ import { BaseBlockDispatcher } from './base-block-dispatcher';
 
 const logger = getLogger('WorkerBlockDispatcherService');
 
-type GetRuntimeVersion = (block: SubstrateBlock) => Promise<RuntimeVersion>;
-
 type IIndexerWorker = {
   processBlock: ProcessBlock;
   fetchBlock: FetchBlock;
@@ -73,7 +71,6 @@ export class WorkerBlockDispatcherService
 {
   private workers: IndexerWorker[];
   private numWorkers: number;
-  private getRuntimeVersion: GetRuntimeVersion;
 
   private taskCounter = 0;
   private isShutdown = false;
