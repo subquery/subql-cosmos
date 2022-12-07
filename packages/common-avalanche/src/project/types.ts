@@ -28,4 +28,5 @@ export interface AvalancheProjectNetworkConfig extends ProjectNetworkConfig {
   chainId?: string;
   subnet?: string;
   dictionary?: string;
+  bypassBlocks?: (number | string)[];
 }

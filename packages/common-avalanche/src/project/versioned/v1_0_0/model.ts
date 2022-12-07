@@ -81,6 +81,9 @@ export class ProjectNetworkDeploymentV1_0_0 {
   chaintypes?: FileType;
   @IsString()
   subnet: string;
+  @IsOptional()
+  @IsArray()
+  bypassBlocks?: (number | string)[];
 }
 
 export class ProjectNetworkV1_0_0 extends ProjectNetworkDeploymentV1_0_0 {

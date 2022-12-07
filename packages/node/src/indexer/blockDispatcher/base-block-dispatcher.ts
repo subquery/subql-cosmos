@@ -18,7 +18,7 @@ export type ProcessBlockResponse = {
 export interface IBlockDispatcher {
   init(onDynamicDsCreated: (height: number) => Promise<void>): Promise<void>;
 
-  enqueueBlocks(heights: number[]): void;
+  enqueueBlocks(heights: number[], latestBufferHeight?: number): void;
 
   queueSize: number;
   freeSize: number;

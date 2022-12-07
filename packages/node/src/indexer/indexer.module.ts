@@ -35,7 +35,6 @@ import { WorkerService } from './worker/worker.service';
       },
       inject: ['ISubqueryProject', EventEmitter2],
     },
-    DictionaryService,
     SandboxService,
     DsProcessorService,
     DynamicDsService,

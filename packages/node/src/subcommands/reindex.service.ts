@@ -1,7 +1,7 @@
 // Copyright 2020-2022 OnFinality Limited authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import {
   getLogger,
   MetadataFactory,
@@ -13,7 +13,7 @@ import {
   getMetaDataInfo,
 } from '@subql/node-core';
 import { Sequelize } from 'sequelize';
-import { SubqlProjectDs, SubqueryProject } from '../configure/SubqueryProject';
+import { SubqueryProject } from '../configure/SubqueryProject';
 import { DynamicDsService } from '../indexer/dynamic-ds.service';
 import { initDbSchema } from '../utils/project';
 import { reindex } from '../utils/reindex';
@@ -27,14 +27,13 @@ export class ReindexService {
   private schema: string;
   private metadataRepo: MetadataRepo;
   private specName: string;
-  private startHeight: number;
 
   constructor(
     private readonly sequelize: Sequelize,
     private readonly nodeConfig: NodeConfig,
     private readonly storeService: StoreService,
     private readonly mmrService: MmrService,
-    private readonly project: SubqueryProject,
+    @Inject('ISubqueryProject') private project: SubqueryProject,
     private readonly forceCleanService: ForceCleanService,
     private readonly dynamicDsService: DynamicDsService,
   ) {}
