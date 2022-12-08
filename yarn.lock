@@ -3016,18 +3016,18 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@polkadot/util@npm:10.1.11":
-  version: 10.1.11
-  resolution: "@polkadot/util@npm:10.1.11"
+"@polkadot/util@npm:10.2.1":
+  version: 10.2.1
+  resolution: "@polkadot/util@npm:10.2.1"
   dependencies:
-    "@babel/runtime": ^7.19.4
-    "@polkadot/x-bigint": 10.1.11
-    "@polkadot/x-global": 10.1.11
-    "@polkadot/x-textdecoder": 10.1.11
-    "@polkadot/x-textencoder": 10.1.11
+    "@babel/runtime": ^7.20.6
+    "@polkadot/x-bigint": 10.2.1
+    "@polkadot/x-global": 10.2.1
+    "@polkadot/x-textdecoder": 10.2.1
+    "@polkadot/x-textencoder": 10.2.1
     "@types/bn.js": ^5.1.1
     bn.js: ^5.2.1
-  checksum: afae2bcc167fb7de6c490e70ce3653ada769cc0f1e3559d3ae87261918bcc804b9c3086c08e765ec4663af0e151e2447cb9d025bd6d4256378898f8ab5ccb301
+  checksum: e4ee46762e36410f8fd3cfd61b340030a72081387acae5cf4fdb14de4bb57fde81c2df02e78d8dc9f1df88ca3a606de1e85945d735ac0ac7996740fbb7970c0f
   languageName: node
   linkType: hard
 
@@ -3257,23 +3257,23 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@polkadot/x-textdecoder@npm:10.1.11":
-  version: 10.1.11
-  resolution: "@polkadot/x-textdecoder@npm:10.1.11"
+"@polkadot/x-textdecoder@npm:10.2.1":
+  version: 10.2.1
+  resolution: "@polkadot/x-textdecoder@npm:10.2.1"
   dependencies:
-    "@babel/runtime": ^7.19.4
-    "@polkadot/x-global": 10.1.11
-  checksum: d54cfc88fed3356ee35dacd656c508da0dcbedbc32b4ad049ceb70616a84b0669b27dbadbab98da0f90a99578768a18fba675f641621e7aa671788e13b1b9920
+    "@babel/runtime": ^7.20.6
+    "@polkadot/x-global": 10.2.1
+  checksum: e7edcb4f0321bf474ce47c71c89fa2b4685e3fa2b77c17bc346a9034d204a48a4855ff8c882fb1047531bd1e0893fd9367085ea223c555ea51fe509a44347826
   languageName: node
   linkType: hard
 
-"@polkadot/x-textencoder@npm:10.1.11":
-  version: 10.1.11
-  resolution: "@polkadot/x-textencoder@npm:10.1.11"
+"@polkadot/x-textencoder@npm:10.2.1":
+  version: 10.2.1
+  resolution: "@polkadot/x-textencoder@npm:10.2.1"
   dependencies:
-    "@babel/runtime": ^7.19.4
-    "@polkadot/x-global": 10.1.11
-  checksum: d3ba066e83b66b45388ed4aa96335f30bfd499df7adda9fe4f60b846ea7ed331954e33bf4b1c99636f7ebd97539a5b2f97fc8715dfec83a23b565e3eb3cdace0
+    "@babel/runtime": ^7.20.6
+    "@polkadot/x-global": 10.2.1
+  checksum: 758daf0f192e88ceeb331e82a97fc2a06db9cb88fcbefb906cf7bda1b5be988ec9c3ca0ffe599852e1b167cd3b95309c16d3fa09cb9279b0f2d8eb2b017edda7
   languageName: node
   linkType: hard
 
