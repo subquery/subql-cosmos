@@ -3,7 +3,7 @@
 
 import assert from 'assert';
 import { isMainThread } from 'worker_threads';
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import {
   MetadataFactory,
@@ -28,7 +28,6 @@ import { reindex } from '../utils/reindex';
 import { ApiService } from './api.service';
 import { DsProcessorService } from './ds-processor.service';
 import { DynamicDsService } from './dynamic-ds.service';
-import { BestBlocks } from './types';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const { version: packageVersion } = require('../../package.json');
@@ -50,7 +49,7 @@ export class ProjectService {
     private readonly poiService: PoiService,
     protected readonly mmrService: MmrService,
     private readonly sequelize: Sequelize,
-    private readonly project: SubqueryProject,
+    @Inject('ISubqueryProject') private readonly project: SubqueryProject,
     private readonly storeService: StoreService,
     private readonly nodeConfig: NodeConfig,
     private readonly dynamicDsService: DynamicDsService,
@@ -78,6 +77,10 @@ export class ProjectService {
   }
 
   // eslint-disable-next-line @typescript-eslint/require-await
+  get metadataName(): string {
+    return this.metadataRepo.tableName;
+  }
+
   private async getExistingProjectSchema(): Promise<string> {
     return getExistingProjectSchema(this.nodeConfig, this.sequelize);
   }
@@ -85,8 +88,7 @@ export class ProjectService {
   async init(): Promise<void> {
     // Used to load assets into DS-processor, has to be done in any thread
     await this.dsProcessorService.validateProjectCustomDatasources();
-    // Do extra work on main thread to setup stuff
-
+    // Do extra work on main thread to set up stuff
     this.project.dataSources = await generateTimestampReferenceForBlockFilters(
       this.project.dataSources,
       this.apiService.getApi(),
@@ -105,7 +107,12 @@ export class ProjectService {
 
       this._startHeight = await this.getStartHeight();
     } else {
-      this.metadataRepo = MetadataFactory(this.sequelize, this.schema);
+      this.metadataRepo = await MetadataFactory(
+        this.sequelize,
+        this.schema,
+        this.nodeConfig.multiChain,
+        this.project.network.chainId,
+      );
 
       this.dynamicDsService.init(this.metadataRepo);
 
@@ -154,7 +161,12 @@ export class ProjectService {
   }
 
   private async ensureMetadata(): Promise<MetadataRepo> {
-    const metadataRepo = MetadataFactory(this.sequelize, this.schema);
+    const metadataRepo = await MetadataFactory(
+      this.sequelize,
+      this.schema,
+      this.nodeConfig.multiChain,
+      this.project.network.chainId,
+    );
 
     this.eventEmitter.emit(
       IndexerEvent.NetworkMetadata,
@@ -185,43 +197,29 @@ export class ProjectService {
     const { chain } = this.apiService.networkMeta;
 
     if (this.project.runner) {
+      const { node, query } = this.project.runner;
       await Promise.all([
         metadataRepo.upsert({
           key: 'runnerNode',
-          value: this.project.runner.node.name,
+          value: node.name,
         }),
         metadataRepo.upsert({
           key: 'runnerNodeVersion',
-          value: this.project.runner.node.version,
+          value: node.version,
         }),
         metadataRepo.upsert({
           key: 'runnerQuery',
-          value: this.project.runner.query.name,
+          value: query.name,
         }),
         metadataRepo.upsert({
           key: 'runnerQueryVersion',
-          value: this.project.runner.query.version,
+          value: query.version,
         }),
       ]);
     }
 
     if (keyValue.chain !== chain) {
       await metadataRepo.upsert({ key: 'chain', value: chain });
-    }
-
-    // If project was created before this feature, don't add the key. If it is project created after, add this key.
-    if (!keyValue.processedBlockCount && !keyValue.lastProcessedHeight) {
-      await metadataRepo.upsert({ key: 'processedBlockCount', value: 0 });
-    }
-
-    // If project was created before this feature, don't add the key. If it is project created after, add this key.
-    if (!keyValue.processedBlockCount && !keyValue.lastProcessedHeight) {
-      await metadataRepo.upsert({ key: 'processedBlockCount', value: 0 });
-    }
-
-    // If project was created before this feature, don't add the key. If it is project created after, add this key.
-    if (!keyValue.processedBlockCount && !keyValue.lastProcessedHeight) {
-      await metadataRepo.upsert({ key: 'processedBlockCount', value: 0 });
     }
 
     // If project was created before this feature, don't add the key. If it is project created after, add this key.
@@ -265,7 +263,6 @@ export class ProjectService {
     } else {
       startHeight = this.getStartBlockFromDataSources();
     }
-
     return startHeight;
   }
 
@@ -318,6 +315,7 @@ export class ProjectService {
       targetBlockHeight,
       lastProcessedHeight,
       this.storeService,
+      this.dynamicDsService,
       this.mmrService,
       this.sequelize,
       /* Not providing force clean service, it should never be needed */
