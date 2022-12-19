@@ -13,6 +13,7 @@ All logs must start with the format: [x.y.z] - yyyy-mm-dd
 - Sync with latest changes on Substrate SDK (#86)
 ### Fixed
 - Exit when `workers` fail to prevent missing blocks (#87)
+- `reindex` subcommand, missing dependency (#89)
 ### Added
 -  Dictionary support for custom datasources (#85)
 
