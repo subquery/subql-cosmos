@@ -52,6 +52,7 @@ const DICTIONARY_MAX_QUERY_SIZE = 10000;
 const CHECK_MEMORY_INTERVAL = 60000;
 const MINIMUM_BATCH_SIZE = 5;
 const INTERVAL_PERCENT = 0.9;
+const DICTIONARY_VALIDATION_EXCEPTIONS = ['juno-1'];
 
 export function eventFilterToQueryEntry(
   filter: SubqlCosmosEventFilter,
@@ -556,7 +557,10 @@ export class FetchService implements OnApplicationShutdown {
       const chain = await this.api.getChainId().catch();
 
       // Exception for juno as juno does not have a genesisHash
-      if (metaData.chain !== chain && chain !== 'juno-1') {
+      if (
+        metaData.chain !== chain &&
+        !DICTIONARY_VALIDATION_EXCEPTIONS.find((ele) => ele === chain)
+      ) {
         logger.error(
           'The dictionary that you have specified does not match the chain you are indexing, it will be ignored. Please update your project manifest to reference the correct dictionary',
         );
