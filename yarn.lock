@@ -3222,7 +3222,7 @@ __metadata:
     "@nestjs/schedule": ^1.0.2
     "@nestjs/schematics": ^8.0.4
     "@nestjs/testing": ^8.1.2
-    "@polkadot/api": 9.5.2
+    "@polkadot/api": 9.11.1
     "@subql/common": latest
     "@subql/common-cosmos": "workspace:*"
     "@subql/node-core": 1.8.0
