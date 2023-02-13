@@ -13,11 +13,7 @@ $ npm i -g @subql/node-terra
 ## Running the app
 
 ```
-<<<<<<< HEAD
 $> subql-node-cosmos
-=======
-$> subql-node
->>>>>>> origin/main
 
 Commands:
   run force-clean  Force cleans the database, dropping project schemas and
@@ -34,11 +30,7 @@ Options:
        [string] [required] [default: process.cwd()]
       --subquery-name       Name of the subquery project   [deprecated] [string]
   -c, --config              Specify configuration file                  [string]
-<<<<<<< HEAD
       --local               Use local mode                [deprecated] [boolean]
-=======
-      --local               Use local mode                [deprecated] [boolean]                              [boolean]
->>>>>>> origin/main
       --db-schema           Db schema name of the project               [string]
       --unsafe              Allows usage of any built-in module within the
                             sandbox                                    [boolean]
@@ -65,10 +57,7 @@ Options:
                                                       [boolean] [default: false]
   -d, --network-dictionary  Specify the dictionary api for this network [string]
       --dictionary-timeout  Max timeout for dictionary query            [number]
-<<<<<<< HEAD
-=======
       --sponsored-dictionary  Use subquery network sponsored dictionary [string]
->>>>>>> origin/main
   -m, --mmr-path            Local path of the merkle mountain range (.mmr) file
                                                                         [string]
       --proof-of-index      Enable/disable proof of index
@@ -79,11 +68,8 @@ Options:
                                                        [boolean] [default: true]
   -w, --workers             Number of worker threads to use for fetching and
                             processing blocks. Disabled by default.     [number]
-<<<<<<< HEAD
-=======
       --multi-chain         Enables indexing multiple subquery projects into the
                             same database schema      [boolean] [default: false]
->>>>>>> origin/main
 ```
 
 ## License
