@@ -211,6 +211,25 @@ export class CosmosClient extends CosmWasmClient {
       throw e;
     }
   }
+
+  static handleError(e: Error): Error {
+    const formatted_error: Error = e;
+    try {
+      const message = JSON.parse(e.message);
+      if (
+        message.data &&
+        message.data.includes(`is not available, lowest height is`)
+      ) {
+        logger.info('here');
+        formatted_error.message = `${message.data}\nuse an archive/full node instead of a pruned node`;
+      }
+    } catch (err) {
+      if (e.message === 'Request failed with status code 429') {
+        formatted_error.name = 'RateLimitError';
+      }
+    }
+    return formatted_error;
+  }
 }
 
 // TODO make this class not exported and expose interface instead
