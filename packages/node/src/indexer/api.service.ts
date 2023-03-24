@@ -111,7 +111,7 @@ export class ApiService {
 
       return this;
     } catch (e) {
-      logger.error(e, 'Failed to init api service');
+      logger.error(CosmosClient.handleError(e), 'Failed to init api service');
       process.exit(1);
     }
   }
@@ -226,6 +226,8 @@ export class CosmosClient extends CosmWasmClient {
     } catch (err) {
       if (e.message === 'Request failed with status code 429') {
         formatted_error.name = 'RateLimitError';
+      } else if (e.message === 'Request failed with status code 403') {
+        formatted_error.name = 'Forbidden';
       }
     }
     return formatted_error;
