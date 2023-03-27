@@ -220,7 +220,7 @@ export class CosmosClient extends CosmWasmClient {
         message.data &&
         message.data.includes(`is not available, lowest height is`)
       ) {
-        formatted_error.message = `${message.data}\nuse an archive/full node instead of a pruned node`;
+        formatted_error.message = `${message.data}\nINFO: This most likely means the provided endpoint is a pruned node. An archive/full node is needed to access historical data`;
       }
     } catch (err) {
       if (e.message === 'Request failed with status code 429') {
