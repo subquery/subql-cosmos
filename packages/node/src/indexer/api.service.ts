@@ -220,7 +220,6 @@ export class CosmosClient extends CosmWasmClient {
         message.data &&
         message.data.includes(`is not available, lowest height is`)
       ) {
-        logger.info('here');
         formatted_error.message = `${message.data}\nuse an archive/full node instead of a pruned node`;
       }
     } catch (err) {
