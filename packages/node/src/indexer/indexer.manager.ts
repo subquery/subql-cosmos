@@ -184,7 +184,7 @@ export class IndexerManager {
       if (isCustomCosmosDs(ds)) {
         return this.dsProcessorService
           .getDsProcessor(ds)
-          .dsFilterProcessor(ds, this.apiService.getApi());
+          .dsFilterProcessor(ds, this.apiService.api);
       } else {
         return true;
       }
@@ -349,7 +349,7 @@ export class IndexerManager {
           return processor.filterProcessor({
             filter: handler.filter,
             input: data,
-            registry: this.apiService.getApi().registry,
+            registry: this.apiService.api.registry,
             ds,
           });
         } catch (e) {
@@ -376,7 +376,7 @@ export class IndexerManager {
       .transformer({
         input: data,
         ds,
-        api: this.apiService.getApi(),
+        api: this.apiService.api,
         filter: handler.filter,
         assets,
       })

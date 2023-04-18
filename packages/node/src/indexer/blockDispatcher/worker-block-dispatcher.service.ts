@@ -138,7 +138,7 @@ export class WorkerBlockDispatcherService
       return;
     }
     logger.info(
-      `Enqueing blocks [${heights[0]}...${last(heights)}], total ${
+      `Enqueueing blocks ${heights[0]}...${last(heights)}, total ${
         heights.length
       } blocks`,
     );
@@ -152,9 +152,11 @@ export class WorkerBlockDispatcherService
           heights.length - startIndex,
           await this.maxBatchSize(workerIdx),
         );
-        heights
-          .slice(startIndex, startIndex + batchSize)
-          .forEach((height) => this.enqueueBlock(height, workerIdx));
+        await Promise.all(
+          heights
+            .slice(startIndex, startIndex + batchSize)
+            .map((height) => this.enqueueBlock(height, workerIdx)),
+        );
         startIndex += batchSize;
       }
     } else {
@@ -167,7 +169,7 @@ export class WorkerBlockDispatcherService
     this.latestBufferedHeight = latestBufferHeight ?? last(heights);
   }
 
-  private enqueueBlock(height: number, workerIdx: number) {
+  private async enqueueBlock(height: number, workerIdx: number) {
     if (this.isShutdown) return;
     const worker = this.workers[workerIdx];
 
@@ -177,14 +179,12 @@ export class WorkerBlockDispatcherService
     const bufferedHeight = this.latestBufferedHeight;
     const pendingBlock = worker.fetchBlock(height);
 
+    await worker.waitForWorkerBatchSize(this.minimumHeapLimit);
+
     const processBlock = async () => {
       try {
-        await worker.waitForWorkerBatchSize(this.minimumHeapLimit);
-
         const start = new Date();
-        await memoryLock.acquire();
-        await worker.fetchBlock(height);
-        memoryLock.release();
+        await pendingBlock;
         const end = new Date();
 
         if (bufferedHeight > this.latestBufferedHeight) {

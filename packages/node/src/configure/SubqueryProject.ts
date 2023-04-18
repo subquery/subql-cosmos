@@ -106,7 +106,7 @@ export class SubqueryProject {
 
 export interface SubqueryProjectNetwork {
   chainId: string;
-  endpoint?: string;
+  endpoint?: string[];
   dictionary?: string;
   chainTypes?: Map<string, CosmosChainType>;
 }
@@ -120,6 +120,10 @@ async function loadProjectFromManifestBase(
   networkOverrides?: Partial<CosmosProjectNetworkConfig>,
 ): Promise<SubqueryProject> {
   const root = await getProjectRoot(reader);
+
+  if (typeof projectManifest.network.endpoint === 'string') {
+    projectManifest.network.endpoint = [projectManifest.network.endpoint];
+  }
 
   const network = await processNetworkConfig(
     {

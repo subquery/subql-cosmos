@@ -37,7 +37,7 @@ export class SandboxService {
     processor.freeze(api, 'api');
     processor.freeze(this.apiService.registry, 'registry');
     if (this.nodeConfig.unsafe) {
-      processor.freeze(this.apiService.getApi(), 'unsafeApi');
+      processor.freeze(this.apiService.api, 'unsafeApi');
     }
     return processor;
   }

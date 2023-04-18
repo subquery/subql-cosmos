@@ -149,7 +149,7 @@ export class FetchService implements OnApplicationShutdown {
   }
 
   get api(): CosmosClient {
-    return this.apiService.getApi();
+    return this.apiService.api;
   }
 
   async syncDynamicDatascourcesFromMeta(): Promise<void> {

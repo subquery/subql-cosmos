@@ -3,8 +3,7 @@
 
 import { threadId } from 'node:worker_threads';
 import { Injectable } from '@nestjs/common';
-import { NodeConfig, getLogger, AutoQueue } from '@subql/node-core';
-import { fetchBlocksBatches } from '../../utils/cosmos';
+import { NodeConfig, getLogger, AutoQueue, memoryLock } from '@subql/node-core';
 import { ApiService } from '../api.service';
 import { IndexerManager } from '../indexer.manager';
 import { BlockContent } from '../types';
@@ -46,9 +45,14 @@ export class WorkerService {
       return await this.queue.put(async () => {
         // If a dynamic ds is created we might be asked to fetch blocks again, use existing result
         if (!this.fetchedBlocks[height]) {
-          const [block] = await fetchBlocksBatches(this.apiService.getApi(), [
-            height,
-          ]);
+          if (memoryLock.isLocked()) {
+            const start = Date.now();
+            await memoryLock.waitForUnlock();
+            const end = Date.now();
+            logger.debug(`memory lock wait time: ${end - start}ms`);
+          }
+
+          const [block] = await this.apiService.fetchBlocks([height]);
           this.fetchedBlocks[height] = block;
         }
 

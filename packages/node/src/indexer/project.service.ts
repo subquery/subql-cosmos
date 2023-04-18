@@ -91,7 +91,7 @@ export class ProjectService {
     // Do extra work on main thread to set up stuff
     this.project.dataSources = await generateTimestampReferenceForBlockFilters(
       this.project.dataSources,
-      this.apiService.getApi(),
+      this.apiService.api,
     );
     if (isMainThread) {
       this._schema = await this.ensureProject();
@@ -199,7 +199,7 @@ export class ProjectService {
     const keyValue = entries.reduce((arr, curr) => {
       arr[curr.key] = curr.value;
       return arr;
-    }, {} as { [key in typeof keys[number]]: string | boolean | number });
+    }, {} as { [key in (typeof keys)[number]]: string | boolean | number });
 
     const { chain } = this.apiService.networkMeta;
 
@@ -287,7 +287,7 @@ export class ProjectService {
 
   async setBlockOffset(offset: number): Promise<void> {
     if (
-      this._blockOffset ||
+      this._blockOffset !== undefined ||
       offset === null ||
       offset === undefined ||
       isNaN(offset)

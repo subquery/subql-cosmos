@@ -9,7 +9,6 @@ import {
   NodeConfig,
   IndexerEvent,
   delay,
-  profilerWrap,
   AutoQueue,
   Queue,
   waitForBatchSize,
@@ -17,7 +16,6 @@ import {
   SmartBatchService,
 } from '@subql/node-core';
 import { last } from 'lodash';
-import * as CosmosUtil from '../../utils/cosmos';
 import { ApiService } from '../api.service';
 import { IndexerManager } from '../indexer.manager';
 import { ProjectService } from '../project.service';
@@ -37,7 +35,6 @@ export class BlockDispatcherService
 
   private fetching = false;
   private isShutdown = false;
-  private readonly fetchBlocksBatches = CosmosUtil.fetchBlocksBatches;
 
   constructor(
     private apiService: ApiService,
@@ -55,13 +52,6 @@ export class BlockDispatcherService
       smartBatchService,
     );
     this.processQueue = new AutoQueue(nodeConfig.batchSize * 3);
-    if (this.nodeConfig.profiler) {
-      this.fetchBlocksBatches = profilerWrap(
-        CosmosUtil.fetchBlocksBatches,
-        'CosmosUtil',
-        'fetchBlocksBatches',
-      );
-    }
   }
   // eslint-disable-next-line @typescript-eslint/require-await
   async init(
@@ -153,10 +143,7 @@ export class BlockDispatcherService
         );
 
         await memoryLock.acquire();
-        const blocks = await this.fetchBlocksBatches(
-          this.apiService.getApi(),
-          blockNums,
-        );
+        const blocks = await this.apiService.fetchBlocks(blockNums);
         memoryLock.release();
 
         this.smartBatchService.addToSizeBuffer(blocks);

@@ -9,9 +9,9 @@ import {
   StoreService,
   PoiService,
   NodeConfig,
+  ConnectionPoolService,
   SmartBatchService,
 } from '@subql/node-core';
-
 import { SubqueryProject } from '../configure/SubqueryProject';
 import { ApiService } from './api.service';
 import {
@@ -31,6 +31,7 @@ import { SandboxService } from './sandbox.service';
     StoreService,
     ApiService,
     IndexerManager,
+    ConnectionPoolService,
     {
       provide: SmartBatchService,
       useFactory: (nodeConfig: NodeConfig) => {

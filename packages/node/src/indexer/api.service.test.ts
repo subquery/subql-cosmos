@@ -63,7 +63,7 @@ describe.skip('ApiService', () => {
   });
 
   it('query block info', async () => {
-    const api = apiService.getApi();
+    const api = apiService.api;
     const blockInfo = await api.blockInfo(TEST_BLOCKNUMBER);
     const doc: any = loadFromJsonOrYaml(
       path.join(projectsDir, 'block_3266772.json'),
@@ -85,7 +85,7 @@ describe.skip('ApiService', () => {
   });
 
   it('query tx info by height', async () => {
-    const api = apiService.getApi();
+    const api = apiService.api;
     const txInfos = await api.txInfoByHeight(TEST_BLOCKNUMBER);
     expect(txInfos.length).toEqual(4);
   });

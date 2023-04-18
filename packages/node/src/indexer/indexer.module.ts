@@ -2,9 +2,15 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { Module } from '@nestjs/common';
-import { StoreService, PoiService, MmrService } from '@subql/node-core';
+import {
+  StoreService,
+  PoiService,
+  MmrService,
+  ConnectionPoolService,
+} from '@subql/node-core';
 import { SubqueryProject } from '../configure/SubqueryProject';
 import { ApiService } from './api.service';
+import { CosmosClientConnection } from './cosmosClient.connection';
 import { DsProcessorService } from './ds-processor.service';
 import { DynamicDsService } from './dynamic-ds.service';
 import { IndexerManager } from './indexer.manager';
@@ -16,14 +22,18 @@ import { WorkerService } from './worker/worker.service';
   providers: [
     IndexerManager,
     StoreService,
+    ConnectionPoolService,
     {
       provide: ApiService,
-      useFactory: async (project: SubqueryProject) => {
-        const apiService = new ApiService(project);
+      useFactory: async (
+        project: SubqueryProject,
+        connectionPoolService: ConnectionPoolService<CosmosClientConnection>,
+      ) => {
+        const apiService = new ApiService(project, connectionPoolService);
         await apiService.init();
         return apiService;
       },
-      inject: ['ISubqueryProject'],
+      inject: ['ISubqueryProject', ConnectionPoolService],
     },
     SandboxService,
     DsProcessorService,
