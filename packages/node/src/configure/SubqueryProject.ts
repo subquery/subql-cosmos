@@ -3,7 +3,6 @@
 
 import { Block } from '@cosmjs/stargate';
 import { Injectable } from '@nestjs/common';
-import { RegisteredTypes } from '@polkadot/types/types';
 import {
   ReaderFactory,
   ReaderOptions,
@@ -73,7 +72,6 @@ export class SubqueryProject {
   dataSources: SubqlProjectDs[];
   schema: GraphQLSchema;
   templates: SubqlProjectDsTemplate[];
-  chainTypes?: RegisteredTypes;
   runner?: RunnerSpecs;
 
   static async create(

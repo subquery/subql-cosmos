@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { Inject, Injectable } from '@nestjs/common';
-import { hexToU8a, u8aEq } from '@polkadot/util';
 import {
   isBlockHandlerProcessor,
   isTransactionHandlerProcessor,
@@ -25,7 +24,6 @@ import {
   ProcessBlockResponse,
 } from '@subql/node-core';
 import { CosmosEvent, CosmosMessage } from '@subql/types-cosmos';
-import { Sequelize } from 'sequelize';
 import { SubqlProjectDs, SubqueryProject } from '../configure/SubqueryProject';
 import * as CosmosUtil from '../utils/cosmos';
 import { yargsOptions } from '../yargs';
