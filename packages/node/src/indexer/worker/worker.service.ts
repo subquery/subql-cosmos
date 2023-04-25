@@ -42,6 +42,7 @@ export class WorkerService {
   constructor(
     private apiService: ApiService,
     private indexerManager: IndexerManager,
+    @Inject('IProjectService')
     private projectService: IProjectService<SubqlProjectDs>,
     nodeConfig: NodeConfig,
   ) {
