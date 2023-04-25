@@ -16,12 +16,13 @@ import {
   BlockResponse,
   Validator,
 } from '@cosmjs/tendermint-rpc/build/tendermint34/responses';
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, OnApplicationShutdown } from '@nestjs/common';
 import {
   getLogger,
   NetworkMetadataPayload,
   retryOnFailAxios,
   ConnectionPoolService,
+  ApiService as BaseApiService,
 } from '@subql/node-core';
 import {
   CosmosProjectNetConfig,
@@ -38,15 +39,20 @@ const logger = getLogger('api');
 const RETRY_STATUS_CODES = [429, 502];
 
 @Injectable()
-export class ApiService {
+export class ApiService
+  extends BaseApiService<SubqueryProject, CosmosClient>
+  implements OnApplicationShutdown
+{
   private fetchBlocksBatches = CosmosUtil.fetchBlocksBatches;
   networkMeta: NetworkMetadataPayload;
   registry: Registry;
 
   constructor(
-    @Inject('ISubqueryProject') protected project: SubqueryProject,
+    @Inject('ISubqueryProject') public project: SubqueryProject,
     private connectionPoolService: ConnectionPoolService<CosmosClientConnection>,
-  ) {}
+  ) {
+    super(project);
+  }
 
   async onApplicationShutdown(): Promise<void> {
     await this.connectionPoolService.onApplicationShutdown();
@@ -155,19 +161,14 @@ export class ApiService {
     return res;
   }
 
-  async fetchBlocks(batch: number[]): Promise<BlockContent[]> {
-    let reconnectAttempts = 0;
-    while (reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
-      try {
-        const blocks = await this.fetchBlocksBatches(this.api, batch);
-        return blocks;
-      } catch (e) {
-        logger.error(e, 'Failed to fetch blocks');
-        reconnectAttempts++;
-      }
-    }
-    throw new Error(
-      `Maximum number of retries (${MAX_RECONNECT_ATTEMPTS}) reached.`,
+  async fetchBlocks(
+    batch: number[],
+    overallSpecVer?: number,
+  ): Promise<BlockContent[]> {
+    return this.fetchBlocksGeneric<BlockContent>(
+      () => (blockArray: number[]) =>
+        this.fetchBlocksBatches(this.api, blockArray),
+      batch,
     );
   }
 }

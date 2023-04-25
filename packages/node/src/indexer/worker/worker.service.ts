@@ -2,8 +2,15 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { threadId } from 'node:worker_threads';
-import { Injectable } from '@nestjs/common';
-import { NodeConfig, getLogger, AutoQueue, memoryLock } from '@subql/node-core';
+import { Inject, Injectable } from '@nestjs/common';
+import {
+  NodeConfig,
+  getLogger,
+  AutoQueue,
+  memoryLock,
+  IProjectService,
+} from '@subql/node-core';
+import { SubqlProjectDs } from '../../configure/SubqueryProject';
 import { ApiService } from '../api.service';
 import { IndexerManager } from '../indexer.manager';
 import { BlockContent } from '../types';
@@ -12,7 +19,7 @@ export type FetchBlockResponse = undefined;
 
 export type ProcessBlockResponse = {
   dynamicDsCreated: boolean;
-  operationHash: string; // Base64 encoded u8a array
+  blockHash: string;
   reindexBlockHeight: number;
 };
 
@@ -35,6 +42,7 @@ export class WorkerService {
   constructor(
     private apiService: ApiService,
     private indexerManager: IndexerManager,
+    private projectService: IProjectService<SubqlProjectDs>,
     nodeConfig: NodeConfig,
   ) {
     this.queue = new AutoQueue(undefined, nodeConfig.batchSize);
@@ -77,16 +85,15 @@ export class WorkerService {
 
       delete this.fetchedBlocks[height];
 
-      const response = await this.indexerManager.indexBlock(block);
-
-      this._isIndexing = false;
-      return {
-        ...response,
-        operationHash: Buffer.from(response.operationHash).toString('base64'),
-      };
+      return await this.indexerManager.indexBlock(
+        block,
+        await this.projectService.getAllDataSources(height),
+      );
     } catch (e) {
       logger.error(e, `Failed to index block ${height}: ${e.stack}`);
       throw e;
+    } finally {
+      this._isIndexing = false;
     }
   }
 

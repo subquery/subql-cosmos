@@ -6,10 +6,10 @@ import { toHex } from '@cosmjs/encoding';
 import { Uint53 } from '@cosmjs/math';
 import { toRfc3339WithNanoseconds } from '@cosmjs/tendermint-rpc';
 import { INestApplication } from '@nestjs/common';
-import { EventEmitterModule } from '@nestjs/event-emitter';
+import { EventEmitter2, EventEmitterModule } from '@nestjs/event-emitter';
 import { Test } from '@nestjs/testing';
 import { loadFromJsonOrYaml } from '@subql/common';
-import { NodeConfig } from '@subql/node-core';
+import { ConnectionPoolService, delay, NodeConfig } from '@subql/node-core';
 import { GraphQLSchema } from 'graphql';
 import { SubqueryProject } from '../configure/SubqueryProject';
 import { ApiService } from './api.service';
@@ -43,10 +43,16 @@ describe.skip('ApiService', () => {
   const prepareApiService = async () => {
     const module = await Test.createTestingModule({
       providers: [
+        ConnectionPoolService,
         {
           provide: 'ISubqueryProject',
           useFactory: () => testCosmosProject(),
         },
+        {
+          provide: NodeConfig,
+          useFactory: () => ({}),
+        },
+        EventEmitter2,
         ApiService,
         NodeConfig,
       ],
