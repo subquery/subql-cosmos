@@ -2861,18 +2861,18 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@polkadot/util@npm:11.1.1":
-  version: 11.1.1
-  resolution: "@polkadot/util@npm:11.1.1"
+"@polkadot/util@npm:11.1.3":
+  version: 11.1.3
+  resolution: "@polkadot/util@npm:11.1.3"
   dependencies:
-    "@polkadot/x-bigint": 11.1.1
-    "@polkadot/x-global": 11.1.1
-    "@polkadot/x-textdecoder": 11.1.1
-    "@polkadot/x-textencoder": 11.1.1
+    "@polkadot/x-bigint": 11.1.3
+    "@polkadot/x-global": 11.1.3
+    "@polkadot/x-textdecoder": 11.1.3
+    "@polkadot/x-textencoder": 11.1.3
     "@types/bn.js": ^5.1.1
     bn.js: ^5.2.1
     tslib: ^2.5.0
-  checksum: fd9e999c971425efc4278c98aa73d802022282b05e0d65e53361933c09956e19b3db6515ff82561853af6a65d61e9674a8a58d1286c764d96d9e623766ec5f4d
+  checksum: 69c5083c65ea4c4f186e08a3ddbae50111309bdec7908487516eceb93e218d470156d26d2dfbb17713423ff32c4995f994cc10317c22d6fa7202d5d722549908
   languageName: node
   linkType: hard
 
@@ -2954,16 +2954,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@polkadot/x-bigint@npm:11.1.1":
-  version: 11.1.1
-  resolution: "@polkadot/x-bigint@npm:11.1.1"
-  dependencies:
-    "@polkadot/x-global": 11.1.1
-    tslib: ^2.5.0
-  checksum: 23132e64e627c3cdb8c08bcc5ee49887256f651138c4f7eb967c4eb7d73e1a77ab7b9eaa352247a281e96919fbb61cccaca6f0487d9127ad8fc8dc131f1e2a13
-  languageName: node
-  linkType: hard
-
 "@polkadot/x-bigint@npm:11.1.3, @polkadot/x-bigint@npm:^11.1.1":
   version: 11.1.3
   resolution: "@polkadot/x-bigint@npm:11.1.3"
@@ -2982,15 +2972,6 @@ __metadata:
     node-fetch: ^3.3.1
     tslib: ^2.5.0
   checksum: b0a5d28c6197b063fbb956d0a4aa7eabe89fc3be2ceeeaff8b85a657d957245180847127de2c332d1db3be7a3f0d59b0f0efdc71cb7bf50e526561e7b261f7c9
-  languageName: node
-  linkType: hard
-
-"@polkadot/x-global@npm:11.1.1":
-  version: 11.1.1
-  resolution: "@polkadot/x-global@npm:11.1.1"
-  dependencies:
-    tslib: ^2.5.0
-  checksum: e682618a060dc70c4194d24d12fa162635ff2a38bc472a8aa8e4a010acb51c00a18b827b6e4310cd53678cd5be0c28f25ab3ba7beda1d772fdb6b39c7345c539
   languageName: node
   linkType: hard
 
@@ -3013,23 +2994,23 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@polkadot/x-textdecoder@npm:11.1.1":
-  version: 11.1.1
-  resolution: "@polkadot/x-textdecoder@npm:11.1.1"
+"@polkadot/x-textdecoder@npm:11.1.3":
+  version: 11.1.3
+  resolution: "@polkadot/x-textdecoder@npm:11.1.3"
   dependencies:
-    "@polkadot/x-global": 11.1.1
+    "@polkadot/x-global": 11.1.3
     tslib: ^2.5.0
-  checksum: fc54e2053b9bd2d06c9318334543509176f2144fc0ea1104ee018a06f02220231d61399f9bfe7580387dfb0460ed7c1d22357dc38ea628fe7a6ffce037583c93
+  checksum: 6c049b2d8728771199072123392452441a7107a658261c42e2ee7389d76fed5467195e072069265153a12b039deaaf17fd72189688244e0c8c288b114b50e07f
   languageName: node
   linkType: hard
 
-"@polkadot/x-textencoder@npm:11.1.1":
-  version: 11.1.1
-  resolution: "@polkadot/x-textencoder@npm:11.1.1"
+"@polkadot/x-textencoder@npm:11.1.3":
+  version: 11.1.3
+  resolution: "@polkadot/x-textencoder@npm:11.1.3"
   dependencies:
-    "@polkadot/x-global": 11.1.1
+    "@polkadot/x-global": 11.1.3
     tslib: ^2.5.0
-  checksum: 791550f3e9fe875ffac9e14db33876f98ac90e0ebdf51aa4b0b397cc0fbd54d3d4050aec99becdaa5291537caa11f93b1f12a4183f33a33ad952409cbf9bf135
+  checksum: 5263e8e48876da03afcaf0ed0859a64e201914fda4ae0f10c282b43283e0614c58381e5f20f86d09755a96b3960482ee39ce7a452ce32f2a2dcd2d04a6937402
   languageName: node
   linkType: hard
 
@@ -3190,9 +3171,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@subql/node-core@npm:1.11.3":
-  version: 1.11.3
-  resolution: "@subql/node-core@npm:1.11.3"
+"@subql/node-core@npm:1.11.4-0":
+  version: 1.11.4-0
+  resolution: "@subql/node-core@npm:1.11.4-0"
   dependencies:
     "@nestjs/common": ^8.2.6
     "@nestjs/event-emitter": ^1.3.0
@@ -3200,19 +3181,20 @@ __metadata:
     "@polkadot/api": 10.1.4
     "@subql/apollo-links": ^0.3.3-1
     "@subql/common": 1.8.1
-    "@subql/types": 1.7.2
+    "@subql/types": 1.7.3-0
     "@subql/utils": 1.5.0
     "@subql/x-merkle-mountain-range": ^2.0.0-0.1.2
     "@willsoto/nestjs-prometheus": ^4.4.0
     async-lock: ^1.4.0
     async-mutex: ^0.4.0
     lodash: ^4.17.21
+    lru-cache: 8.0.4
     prom-client: ^14.0.1
     sequelize: 6.28.0
     source-map: ^0.7.4
     vm2: ^3.9.9
     yargs: ^16.2.0
-  checksum: 26ffd5b25991a6718941de81c58c3091492d7646aced9157397eb44a81db135e374d1250ebc8ddc263420cd1f5cd5f8aa0e6136d00a9030dfb852f1b3d3938c3
+  checksum: 4eb3d4074bbd34e77e7f6ee4b91f2ebac6cd659a6f86be243cb081bbf9c575d0ad0de98dd52714412f1be91c8e588a95991bc432a3eec0ffac146ae8b5f08417
   languageName: node
   linkType: hard
 
@@ -3234,7 +3216,7 @@ __metadata:
     "@polkadot/api": 9.11.1
     "@subql/common": latest
     "@subql/common-cosmos": "workspace:*"
-    "@subql/node-core": 1.11.3
+    "@subql/node-core": 1.11.4-0
     "@subql/types-cosmos": "workspace:*"
     "@subql/utils": ^1.5.0
     "@subql/x-merkle-mountain-range": 2.0.0-0.1.2
@@ -3286,12 +3268,12 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@subql/types@npm:1.7.2":
-  version: 1.7.2
-  resolution: "@subql/types@npm:1.7.2"
+"@subql/types@npm:1.7.3-0":
+  version: 1.7.3-0
+  resolution: "@subql/types@npm:1.7.3-0"
   peerDependencies:
     "@polkadot/api": ^10
-  checksum: f4cc41b58ce6564c0a29d745d09afcbeea9b6cda4b489ca70a3eb47add0d405e751e45e7f12713b7eb1b07980fb3d752b040c2f5066f908f3944e4185d697810
+  checksum: b1feb0ebda2bbdb63f47fbc3ca6e246bb6cc3d36be5c2f5269a5f4ede9e2b5aa329214932bc45847543bf98aa0b4707cc2039e70994b4dd33943a064242a90ce
   languageName: node
   linkType: hard
 
@@ -8820,6 +8802,13 @@ __metadata:
   bin:
     loose-envify: cli.js
   checksum: 6517e24e0cad87ec9888f500c5b5947032cdfe6ef65e1c1936a0c48a524b81e65542c9c3edc91c97d5bddc806ee2a985dbc79be89215d613b1de5db6d1cfe6f4
+  languageName: node
+  linkType: hard
+
+"lru-cache@npm:8.0.4":
+  version: 8.0.4
+  resolution: "lru-cache@npm:8.0.4"
+  checksum: dee2b905a8cd688c5847faa46ba3cfeaa0766283b244bfd6177420e04e9d923fc901a9a578fc3963d70959631595240ead37abaf43e21968bb9805bbd9519856
   languageName: node
   linkType: hard
 
