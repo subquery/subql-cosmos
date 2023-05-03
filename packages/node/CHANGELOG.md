@@ -18,6 +18,7 @@ All logs must start with the format: [x.y.z] - yyyy-mm-dd
 - Testing Framework, allow users to test their projects filters and handler functions without having to index the project
   - Create test files with the naming convention `*.test.ts` and place them in the `src/tests` or `src/test` folder. Each test file should contain test cases for specific mapping handlers.
   - Run the testing service using the command: `subql-node-cosmos test`.
+- Expose `validator()` from tendermint client to safe api in sandbox. This will allow projects to fetch validators of current block. (#106)
 
 ## [1.19.1] - 2023-04-14
 ### Updated
