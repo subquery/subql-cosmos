@@ -23,7 +23,11 @@ import {
   IIndexerManager,
   ProcessBlockResponse,
 } from '@subql/node-core';
-import { CosmosEvent, CosmosMessage } from '@subql/types-cosmos';
+import {
+  CosmosEvent,
+  CosmosMessage,
+  CosmosTransaction,
+} from '@subql/types-cosmos';
 import { SubqlProjectDs, SubqueryProject } from '../configure/SubqueryProject';
 import * as CosmosUtil from '../utils/cosmos';
 import { yargsOptions } from '../yargs';
@@ -163,11 +167,25 @@ export class IndexerManager
   ): Promise<void> {
     await this.indexBlockContent(blockContent, dataSources, getVM);
 
-    await this.indexTransaction(blockContent, dataSources, getVM);
+    for (const tx of blockContent.transactions) {
+      await this.indexTransaction(tx, dataSources, getVM);
+    }
 
-    await this.indexMessage(blockContent, dataSources, getVM);
+    for (const msg of blockContent.messages) {
+      await this.indexMessage(msg, dataSources, getVM);
+    }
 
-    await this.indexEvent(blockContent, dataSources, getVM);
+    for (const evt of blockContent.beginBlockEvents) {
+      await this.indexEvent(evt, dataSources, getVM);
+    }
+
+    for (const evt of blockContent.events) {
+      await this.indexEvent(evt, dataSources, getVM);
+    }
+
+    for (const evt of blockContent.endBlockEvents) {
+      await this.indexEvent(evt, dataSources, getVM);
+    }
   }
 
   private async indexBlockContent(
@@ -176,49 +194,52 @@ export class IndexerManager
     getVM: (d: SubqlProjectDs) => Promise<IndexerSandbox>,
   ): Promise<void> {
     for (const ds of dataSources) {
-      await this.indexData(SubqlCosmosHandlerKind.Block, block, ds, getVM);
-    }
-  }
-
-  private async indexTransaction(
-    block: BlockContent,
-    dataSources: SubqlProjectDs[],
-    getVM: (d: SubqlProjectDs) => Promise<IndexerSandbox>,
-  ): Promise<void> {
-    for (const ds of dataSources) {
       await this.indexData(
-        SubqlCosmosHandlerKind.Transaction,
-        block,
+        SubqlCosmosHandlerKind.Block,
+        block.block,
         ds,
         getVM,
       );
     }
   }
 
-  private async indexMessage(
-    block: BlockContent,
+  private async indexTransaction(
+    //block: BlockContent,
+    tx: CosmosTransaction,
     dataSources: SubqlProjectDs[],
     getVM: (d: SubqlProjectDs) => Promise<IndexerSandbox>,
   ): Promise<void> {
     for (const ds of dataSources) {
-      await this.indexData(SubqlCosmosHandlerKind.Message, block, ds, getVM);
+      await this.indexData(SubqlCosmosHandlerKind.Transaction, tx, ds, getVM);
+    }
+  }
+
+  private async indexMessage(
+    //block: BlockContent,
+    message: CosmosMessage,
+    dataSources: SubqlProjectDs[],
+    getVM: (d: SubqlProjectDs) => Promise<IndexerSandbox>,
+  ): Promise<void> {
+    for (const ds of dataSources) {
+      await this.indexData(SubqlCosmosHandlerKind.Message, message, ds, getVM);
     }
   }
 
   private async indexEvent(
-    block: BlockContent,
+    event: CosmosEvent,
     dataSources: SubqlProjectDs[],
     getVM: (d: SubqlProjectDs) => Promise<IndexerSandbox>,
   ): Promise<void> {
     for (const ds of dataSources) {
-      await this.indexData(SubqlCosmosHandlerKind.Event, block, ds, getVM);
+      //TODO: change this to resemble main sdk indexer function
+      await this.indexData(SubqlCosmosHandlerKind.Event, event, ds, getVM);
     }
   }
 
   private async indexData<K extends SubqlCosmosHandlerKind>(
     kind: K,
-    //data: CosmosRuntimeHandlerInputMap[K],
-    block: BlockContent,
+    data: CosmosRuntimeHandlerInputMap[K],
+    //block: BlockContent,
     ds: SubqlProjectDs,
     getVM: (ds: SubqlProjectDs) => Promise<IndexerSandbox>,
   ): Promise<void> {
@@ -228,53 +249,53 @@ export class IndexerManager
         (h) => h.kind === kind, //&& FilterTypeMap[kind](data as any, h.filter),
       );
 
-      const blockData = BlockContentTypeMap[kind](block);
+      //const blockData = BlockContentTypeMap[kind](block);
 
-      for (const data of blockData) {
-        const filteredHandlers = handlers.filter((h) =>
-          FilterTypeMap[kind](data as any, h.filter as any),
-        );
-        for (const handler of filteredHandlers) {
-          vm = vm ?? (await getVM(ds));
-          this.nodeConfig.profiler
-            ? await profilerWrap(
-                vm.securedExec.bind(vm),
-                'handlerPerformance',
-                handler.handler,
-              )(handler.handler, [data])
-            : await vm.securedExec(handler.handler, [data]);
-        }
+      //for (const data of blockData) {
+      const filteredHandlers = handlers.filter((h) =>
+        FilterTypeMap[kind](data as any, h.filter as any),
+      );
+      for (const handler of filteredHandlers) {
+        vm = vm ?? (await getVM(ds));
+        this.nodeConfig.profiler
+          ? await profilerWrap(
+              vm.securedExec.bind(vm),
+              'handlerPerformance',
+              handler.handler,
+            )(handler.handler, [data])
+          : await vm.securedExec(handler.handler, [data]);
       }
+      //}
     } else if (isCustomCosmosDs(ds)) {
-      const blockData = BlockContentTypeMap[kind](block);
+      //const blockData = BlockContentTypeMap[kind](block);
 
-      for (const data of blockData) {
-        const handlers = this.filterCustomDsHandlers<K>(
-          ds,
-          data as CosmosRuntimeHandlerInputMap[K],
-          ProcessorTypeMap[kind],
-          (data, baseFilter) => {
-            switch (kind) {
-              case SubqlCosmosHandlerKind.Message:
-                return !!CosmosUtil.filterMessages(
-                  [data as CosmosMessage],
-                  baseFilter,
-                ).length;
-              case SubqlCosmosHandlerKind.Event:
-                return !!CosmosUtil.filterEvents(
-                  [data as CosmosEvent],
-                  baseFilter,
-                ).length;
-              default:
-                throw new Error('Unsuported handler kind');
-            }
-          },
-        );
-        for (const handler of handlers) {
-          vm = vm ?? (await getVM(ds));
-          await this.transformAndExecuteCustomDs(ds, vm, handler, data);
-        }
+      //for (const data of blockData) {
+      const handlers = this.filterCustomDsHandlers<K>(
+        ds,
+        data as CosmosRuntimeHandlerInputMap[K],
+        ProcessorTypeMap[kind],
+        (data, baseFilter) => {
+          switch (kind) {
+            case SubqlCosmosHandlerKind.Message:
+              return !!CosmosUtil.filterMessages(
+                [data as CosmosMessage],
+                baseFilter,
+              ).length;
+            case SubqlCosmosHandlerKind.Event:
+              return !!CosmosUtil.filterEvents(
+                [data as CosmosEvent],
+                baseFilter,
+              ).length;
+            default:
+              throw new Error('Unsuported handler kind');
+          }
+        },
+      );
+      for (const handler of handlers) {
+        vm = vm ?? (await getVM(ds));
+        await this.transformAndExecuteCustomDs(ds, vm, handler, data);
       }
+      //}
     }
   }
 
@@ -371,12 +392,4 @@ const FilterTypeMap = {
   [SubqlCosmosHandlerKind.Transaction]: CosmosUtil.filterTx,
   [SubqlCosmosHandlerKind.Event]: CosmosUtil.filterEvent,
   [SubqlCosmosHandlerKind.Message]: CosmosUtil.filterMessageData,
-};
-
-const BlockContentTypeMap = {
-  [SubqlCosmosHandlerKind.Block]: (block: BlockContent) => [block.block],
-  [SubqlCosmosHandlerKind.Transaction]: (block: BlockContent) =>
-    block.transactions,
-  [SubqlCosmosHandlerKind.Message]: (block: BlockContent) => block.messages,
-  [SubqlCosmosHandlerKind.Event]: (block: BlockContent) => block.events,
 };
