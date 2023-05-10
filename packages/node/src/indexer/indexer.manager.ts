@@ -167,20 +167,24 @@ export class IndexerManager
   ): Promise<void> {
     await this.indexBlockContent(blockContent, dataSources, getVM);
 
-    for (const tx of blockContent.transactions) {
-      await this.indexTransaction(tx, dataSources, getVM);
-    }
-
-    for (const msg of blockContent.messages) {
-      await this.indexMessage(msg, dataSources, getVM);
-    }
-
     for (const evt of blockContent.beginBlockEvents) {
       await this.indexEvent(evt, dataSources, getVM);
     }
 
-    for (const evt of blockContent.events) {
-      await this.indexEvent(evt, dataSources, getVM);
+    for (const tx of blockContent.transactions) {
+      await this.indexTransaction(tx, dataSources, getVM);
+      const msgs = blockContent.messages.filter(
+        (msg) => msg.tx.hash === tx.hash,
+      );
+      for (const msg of msgs) {
+        await this.indexMessage(msg, dataSources, getVM);
+        const events = blockContent.events.filter(
+          (event) => event.msg?.idx === msg.idx,
+        );
+        for (const evt of events) {
+          await this.indexEvent(evt, dataSources, getVM);
+        }
+      }
     }
 
     for (const evt of blockContent.endBlockEvents) {
