@@ -209,7 +209,6 @@ export class IndexerManager
   }
 
   private async indexTransaction(
-    //block: BlockContent,
     tx: CosmosTransaction,
     dataSources: SubqlProjectDs[],
     getVM: (d: SubqlProjectDs) => Promise<IndexerSandbox>,
@@ -220,7 +219,6 @@ export class IndexerManager
   }
 
   private async indexMessage(
-    //block: BlockContent,
     message: CosmosMessage,
     dataSources: SubqlProjectDs[],
     getVM: (d: SubqlProjectDs) => Promise<IndexerSandbox>,
@@ -236,7 +234,6 @@ export class IndexerManager
     getVM: (d: SubqlProjectDs) => Promise<IndexerSandbox>,
   ): Promise<void> {
     for (const ds of dataSources) {
-      //TODO: change this to resemble main sdk indexer function
       await this.indexData(SubqlCosmosHandlerKind.Event, event, ds, getVM);
     }
   }
@@ -244,19 +241,13 @@ export class IndexerManager
   private async indexData<K extends SubqlCosmosHandlerKind>(
     kind: K,
     data: CosmosRuntimeHandlerInputMap[K],
-    //block: BlockContent,
     ds: SubqlProjectDs,
     getVM: (ds: SubqlProjectDs) => Promise<IndexerSandbox>,
   ): Promise<void> {
     let vm: IndexerSandbox;
     if (isRuntimeCosmosDs(ds)) {
-      const handlers = ds.mapping.handlers.filter(
-        (h) => h.kind === kind, //&& FilterTypeMap[kind](data as any, h.filter),
-      );
+      const handlers = ds.mapping.handlers.filter((h) => h.kind === kind);
 
-      //const blockData = BlockContentTypeMap[kind](block);
-
-      //for (const data of blockData) {
       const filteredHandlers = handlers.filter((h) =>
         FilterTypeMap[kind](data as any, h.filter as any),
       );
@@ -270,11 +261,7 @@ export class IndexerManager
             )(handler.handler, [data])
           : await vm.securedExec(handler.handler, [data]);
       }
-      //}
     } else if (isCustomCosmosDs(ds)) {
-      //const blockData = BlockContentTypeMap[kind](block);
-
-      //for (const data of blockData) {
       const handlers = this.filterCustomDsHandlers<K>(
         ds,
         data as CosmosRuntimeHandlerInputMap[K],
@@ -304,7 +291,6 @@ export class IndexerManager
         vm = vm ?? (await getVM(ds));
         await this.transformAndExecuteCustomDs(ds, vm, handler, data);
       }
-      //}
     }
   }
 
