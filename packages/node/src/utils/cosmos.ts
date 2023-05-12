@@ -251,11 +251,12 @@ function wrapMsg(
 export function wrapBlockBeginAndEndEvents(
   block: CosmosBlock,
   events: Event[],
+  idxOffset: number,
 ): CosmosEvent[] {
   return events.map(
-    (event, idx) =>
+    (event) =>
       <CosmosEvent>{
-        idx: idx,
+        idx: idxOffset++,
         event: fromTendermint34Event(event),
         block: block,
         msg: null,
@@ -269,6 +270,7 @@ export function wrapEvent(
   block: CosmosBlock,
   txs: CosmosTransaction[],
   api: CosmosClient,
+  idxOffset: number, //use this offset to avoid clash with idx of begin block events
 ): CosmosEvent[] {
   const events: CosmosEvent[] = [];
   for (const tx of txs) {
@@ -284,7 +286,7 @@ export function wrapEvent(
       const msg = wrapCosmosMsg(block, tx, log.msg_index, api);
       for (let i = 0; i < log.events.length; i++) {
         const event: CosmosEvent = {
-          idx: i,
+          idx: idxOffset++,
           msg,
           tx,
           block,
@@ -329,6 +331,7 @@ class LazyBlockContent implements BlockContent {
   private _wrappedEvent: CosmosEvent[];
   private _wrappedBeginBlockEvents: CosmosEvent[];
   private _wrappedEndBlockEvents: CosmosEvent[];
+  private _eventIdx = 0; //To maintain a valid count over begin block events, tx events and end block events
 
   constructor(
     private _blockInfo: BlockResponse,
@@ -361,16 +364,25 @@ class LazyBlockContent implements BlockContent {
 
   get events() {
     if (!this._wrappedEvent) {
-      this._wrappedEvent = wrapEvent(this.block, this.transactions, this._api);
+      this._wrappedEvent = wrapEvent(
+        this.block,
+        this.transactions,
+        this._api,
+        this._eventIdx,
+      );
+      this._eventIdx += this._wrappedEvent.length;
     }
     return this._wrappedEvent;
   }
 
   get beginBlockEvents() {
     if (!this._wrappedBeginBlockEvents) {
-      this._wrappedBeginBlockEvents = wrapBlockBeginAndEndEvents(this.block, [
-        ...this._results.beginBlockEvents,
-      ]);
+      this._wrappedBeginBlockEvents = wrapBlockBeginAndEndEvents(
+        this.block,
+        [...this._results.beginBlockEvents],
+        this._eventIdx,
+      );
+      this._eventIdx += this._wrappedBeginBlockEvents.length;
     }
 
     return this._wrappedBeginBlockEvents;
@@ -378,9 +390,12 @@ class LazyBlockContent implements BlockContent {
 
   get endBlockEvents() {
     if (!this._wrappedEndBlockEvents) {
-      this._wrappedEndBlockEvents = wrapBlockBeginAndEndEvents(this.block, [
-        ...this._results.endBlockEvents,
-      ]);
+      this._wrappedEndBlockEvents = wrapBlockBeginAndEndEvents(
+        this.block,
+        [...this._results.endBlockEvents],
+        this._eventIdx,
+      );
+      this._eventIdx += this._wrappedEndBlockEvents.length;
     }
 
     return this._wrappedEndBlockEvents;

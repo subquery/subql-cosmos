@@ -24,6 +24,7 @@ import {
   ProcessBlockResponse,
 } from '@subql/node-core';
 import {
+  CosmosBlock,
   CosmosEvent,
   CosmosMessage,
   CosmosTransaction,
@@ -280,6 +281,10 @@ export class IndexerManager
         ProcessorTypeMap[kind],
         (data, baseFilter) => {
           switch (kind) {
+            case SubqlCosmosHandlerKind.Block:
+              return CosmosUtil.filterBlock(data as CosmosBlock, baseFilter);
+            case SubqlCosmosHandlerKind.Transaction:
+              return CosmosUtil.filterTx(data as CosmosTransaction, baseFilter);
             case SubqlCosmosHandlerKind.Message:
               return !!CosmosUtil.filterMessages(
                 [data as CosmosMessage],
