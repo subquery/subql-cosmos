@@ -193,6 +193,8 @@ export class IndexerManager extends BaseIndexerManager<
     switch (kind) {
       case SubqlCosmosHandlerKind.Block:
         return !!CosmosUtil.filterBlock(data as CosmosBlock, baseFilter);
+      case SubqlCosmosHandlerKind.Transaction:
+        return !!CosmosUtil.filterTx(data as CosmosTransaction, baseFilter);
       case SubqlCosmosHandlerKind.Message:
         return !!CosmosUtil.filterMessages([data as CosmosMessage], baseFilter)
           .length;
