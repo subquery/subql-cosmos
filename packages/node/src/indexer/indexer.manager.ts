@@ -14,11 +14,11 @@ import {
 } from '@subql/common-cosmos';
 import {
   NodeConfig,
-  getLogger,
   profiler,
   IndexerSandbox,
   ProcessBlockResponse,
   BaseIndexerManager,
+  getLogger,
 } from '@subql/node-core';
 import {
   CosmosBlock,
@@ -85,7 +85,7 @@ export class IndexerManager extends BaseIndexerManager<
     logger.info('indexer manager started');
   }
 
-  @profiler(yargsOptions.argv.profiler)
+  @profiler()
   async indexBlock(
     block: BlockContent,
     dataSources: SubqlCosmosDatasource[],
