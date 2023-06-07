@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.5.2] - 2023-06-08
+### Fixed
+- Sync with node-core 2.4.4, fixed various issue for mmr
+
 ## [2.5.1] - 2023-06-02
 ### Fixed
 - Sync with node-core 2.4.3, fixed mmr missing node due to cache lock
@@ -152,7 +156,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.3.0] - 2022-07-28
 ### Changed
-- Sync with latest development from origin. See [@subql/node changelog](https://github.com/subquery/subql/blob/main/packages/node/CHANGELOG.md) from v1.2.1 to v1.6.0 (#44) (#45)
+- Sync with latest development from origin. See 
   - Support for worker threads
   - Added `dictionary-timeout` flag
 
@@ -209,8 +213,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Use modified tendermint-rpc to avoid Juno block 3103475
 
 ## [0.0.5] - 2022-06-15
-[Unreleased]: https://github.com/subquery/subql-cosmos/compare/node/2.5.1...HEAD
-[2.5.0]: https://github.com/subquery/subql-cosmos/compare/node/2.5.0...node/2.5.1
+### Added
+- Init release
+
+[Unreleased]: https://github.com/subquery/subql-cosmos/compare/node/v2.5.2...HEAD
+[2.5.2]: https://github.com/subquery/subql-cosmos/compare/node/v2.5.1...node/v2.5.2
+[2.5.1]: https://github.com/subquery/subql-cosmos/compare/node/2.5.0...node/2.5.1
 [2.5.0]: https://github.com/subquery/subql-cosmos/compare/node/2.3.0...node/2.5.0
 [2.3.0]: https://github.com/subquery/subql-cosmos/compare/node/2.1.0...node/2.3.0
 [2.1.0]: https://github.com/subquery/subql-cosmos/compare/node/2.0.1...node/2.1.0
