@@ -132,29 +132,26 @@ export class CosmosClientConnection
   }
 
   static handleRateLimitError(e: Error): ApiConnectionError {
-    const formatted_error = new ApiConnectionError(
+    return new ApiConnectionError(
       'RateLimit',
       e.message,
       ApiErrorType.RateLimit,
     );
-    return formatted_error;
   }
 
   static handleTimeoutError(e: Error): ApiConnectionError {
-    const formatted_error = new ApiConnectionError(
+    return new ApiConnectionError(
       'TimeoutError',
       e.message,
       ApiErrorType.Timeout,
     );
-    return formatted_error;
   }
 
   static handleDisconnectionError(e: Error): ApiConnectionError {
-    const formatted_error = new ApiConnectionError(
+    return new ApiConnectionError(
       'ConnectionError',
       e.message,
       ApiErrorType.Connection,
     );
-    return formatted_error;
   }
 }
