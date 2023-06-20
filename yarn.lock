@@ -3008,7 +3008,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@subql/common-cosmos@workspace:packages/common-cosmos"
   dependencies:
-    "@subql/common": ^2.2.1
+    "@subql/common": ^2.2.2
     "@subql/types-cosmos": "workspace:*"
     "@types/bn.js": 4.11.6
     "@types/js-yaml": ^4.0.4
@@ -3034,22 +3034,6 @@ __metadata:
     reflect-metadata: ^0.1.13
     semver: ^7.3.5
   checksum: ccfe2474d21f26ce8aacd19b4c093a738205b91434b0abc7dd9dae8f39958d5e0e99357b5a9ad63af6df6b78693d1c6b8def8f2becf8ce16c24d0430e3d507ed
-  languageName: node
-  linkType: hard
-
-"@subql/common@npm:^2.2.1":
-  version: 2.2.1
-  resolution: "@subql/common@npm:2.2.1"
-  dependencies:
-    axios: ^0.27.2
-    class-transformer: ^0.5.1
-    class-validator: ^0.14.0
-    fs-extra: ^10.1.0
-    ipfs-http-client: ^52.0.3
-    js-yaml: ^4.1.0
-    reflect-metadata: ^0.1.13
-    semver: ^7.3.5
-  checksum: e9ba29809034e8e3d5823c72fa4495482b400a5556971b3995229c595c3d3237cb26a1309ea1223ea9a2ea32bcb2b2fefee21671d393fb8d4fc1197825c0d8a2
   languageName: node
   linkType: hard
 
