@@ -3061,9 +3061,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@subql/apollo-links@npm:^0.5.1":
-  version: 0.5.2
-  resolution: "@subql/apollo-links@npm:0.5.2"
+"@subql/apollo-links@npm:^0.5.3":
+  version: 0.5.5
+  resolution: "@subql/apollo-links@npm:0.5.5"
   dependencies:
     "@metamask/eth-sig-util": 5.1.0
     apollo-link-error: ^1.1.13
@@ -3074,7 +3074,7 @@ __metadata:
   peerDependencies:
     "@apollo/client": "*"
     graphql: "*"
-  checksum: 657a8c7701a85aa5f9e162bc1a0981be559d40fab7e304414d9894b7a1928d5566a302d0ada426202be4e001ee785045a1cbcf10b4799ebed4fe21988427683e
+  checksum: 9075c7e52a08ce7e60e466f16364cf7cc66965544765079c0a6ad879c7edc818c5e92e0c3bdd4fd9191091335e02563d9676ff79546b712269ba08db77df8f8e
   languageName: node
   linkType: hard
 
@@ -3111,15 +3111,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@subql/node-core@npm:^3.1.2":
-  version: 3.1.2
-  resolution: "@subql/node-core@npm:3.1.2"
+"@subql/node-core@npm:^4.0.0":
+  version: 4.0.0
+  resolution: "@subql/node-core@npm:4.0.0"
   dependencies:
     "@apollo/client": ^3.7.16
     "@nestjs/common": ^9.4.0
     "@nestjs/event-emitter": ^2.0.0
     "@nestjs/schedule": ^3.0.1
-    "@subql/apollo-links": ^0.5.1
+    "@subql/apollo-links": ^0.5.3
     "@subql/common": 2.3.0
     "@subql/testing": 2.0.1
     "@subql/types": 2.1.2
@@ -3139,7 +3139,7 @@ __metadata:
     tar: ^6.1.11
     vm2: ^3.9.19
     yargs: ^16.2.0
-  checksum: fcc21354695f01aec9600b8c29f08a1c229e1c0e7a0a799b143c850eaf2fd54b9fa4320a5c9e1024078946bb19526eda1b4d188a79317b8ba36f6cdb751bc840
+  checksum: a72badfc8cc0a75dfe8bb0a3e8080d2469c76e5961f89ece5742610c7e5678c56b031014cfa934553fd9d820414368bc7f7b84cde94d2deb9df02d15525ddfe0
   languageName: node
   linkType: hard
 
@@ -3160,7 +3160,7 @@ __metadata:
     "@nestjs/testing": ^9.4.0
     "@subql/common": ^2.3.0
     "@subql/common-cosmos": "workspace:*"
-    "@subql/node-core": ^3.1.2
+    "@subql/node-core": ^4.0.0
     "@subql/types-cosmos": "workspace:*"
     "@types/express": ^4.17.13
     "@types/jest": ^27.4.0
