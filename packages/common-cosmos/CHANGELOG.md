@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [2.3.2] - 2023-08-24
+## [2.4.0] - 2023-08-24
 ### Added
 - Support protobuf to ts cosmos `codegen` (#160)
 
