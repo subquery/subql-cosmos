@@ -48,24 +48,24 @@ export function isProtoPath(filePath: string, projectPath: string): boolean {
 }
 
 export function prepareCosmwasmJobs(
-  sortedAssets: Map<string, string>,
+  sortedAssets: Record<string, string>,
   loadReadAbi: (filePath: string) => IDLObject,
   upperFirst: (input?: string) => string
 ): CosmwasmRenderJobType[] {
-  return Array.from(sortedAssets.keys()).map((key) => {
-    const value = sortedAssets.get(key);
+  return Object.keys(sortedAssets).map((key) => {
+    const value = sortedAssets[key];
     const readContract = loadReadAbi(value);
 
     const msgObjs: Record<string, string | null> = {
-      MsgInstantiateContract: readContract.instantiate?.title ?? null,
-      MsgMigrateContract: readContract.migrate?.title ?? null,
-      MsgExecuteContract: readContract.execute?.title ?? null,
+      MsgInstantiateContract: upperFirst(readContract.instantiate?.title ?? null),
+      MsgMigrateContract: upperFirst(readContract.migrate?.title ?? null),
+      MsgExecuteContract: upperFirst(readContract.execute?.title ?? null),
     };
 
     const messages = Object.entries(msgObjs)
-      .filter(([_, value]) => value !== null)
+      .filter(([, value]) => value !== null && value !== '')
       .map(([msgType, msgTitle]) => ({
-        [upperFirst(msgType)]: upperFirst(msgTitle),
+        [msgType]: msgTitle,
       }));
 
     return {
@@ -78,23 +78,20 @@ export function prepareCosmwasmJobs(
 export function prepareSortedAssets(
   datasources: SubqlCosmosRuntimeDatasource[],
   projectPath: string
-): Map<string, string> {
-  const sortedAssets = new Map<string, string>();
-  datasources.forEach((d) => {
-    if (!d?.assets) {
-      return;
-    }
-    if (isRuntimeCosmosDs(d)) {
+): Record<string, string> {
+  const sortedAssets: Record<string, string> = {};
+  datasources
+    .filter((d) => !!d?.assets && isRuntimeCosmosDs(d))
+    .forEach((d) => {
       Object.entries(d.assets).map(([name, value]) => {
         const filePath = path.join(projectPath, value.file);
         if (!fs.existsSync(filePath)) {
           throw new Error(`Error: Asset ${name}, file ${value.file} does not exist`);
         }
         // using name provided in assets
-        sortedAssets.set(name, filePath);
+        sortedAssets[name] = filePath;
       });
-    }
-  });
+    });
   return sortedAssets;
 }
 
@@ -108,7 +105,7 @@ export async function generateCosmwasm(
 ): Promise<void> {
   const sortedAssets = prepareSortedAssets(datasources, projectPath);
 
-  if (sortedAssets.size === 0) {
+  if (Object.keys(sortedAssets).length === 0) {
     return prepareDirPath(path.join(projectPath, COSMWASM_INTERFACES_ROOT_DIR), false);
   }
   await Promise.all([
@@ -120,7 +117,7 @@ export async function generateCosmwasm(
     await cosmwasmCodegen(
       COSMWASM_OPTS(
         path.join(projectPath, COSMWASM_INTERFACES_ROOT_DIR),
-        Array.from(sortedAssets.entries()).map(([name, dir]) => ({name, dir: path.dirname(dir)}))
+        Object.entries(sortedAssets).map(([name, dir]) => ({name, dir: path.dirname(dir)}))
       )
     );
     const renderJobs = prepareCosmwasmJobs(sortedAssets, loadCosmwasmAbis, upperFirst);

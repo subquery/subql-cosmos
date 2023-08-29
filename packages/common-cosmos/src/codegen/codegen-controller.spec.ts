@@ -150,12 +150,12 @@ describe('Codegen cosmos', () => {
         },
       } as any;
 
-      expect(prepareSortedAssets([notCosmosDs], PROJECT_PATH)).toStrictEqual(new Map());
+      expect(prepareSortedAssets([notCosmosDs], PROJECT_PATH)).toStrictEqual({});
     });
     it('Correct output on processCosmwasm render jobs', () => {
-      const mockSortedAssets = new Map<string, string>([
-        ['cw20', path.join(PROJECT_PATH, 'cosmwasm-contract/cw20/schema/cw20.json')],
-      ]);
+      const mockSortedAssets = {
+        cw20: path.join(PROJECT_PATH, 'cosmwasm-contract/cw20/schema/cw20.json'),
+      };
 
       expect(prepareCosmwasmJobs(mockSortedAssets, loadCosmwasmAbis, upperFirst)).toStrictEqual([
         {
