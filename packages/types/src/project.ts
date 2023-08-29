@@ -140,10 +140,16 @@ interface ISubqlCosmosDatasource<M extends SubqlCosmosMapping> {
   mapping: M;
 }
 
+export interface SubqlCosmosProcessorOptions {
+  abi?: string;
+}
+
 export interface SubqlCosmosRuntimeDatasource<
   M extends SubqlCosmosMapping<SubqlCosmosRuntimeHandler> = SubqlCosmosMapping<SubqlCosmosRuntimeHandler>
 > extends ISubqlCosmosDatasource<M> {
   kind: SubqlCosmosDatasourceKind.Runtime;
+  options?: SubqlCosmosProcessorOptions;
+  assets?: Map<string, {file: string}>;
 }
 
 export type SubqlCosmosDatasource = SubqlCosmosRuntimeDatasource | SubqlCosmosCustomDatasource;
