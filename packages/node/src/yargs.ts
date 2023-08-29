@@ -220,9 +220,9 @@ export const yargsOptions = yargs(hideBin(process.argv))
     },
     'disable-historical': {
       demandOption: false,
-      default: false,
       describe: 'Disable storing historical state entities',
       type: 'boolean',
+      // NOTE: don't set a default for this. It will break apply args from manifest. The default should be set in NodeConfig
     },
     ipfs: {
       demandOption: false,
@@ -390,14 +390,15 @@ export const yargsOptions = yargs(hideBin(process.argv))
     },
     'unfinalized-blocks': {
       demandOption: false,
-      default: false,
       describe: 'Enable to fetch and index unfinalized blocks',
       type: 'boolean',
+      // NOTE: don't set a default for this. It will break apply args from manifest. The default should be set in NodeConfig
     },
     unsafe: {
       type: 'boolean',
       demandOption: false,
       describe: 'Allows usage of any built-in module within the sandbox',
+      // NOTE: don't set a default for this. It will break apply args from manifest. The default should be set in NodeConfig
     },
     workers: {
       alias: 'w',

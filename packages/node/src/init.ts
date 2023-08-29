@@ -43,7 +43,7 @@ export async function bootstrap(): Promise<void> {
 
   try {
     const app = await NestFactory.create(AppModule, {
-      logger: debug ? new NestLogger() : false,
+      logger: new NestLogger(debug),
     });
     await app.init();
 

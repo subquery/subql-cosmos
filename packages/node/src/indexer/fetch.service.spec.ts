@@ -1,6 +1,7 @@
 // Copyright 2020-2023 SubQuery Pte Ltd authors & contributors
 // SPDX-License-Identifier: GPL-3.0
 
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { SubqlCosmosMessageFilter } from '@subql/common-cosmos';
 import { NodeConfig } from '@subql/node-core';
 import { DictionaryService } from './dictionary.service';
@@ -26,6 +27,7 @@ function mockDictionaryService(url: string): DictionaryServicePrivate {
       },
     } as any,
     nodeConfig,
+    new EventEmitter2(),
   ) as DictionaryServicePrivate;
 }
 

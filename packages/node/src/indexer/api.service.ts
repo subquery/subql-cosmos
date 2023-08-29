@@ -42,7 +42,7 @@ const logger = getLogger('api');
 
 @Injectable()
 export class ApiService
-  extends BaseApiService<CosmosClient, CosmosSafeClient, BlockContent>
+  extends BaseApiService<CosmosClient, CosmosSafeClient, BlockContent[]>
   implements OnApplicationShutdown
 {
   private fetchBlocksBatches = CosmosUtil.fetchBlocksBatches;

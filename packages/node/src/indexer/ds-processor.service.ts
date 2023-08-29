@@ -74,7 +74,7 @@ export function asSecondLayerHandlerProcessor_1_0_0<
 export class DsProcessorService extends BaseDsProcessorService<
   SubqlCosmosDatasource,
   SubqlCosmosCustomDatasource<string>,
-  SubqlCosmosDatasourceProcessor<string, undefined>
+  SubqlCosmosDatasourceProcessor<string, any>
 > {
   protected isCustomDs = isCustomCosmosDs;
 }

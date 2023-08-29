@@ -28,7 +28,7 @@ import {
   SubqlCosmosCustomDatasource,
   SubqlCosmosDatasource,
 } from '@subql/types-cosmos';
-import { SubqlProjectDs } from '../configure/SubqueryProject';
+import { CosmosProjectDs } from '../configure/SubqueryProject';
 import * as CosmosUtil from '../utils/cosmos';
 import { ApiService, CosmosClient, CosmosSafeClient } from './api.service';
 import {
@@ -110,8 +110,8 @@ export class IndexerManager extends BaseIndexerManager<
 
   protected async indexBlockData(
     blockContent: BlockContent,
-    dataSources: SubqlProjectDs[],
-    getVM: (d: SubqlProjectDs) => Promise<IndexerSandbox>,
+    dataSources: CosmosProjectDs[],
+    getVM: (d: CosmosProjectDs) => Promise<IndexerSandbox>,
   ): Promise<void> {
     await this.indexBlockContent(blockContent, dataSources, getVM);
 
@@ -142,8 +142,8 @@ export class IndexerManager extends BaseIndexerManager<
 
   private async indexBlockContent(
     block: BlockContent,
-    dataSources: SubqlProjectDs[],
-    getVM: (d: SubqlProjectDs) => Promise<IndexerSandbox>,
+    dataSources: CosmosProjectDs[],
+    getVM: (d: CosmosProjectDs) => Promise<IndexerSandbox>,
   ): Promise<void> {
     for (const ds of dataSources) {
       await this.indexData(
@@ -157,8 +157,8 @@ export class IndexerManager extends BaseIndexerManager<
 
   private async indexTransaction(
     tx: CosmosTransaction,
-    dataSources: SubqlProjectDs[],
-    getVM: (d: SubqlProjectDs) => Promise<IndexerSandbox>,
+    dataSources: CosmosProjectDs[],
+    getVM: (d: CosmosProjectDs) => Promise<IndexerSandbox>,
   ): Promise<void> {
     for (const ds of dataSources) {
       await this.indexData(SubqlCosmosHandlerKind.Transaction, tx, ds, getVM);
@@ -167,8 +167,8 @@ export class IndexerManager extends BaseIndexerManager<
 
   private async indexMessage(
     message: CosmosMessage,
-    dataSources: SubqlProjectDs[],
-    getVM: (d: SubqlProjectDs) => Promise<IndexerSandbox>,
+    dataSources: CosmosProjectDs[],
+    getVM: (d: CosmosProjectDs) => Promise<IndexerSandbox>,
   ): Promise<void> {
     for (const ds of dataSources) {
       await this.indexData(SubqlCosmosHandlerKind.Message, message, ds, getVM);
@@ -177,8 +177,8 @@ export class IndexerManager extends BaseIndexerManager<
 
   private async indexEvent(
     event: CosmosEvent,
-    dataSources: SubqlProjectDs[],
-    getVM: (d: SubqlProjectDs) => Promise<IndexerSandbox>,
+    dataSources: CosmosProjectDs[],
+    getVM: (d: CosmosProjectDs) => Promise<IndexerSandbox>,
   ): Promise<void> {
     for (const ds of dataSources) {
       await this.indexData(SubqlCosmosHandlerKind.Event, event, ds, getVM);

@@ -8,6 +8,6 @@ export interface RuntimeDatasourceTemplate extends Omit<SubqlCosmosRuntimeDataso
 export interface CustomDatasourceTemplate extends Omit<SubqlCosmosCustomDatasource, 'name'>, TemplateBase {}
 
 export type CosmosProjectManifestV1_0_0 = ProjectManifestV1_0_0<
-  RuntimeDatasourceTemplate | CustomDatasourceTemplate,
-  SubqlCosmosRuntimeDatasource | SubqlCosmosCustomDatasource
+  SubqlCosmosRuntimeDatasource | SubqlCosmosCustomDatasource,
+  RuntimeDatasourceTemplate | CustomDatasourceTemplate
 >;

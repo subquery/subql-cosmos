@@ -4,15 +4,18 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { isCustomCosmosDs, isRuntimeCosmosDs } from '@subql/common-cosmos';
 import {
+  getLogger,
   DatasourceParams,
   DynamicDsService as BaseDynamicDsService,
 } from '@subql/node-core';
 import { cloneDeep } from 'lodash';
-import { SubqlProjectDs, SubqueryProject } from '../configure/SubqueryProject';
+import { CosmosProjectDs, SubqueryProject } from '../configure/SubqueryProject';
 import { DsProcessorService } from './ds-processor.service';
 
+const logger = getLogger('DynamicDsService');
+
 @Injectable()
-export class DynamicDsService extends BaseDynamicDsService<SubqlProjectDs> {
+export class DynamicDsService extends BaseDynamicDsService<CosmosProjectDs> {
   constructor(
     private readonly dsProcessorService: DsProcessorService,
     @Inject('ISubqueryProject') private readonly project: SubqueryProject,
@@ -22,7 +25,7 @@ export class DynamicDsService extends BaseDynamicDsService<SubqlProjectDs> {
 
   protected async getDatasource(
     params: DatasourceParams,
-  ): Promise<SubqlProjectDs> {
+  ): Promise<CosmosProjectDs> {
     const template = cloneDeep(
       this.project.templates.find((t) => t.name === params.templateName),
     );
@@ -40,7 +43,7 @@ export class DynamicDsService extends BaseDynamicDsService<SubqlProjectDs> {
     const dsObj = {
       ...template,
       startBlock: params.startBlock,
-    } as SubqlProjectDs;
+    } as CosmosProjectDs;
     delete dsObj.name;
     try {
       if (isCustomCosmosDs(dsObj)) {
