@@ -6,7 +6,7 @@ import path from 'path';
 import {promisify} from 'util';
 import {loadFromJsonOrYaml} from '@subql/common';
 import {SubqlCosmosRuntimeDatasource} from '@subql/types-cosmos';
-import {upperFirst, camelCase} from 'lodash';
+import {upperFirst} from 'lodash';
 import rimraf from 'rimraf';
 import {
   isProtoPath,
