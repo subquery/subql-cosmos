@@ -27,7 +27,7 @@ import { CosmosClient } from '../indexer/api.service';
 import { HttpClient } from '../indexer/rpc-clients';
 import { filterMessageData, wrapEvent } from './cosmos';
 
-const ENDPOINT = 'https://juno.api.onfinality.io/public';
+const ENDPOINT = 'https://rpc-juno.itastakers.com/';
 const CHAINID = 'juno-1';
 
 const TEST_BLOCKNUMBER = 4136538;
