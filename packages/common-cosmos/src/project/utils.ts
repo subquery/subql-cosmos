@@ -55,26 +55,17 @@ export function isCosmosTemplates(
 
 @ValidatorConstraint({name: 'isFileReference', async: false})
 export class FileReferenceImp implements ValidatorConstraintInterface {
-  validate(value: Map<string, FileReference>, args: ValidationArguments): boolean {
+  validate(value: Map<string, FileReference>): boolean {
     if (!value) {
       return false;
     }
-    Object.values(value).forEach((fileReference: FileReference) => {
-      if (!this.isValidFileReference(fileReference)) {
-        throw new Error(this.defaultMessage(args));
-      }
-    });
-    return true;
+    return !!Object.values(value).find((fileReference: FileReference) => this.isValidFileReference(fileReference));
   }
   defaultMessage(args: ValidationArguments): string {
     return `${JSON.stringify(args.value)} is not a valid assets format`;
   }
 
   private isValidFileReference(fileReference: FileReference): boolean {
-    return (
-      typeof fileReference === 'object' &&
-      !!Object.keys(fileReference).filter((key) => key === 'file').length &&
-      typeof fileReference.file === 'string'
-    );
+    return typeof fileReference === 'object' && 'file' in fileReference && typeof fileReference.file === 'string';
   }
 }

@@ -94,12 +94,6 @@ describe('Codegen cosmos', () => {
       p = './protos/cosmos/osmosis/gamm/v1beta1/tx.proto';
       expect(isProtoPath(p, PROJECT_PATH)).toBe(false);
     });
-    it('Ensure correctness on Cosmos Manifest validate', () => {
-      const cosmosManifest = loadFromJsonOrYaml(path.join(PROJECT_PATH, 'project.yaml')) as any;
-      const ethManifest = loadFromJsonOrYaml(path.join(PROJECT_PATH, 'bad-cosmos-project.yaml')) as any;
-      expect(validateCosmosManifest(cosmosManifest)).toBe(true);
-      expect(validateCosmosManifest(ethManifest)).toBe(false);
-    });
     it('User provided common protos should only overwrite the provided .proto file', async () => {
       const tp = await tempProtoDir(PROJECT_PATH);
       const v = await fs.promises.readFile(path.join(tp, './cosmos/base/v1beta1/coin.proto'));

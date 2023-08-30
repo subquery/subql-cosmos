@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: GPL-3.0
 
 import path from 'path';
+import {loadFromJsonOrYaml} from '@subql/common';
+import {validateCosmosManifest} from '../codegen/util';
 import {loadCosmosProjectManifest} from './load';
 
 const projectsDir = path.join(__dirname, '../../test');
@@ -22,6 +24,12 @@ describe('project.yaml', () => {
   it('Should throw on invalid FileReference on asset', () => {
     expect(() =>
       loadCosmosProjectManifest(path.join(projectsDir, 'protoTest1', 'bad-abi-cosmos-project.yaml'))
-    ).toThrow('{"baseMinter":{"filePath":"./cosmwasm-contract/cw20/schema/cw20.json"}} is not a valid assets format');
+    ).toThrow('- property dataSources[0].assets has failed the following constraints: isFileReference');
+  });
+  it('Ensure correctness on Cosmos Manifest validate', () => {
+    const cosmosManifest = loadFromJsonOrYaml(path.join(projectsDir, './protoTest1', 'project.yaml')) as any;
+    const ethManifest = loadFromJsonOrYaml(path.join(projectsDir, 'project_1.0.0_bad_runner.yaml')) as any;
+    expect(validateCosmosManifest(cosmosManifest)).toBe(true);
+    expect(validateCosmosManifest(ethManifest)).toBe(false);
   });
 });

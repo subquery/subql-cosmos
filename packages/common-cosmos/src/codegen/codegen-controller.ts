@@ -56,14 +56,14 @@ export function prepareCosmwasmJobs(
     const value = sortedAssets[key];
     const readContract = loadReadAbi(value);
 
-    const msgObjs: Record<string, string | null> = {
-      MsgInstantiateContract: upperFirst(readContract.instantiate?.title ?? null),
-      MsgMigrateContract: upperFirst(readContract.migrate?.title ?? null),
-      MsgExecuteContract: upperFirst(readContract.execute?.title ?? null),
+    const msgObjs: Record<string, string | undefined> = {
+      MsgInstantiateContract: upperFirst(readContract.instantiate?.title),
+      MsgMigrateContract: upperFirst(readContract.migrate?.title),
+      MsgExecuteContract: upperFirst(readContract.execute?.title),
     };
 
-    const messages = Object.entries(msgObjs)
-      .filter(([, value]) => value !== null && value !== '')
+    const messages = Object.values(msgObjs)
+      .filter((value) => !!value)
       .map(([msgType, msgTitle]) => ({
         [msgType]: msgTitle,
       }));
