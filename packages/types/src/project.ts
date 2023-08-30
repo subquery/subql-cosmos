@@ -149,7 +149,7 @@ export interface SubqlCosmosRuntimeDatasource<
 > extends ISubqlCosmosDatasource<M> {
   kind: SubqlCosmosDatasourceKind.Runtime;
   options?: SubqlCosmosProcessorOptions;
-  assets?: Map<string, {file: string}>;
+  assets?: Map<string, FileReference>;
 }
 
 export type SubqlCosmosDatasource = SubqlCosmosRuntimeDatasource | SubqlCosmosCustomDatasource;

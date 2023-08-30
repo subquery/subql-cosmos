@@ -21,6 +21,7 @@ import {
   SubqlCosmosMessageHandler,
   CustomModule,
   SubqlCosmosTxFilter,
+  SubqlCosmosProcessorOptions,
 } from '@subql/types-cosmos';
 
 import {plainToClass, Transform, Type} from 'class-transformer';
@@ -34,7 +35,6 @@ import {
   IsObject,
   ValidateNested,
   ValidateIf,
-  IsNumber,
   IsBoolean,
 } from 'class-validator';
 
@@ -159,6 +159,12 @@ export class CosmosCustomMapping implements SubqlCosmosMapping<SubqlCosmosCustom
   file: string;
 }
 
+export class CosmosProcessorOptions implements SubqlCosmosProcessorOptions {
+  @IsOptional()
+  @IsString()
+  abi?: string;
+}
+
 export class CosmosRuntimeDataSourceBase<M extends SubqlCosmosMapping<SubqlCosmosRuntimeHandler>>
   implements SubqlCosmosRuntimeDatasource<M>
 {
@@ -172,6 +178,12 @@ export class CosmosRuntimeDataSourceBase<M extends SubqlCosmosMapping<SubqlCosmo
   @Type(() => CosmosCustomModuleImpl)
   @ValidateNested({each: true})
   chainTypes: Map<string, CustomModule>;
+  @IsOptional()
+  assets?: Map<string, FileReference>;
+  @IsOptional()
+  @Type(() => CosmosProcessorOptions)
+  @ValidateNested()
+  options?: CosmosProcessorOptions;
 }
 
 export class CosmosFileReferenceImpl implements FileReference {

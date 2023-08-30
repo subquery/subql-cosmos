@@ -14,4 +14,9 @@ describe('project.yaml', () => {
   it('can validate a v1.0.0 project.yaml with unsupported runner node', () => {
     expect(() => loadCosmosProjectManifest(path.join(projectsDir, 'project_1.0.0_bad_runner.yaml'))).toThrow();
   });
+  it('assets should be validated', () => {
+    expect(() =>
+      loadCosmosProjectManifest(path.join(projectsDir, 'protoTest1', 'cosmwasm-project.yaml'))
+    ).not.toThrow();
+  });
 });
