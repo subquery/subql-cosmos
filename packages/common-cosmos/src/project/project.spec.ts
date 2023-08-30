@@ -19,4 +19,9 @@ describe('project.yaml', () => {
       loadCosmosProjectManifest(path.join(projectsDir, 'protoTest1', 'cosmwasm-project.yaml'))
     ).not.toThrow();
   });
+  it('Should throw on invalid FileReference on asset', () => {
+    expect(() =>
+      loadCosmosProjectManifest(path.join(projectsDir, 'protoTest1', 'bad-abi-cosmos-project.yaml'))
+    ).toThrow('{"baseMinter":{"filePath":"./cosmwasm-contract/cw20/schema/cw20.json"}} is not a valid assets format');
+  });
 });

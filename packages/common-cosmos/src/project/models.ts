@@ -23,9 +23,7 @@ import {
   SubqlCosmosTxFilter,
   SubqlCosmosProcessorOptions,
 } from '@subql/types-cosmos';
-
 import {plainToClass, Transform, Type} from 'class-transformer';
-
 import {
   IsArray,
   IsEnum,
@@ -36,7 +34,9 @@ import {
   ValidateNested,
   ValidateIf,
   IsBoolean,
+  Validate,
 } from 'class-validator';
+import {FileReferenceImp} from './utils';
 
 export class CosmosBlockFilter implements SubqlCosmosBlockFilter {
   @IsOptional()
@@ -179,6 +179,7 @@ export class CosmosRuntimeDataSourceBase<M extends SubqlCosmosMapping<SubqlCosmo
   @ValidateNested({each: true})
   chainTypes: Map<string, CustomModule>;
   @IsOptional()
+  @Validate(FileReferenceImp)
   assets?: Map<string, FileReference>;
   @IsOptional()
   @Type(() => CosmosProcessorOptions)

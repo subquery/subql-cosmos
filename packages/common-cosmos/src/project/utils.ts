@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0
 
 import {
+  FileReference,
   SecondLayerHandlerProcessor,
   SubqlCosmosCustomDatasource,
   SubqlCosmosDatasource,
@@ -9,6 +10,7 @@ import {
   SubqlCosmosHandlerKind,
   SubqlCosmosRuntimeDatasource,
 } from '@subql/types-cosmos';
+import {ValidationArguments, ValidatorConstraint, ValidatorConstraintInterface} from 'class-validator';
 import {gte} from 'semver';
 import {CustomDatasourceTemplate, RuntimeDatasourceTemplate} from './versioned';
 
@@ -49,4 +51,30 @@ export function isCosmosTemplates(
   specVersion: string
 ): templatesData is (RuntimeDatasourceTemplate | CustomDatasourceTemplate)[] {
   return (isRuntimeCosmosDs(templatesData[0]) || isCustomCosmosDs(templatesData[0])) && gte(specVersion, '0.2.1');
+}
+
+@ValidatorConstraint({name: 'isFileReference', async: false})
+export class FileReferenceImp implements ValidatorConstraintInterface {
+  validate(value: Map<string, FileReference>, args: ValidationArguments): boolean {
+    if (!value) {
+      return false;
+    }
+    Object.values(value).forEach((fileReference: FileReference) => {
+      if (!this.isValidFileReference(fileReference)) {
+        throw new Error(this.defaultMessage(args));
+      }
+    });
+    return true;
+  }
+  defaultMessage(args: ValidationArguments): string {
+    return `${JSON.stringify(args.value)} is not a valid assets format`;
+  }
+
+  private isValidFileReference(fileReference: FileReference): boolean {
+    return (
+      typeof fileReference === 'object' &&
+      !!Object.keys(fileReference).filter((key) => key === 'file').length &&
+      typeof fileReference.file === 'string'
+    );
+  }
 }
