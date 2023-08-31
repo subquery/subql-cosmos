@@ -9,6 +9,7 @@ import {makeTempDir} from '@subql/common';
 import {CustomModule, SubqlCosmosRuntimeDatasource} from '@subql/types-cosmos';
 import {Data} from 'ejs';
 import {copySync} from 'fs-extra';
+import {pickBy, Dictionary, ValueKeyIterateeTypeGuard} from 'lodash';
 import {IDLObject} from 'wasm-ast-types';
 import {isRuntimeCosmosDs} from '../project';
 import {COSMWASM_OPTS, TELESCOPE_OPTS} from './constants';
@@ -23,7 +24,7 @@ const PROTO_INTERFACE_TEMPLATE_PATH = path.resolve(__dirname, '../../templates/p
 // CosmWasm to ts
 const COSMWASM_INTERFACES_ROOT_DIR = 'src/types/cosmwasm-interfaces';
 const COSMWASM_INTERFACE_WRAPPER_PATH = '/src/types/cosmwasm-interface-wrappers';
-const COSMWASM_INTERFACE_TEMPLATE_PATH = path.resolve(__dirname, '../../template/cosmwasm-interfaces.ts.ejs');
+const COSMWASM_INTERFACE_TEMPLATE_PATH = path.resolve(__dirname, '../../templates/cosmwasm-interfaces.ts.ejs');
 
 interface ProtobufRenderProps {
   messageNames: string[]; // all messages
@@ -33,7 +34,7 @@ type CosmosChainTypeDataType = Map<string, CustomModule> | Record<string, Custom
 
 interface CosmwasmRenderJobType {
   contract: string;
-  messages: Record<string, string | null>[];
+  messages: Record<string, string>;
 }
 
 export function processProtoFilePath(path: string): string {
@@ -55,22 +56,23 @@ export function prepareCosmwasmJobs(
   return Object.keys(sortedAssets).map((key) => {
     const value = sortedAssets[key];
     const readContract = loadReadAbi(value);
-
-    const msgObjs: Record<string, string | undefined> = {
+    const msgObject: Record<string, string> = {
       MsgInstantiateContract: upperFirst(readContract.instantiate?.title),
       MsgMigrateContract: upperFirst(readContract.migrate?.title),
       MsgExecuteContract: upperFirst(readContract.execute?.title),
     };
 
-    const messages = Object.values(msgObjs)
-      .filter((value) => !!value)
-      .map(([msgType, msgTitle]) => ({
-        [msgType]: msgTitle,
-      }));
+    const cleanObject: Record<string, string> = {};
+
+    for (const key in msgObject) {
+      if (msgObject[key]) {
+        cleanObject[key] = msgObject[key];
+      }
+    }
 
     return {
       contract: upperFirst(key),
-      messages,
+      messages: cleanObject,
     };
   });
 }
@@ -100,7 +102,6 @@ export async function generateCosmwasm(
   projectPath: string,
   prepareDirPath: (path: string, recreate: boolean) => Promise<void>,
   upperFirst: (input?: string) => string,
-  camelCase: (input?: string) => string,
   renderTemplate: (templatePath: string, outputPath: string, templateData: Data) => Promise<void>
 ): Promise<void> {
   const sortedAssets = prepareSortedAssets(datasources, projectPath);

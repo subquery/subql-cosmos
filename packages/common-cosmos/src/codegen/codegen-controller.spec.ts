@@ -6,9 +6,11 @@ import path from 'path';
 import {promisify} from 'util';
 import {loadFromJsonOrYaml} from '@subql/common';
 import {SubqlCosmosRuntimeDatasource} from '@subql/types-cosmos';
+import ejs from 'ejs';
 import {upperFirst} from 'lodash';
 import rimraf from 'rimraf';
 import {
+  generateCosmwasm,
   isProtoPath,
   prepareCosmwasmJobs,
   prepareProtobufRenderProps,
@@ -150,13 +152,47 @@ describe('Codegen cosmos', () => {
       const mockSortedAssets = {
         cw20: path.join(PROJECT_PATH, 'cosmwasm-contract/cw20/schema/cw20.json'),
       };
-
       expect(prepareCosmwasmJobs(mockSortedAssets, loadCosmwasmAbis, upperFirst)).toStrictEqual([
         {
           contract: 'Cw20',
-          messages: [{MsgInstantiateContract: 'InstantiateMsg'}, {MsgExecuteContract: 'ExecuteMsg'}],
+          messages: {
+            MsgInstantiateContract: 'InstantiateMsg',
+            MsgExecuteContract: 'ExecuteMsg',
+          },
         },
       ]);
+    });
+    it('render correct codegen from ejs', async () => {
+      const mockJob = {
+        contract: 'Cw20',
+        messages: {
+          MsgInstantiateContract: 'InstantiateMsg',
+          MsgExecuteContract: 'ExecuteMsg',
+        },
+      };
+
+      const data = await ejs.renderFile(path.resolve(__dirname, '../../templates/cosmwasm-interfaces.ts.ejs'), {
+        props: {abi: mockJob},
+        helper: {upperFirst},
+      });
+      await fs.promises.writeFile(path.join(PROJECT_PATH, 'test.ts'), data);
+      const expectCodegen =
+        '' +
+        '// SPDX-License-Identifier: Apache-2.0\n' +
+        '\n' +
+        '// Auto-generated, DO NOT EDIT\n' +
+        'import { CosmosMessage, MsgInstantiateContract,MsgExecuteContract } from "@subql/types-cosmos";\n' +
+        '\n' +
+        'import { InstantiateMsg, ExecuteMsg } from "../cosmwasm-interfaces/Cw20.types";\n' +
+        '\n' +
+        '\n' +
+        'export type Cw20InstantiateMsg = CosmosMessage<MsgInstantiateContract<InstantiateMsg>>;\n' +
+        '\n' +
+        'export type Cw20ExecuteMsg = CosmosMessage<MsgExecuteContract<ExecuteMsg>>;\n';
+
+      const output = await fs.promises.readFile(path.join(PROJECT_PATH, 'test.ts'));
+      expect(output.toString()).toMatch(expectCodegen);
+      await promisify(rimraf)(path.join(PROJECT_PATH, 'test.ts'));
     });
   });
 });
