@@ -9,7 +9,6 @@ import {makeTempDir} from '@subql/common';
 import {CustomModule, SubqlCosmosRuntimeDatasource} from '@subql/types-cosmos';
 import {Data} from 'ejs';
 import {copySync} from 'fs-extra';
-import {pickBy, Dictionary, ValueKeyIterateeTypeGuard} from 'lodash';
 import {IDLObject} from 'wasm-ast-types';
 import {isRuntimeCosmosDs} from '../project';
 import {COSMWASM_OPTS, TELESCOPE_OPTS} from './constants';

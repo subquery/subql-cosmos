@@ -4,13 +4,11 @@
 import fs from 'fs';
 import path from 'path';
 import {promisify} from 'util';
-import {loadFromJsonOrYaml} from '@subql/common';
 import {SubqlCosmosRuntimeDatasource} from '@subql/types-cosmos';
 import ejs from 'ejs';
 import {upperFirst} from 'lodash';
 import rimraf from 'rimraf';
 import {
-  generateCosmwasm,
   isProtoPath,
   prepareCosmwasmJobs,
   prepareProtobufRenderProps,
@@ -18,7 +16,7 @@ import {
   processProtoFilePath,
   tempProtoDir,
 } from './codegen-controller';
-import {loadCosmwasmAbis, validateCosmosManifest} from './util';
+import {loadCosmwasmAbis} from './util';
 
 const PROJECT_PATH = path.join(__dirname, '../../test/protoTest1');
 
