@@ -7,8 +7,6 @@ import { SchedulerRegistry } from '@nestjs/schedule';
 import {
   DbModule,
   ForceCleanService,
-  MmrService,
-  PgMmrCacheService,
   ReindexService,
   StoreCacheService,
   StoreService,
@@ -24,8 +22,6 @@ import { UnfinalizedBlocksService } from '../indexer/unfinalizedBlocks.service';
     StoreCacheService,
     StoreService,
     ReindexService,
-    MmrService,
-    PgMmrCacheService,
     ForceCleanService,
     {
       provide: 'UnfinalizedBlocksService',

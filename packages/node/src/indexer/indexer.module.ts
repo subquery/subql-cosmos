@@ -6,12 +6,9 @@ import { Module } from '@nestjs/common';
 import {
   StoreService,
   PoiService,
-  MmrService,
   ConnectionPoolService,
   StoreCacheService,
   WorkerDynamicDsService,
-  PgMmrCacheService,
-  MmrQueryService,
   ConnectionPoolStateManager,
   WorkerConnectionPoolStateManager,
 } from '@subql/node-core';
@@ -66,9 +63,6 @@ import { WorkerUnfinalizedBlocksService } from './worker/worker.unfinalizedBlock
       },
     },
     PoiService,
-    MmrService,
-    PgMmrCacheService,
-    MmrQueryService,
     {
       provide: 'IProjectService',
       useClass: ProjectService,
@@ -84,6 +78,6 @@ import { WorkerUnfinalizedBlocksService } from './worker/worker.unfinalizedBlock
       },
     },
   ],
-  exports: [StoreService, MmrService, MmrQueryService],
+  exports: [StoreService],
 })
 export class IndexerModule {}
