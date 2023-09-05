@@ -24,6 +24,7 @@ import {
   SubqlCosmosBlockFilter,
   SubqlCosmosTxFilter,
 } from '@subql/types-cosmos';
+import { isLong } from 'long';
 import { CosmosClient } from '../indexer/api.service';
 import { BlockContent } from '../indexer/types';
 
@@ -73,8 +74,8 @@ export function filterMessageData(
         .split('.')
         .reduce((acc, curr) => acc[curr], data.msg.decodedMsg);
 
-      //stringify object types (such as Long) for equality check
-      if (typeof decodedMsgData === 'object') {
+      //stringify Long for equality check
+      if (isLong(decodedMsgData)) {
         decodedMsgData = decodedMsgData.toString();
       }
 
