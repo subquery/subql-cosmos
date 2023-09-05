@@ -69,10 +69,16 @@ export function filterMessageData(
   }
   if (filter.values) {
     for (const key in filter.values) {
-      if (
-        filter.values[key] !==
-        key.split('.').reduce((acc, curr) => acc[curr], data.msg.decodedMsg)
-      ) {
+      let decodedMsgData = key
+        .split('.')
+        .reduce((acc, curr) => acc[curr], data.msg.decodedMsg);
+
+      //stringify object types (such as Long) for equality check
+      if (typeof decodedMsgData === 'object') {
+        decodedMsgData = decodedMsgData.toString();
+      }
+
+      if (filter.values[key] !== decodedMsgData) {
         return false;
       }
     }
