@@ -76,7 +76,10 @@ export function filterMessageData(
 
       //stringify Long for equality check
       if (isLong(decodedMsgData)) {
-        decodedMsgData = decodedMsgData.toString();
+        decodedMsgData =
+          typeof filter.values[key] === 'number'
+            ? decodedMsgData.toNumber()
+            : decodedMsgData.toString();
       }
 
       if (filter.values[key] !== decodedMsgData) {

@@ -199,6 +199,29 @@ describe('CosmosUtils', () => {
     expect(result).toEqual(true);
   });
 
+  it('can filter long type decoded msg for number filter', () => {
+    const msg: CosmosMessage = {
+      tx: null,
+      msg: {
+        typeUrl: '/cosmwasm.wasm.v1.MsgInstantiateContract',
+        decodedMsg: {
+          codeId: longify(4),
+        },
+      },
+    } as unknown as CosmosMessage;
+
+    const filter: CosmosMessageFilter = {
+      type: '/cosmwasm.wasm.v1.MsgInstantiateContract',
+      values: {
+        codeId: 4 as unknown as string,
+      },
+      includeFailedTx: true,
+    };
+
+    const result = filterMessageData(msg, filter);
+    expect(result).toEqual(true);
+  });
+
   it('can filter long type decoded msg for false', () => {
     const msg: CosmosMessage = {
       tx: null,
