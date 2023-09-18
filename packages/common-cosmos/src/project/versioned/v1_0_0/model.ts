@@ -35,7 +35,7 @@ import {
   IsNotEmpty,
   Validate,
 } from 'class-validator';
-import {CosmosCustomDataSourceBase, CosmosCustomModuleImpl, CosmosRuntimeDataSourceBase} from '../../models';
+import {CosmosCustomDataSourceBase, CosmosRuntimeDataSourceBase} from '../../models';
 import {ChainTypesImp} from '../../utils';
 
 const COSMOS_NODE_NAME = `@subql/node-cosmos`;
