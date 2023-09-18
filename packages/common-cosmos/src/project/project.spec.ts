@@ -43,9 +43,16 @@ describe('project.yaml', () => {
     expect(validateCosmosManifest(cosmosManifest)).toBe(true);
     expect(validateCosmosManifest(ethManifest)).toBe(false);
   });
+  it('Should fail on incorrect chaintypes', () => {
+    const cosmosManifest = loadFromJsonOrYaml(
+      path.join(projectsDir, './protoTest1', 'bad-chaintypes-project.yaml')
+    ) as any;
+    expect(() => parseCosmosProjectManifest(cosmosManifest)).toThrow('failed to parse project.yaml');
+  });
   it('Ensure correctness on manifest deployment', () => {
     const cosmosManifest = loadFromJsonOrYaml(path.join(projectsDir, './protoTest1', 'project.yaml')) as any;
     const manifest = parseCosmosProjectManifest(cosmosManifest);
+    console.log('delpoyment', manifest.toDeployment());
     expect(manifest.toDeployment()).toBe(
       'dataSources:\n' +
         '  - kind: cosmos/Runtime\n' +
