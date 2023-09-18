@@ -1,11 +1,8 @@
 // Copyright 2020-2023 SubQuery Pte Ltd authors & contributors
 // SPDX-License-Identifier: GPL-3.0
 
-<<<<<<< HEAD
 import {FileReference} from '@subql/types-core';
-=======
 import {CosmosCustomModuleImpl} from '@subql/common-cosmos/project/models';
->>>>>>> dd005b73 (update class validator)
 import {
   SecondLayerHandlerProcessor,
   SubqlCosmosCustomDatasource,
@@ -16,7 +13,7 @@ import {
   CustomDatasourceTemplate,
   RuntimeDatasourceTemplate,
 } from '@subql/types-cosmos';
-import {ValidationArguments, ValidatorConstraint, ValidatorConstraintInterface, validate} from 'class-validator';
+import {ValidationArguments, ValidatorConstraint, ValidatorConstraintInterface} from 'class-validator';
 import {gte} from 'semver';
 
 export function isCustomCosmosDs(ds: SubqlCosmosDatasource): ds is SubqlCosmosCustomDatasource<string> {
@@ -72,26 +69,5 @@ export class FileReferenceImp implements ValidatorConstraintInterface {
 
   private isValidFileReference(fileReference: FileReference): boolean {
     return typeof fileReference === 'object' && 'file' in fileReference && typeof fileReference.file === 'string';
-  }
-}
-
-@ValidatorConstraint({name: 'isChainTypes', async: false})
-export class ChainTypesImp implements ValidatorConstraintInterface {
-  async validate(value: Map<string, CosmosCustomModuleImpl>): Promise<boolean> {
-    if (!value) {
-      return false;
-    }
-
-    for (const chainType of Object.values(value)) {
-      const errors = await validate(chainType);
-      if (errors.length > 0) {
-        return false;
-      }
-    }
-    return true;
-  }
-
-  defaultMessage(args: ValidationArguments): string {
-    return `${JSON.stringify(args.value)} is not a valid chainType format`;
   }
 }
