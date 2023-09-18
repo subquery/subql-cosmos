@@ -82,7 +82,7 @@ export class ChainTypesImp implements ValidatorConstraintInterface {
       return false;
     }
 
-    for (const chainType of value.values()) {
+    for (const chainType of Object.values(value)) {
       const errors = await validate(chainType);
       if (errors.length > 0) {
         return false;
@@ -92,6 +92,6 @@ export class ChainTypesImp implements ValidatorConstraintInterface {
   }
 
   defaultMessage(args: ValidationArguments): string {
-    return `${JSON.stringify(args.value)} is not a valid assets format`;
+    return `${JSON.stringify(args.value)} is not a valid chainType format`;
   }
 }
