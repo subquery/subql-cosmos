@@ -37,7 +37,7 @@ import {
   IsBoolean,
   Validate,
 } from 'class-validator';
-import {FileReferenceImp} from './utils';
+import {ChainTypesImp, FileReferenceImp} from './utils';
 
 export class CosmosBlockFilter implements SubqlCosmosBlockFilter {
   @IsOptional()
@@ -176,8 +176,7 @@ export class CosmosRuntimeDataSourceBase<M extends SubqlCosmosMapping<SubqlCosmo
   mapping: M;
   @IsInt()
   startBlock: number;
-  @Type(() => CosmosCustomModuleImpl)
-  @ValidateNested({each: true})
+  @Validate(ChainTypesImp)
   chainTypes: Map<string, CustomModule>;
   @IsOptional()
   @Validate(FileReferenceImp)
@@ -220,8 +219,14 @@ export class CosmosCustomDataSourceBase<
   assets: Map<string, CustomDataSourceAsset>;
   @Type(() => ProcessorImpl)
   @IsObject()
+<<<<<<< HEAD
   processor: Processor<O>;
   @Type(() => CosmosCustomModuleImpl)
   @ValidateNested({each: true})
   chainTypes: Map<string, CustomModule>;
+=======
+  processor: FileReference;
+  @Validate(ChainTypesImp)
+  chainTypes: Map<string, CosmosCustomModuleImpl>;
+>>>>>>> dd005b73 (update class validator)
 }

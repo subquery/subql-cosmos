@@ -33,8 +33,10 @@ import {
   IsOptional,
   IsArray,
   IsNotEmpty,
+  Validate,
 } from 'class-validator';
 import {CosmosCustomDataSourceBase, CosmosCustomModuleImpl, CosmosRuntimeDataSourceBase} from '../../models';
+import {ChainTypesImp} from '../../utils';
 
 const COSMOS_NODE_NAME = `@subql/node-cosmos`;
 
@@ -75,9 +77,8 @@ export class CosmosProjectNetworkDeployment {
 }
 
 export class CosmosProjectNetwork extends CommonProjectNetworkV1_0_0<FileType> {
-  @Type(() => CosmosCustomModuleImpl)
   @IsOptional()
-  @ValidateNested({each: true})
+  @Validate(ChainTypesImp)
   chainTypes?: Map<string, CustomModule>;
 }
 
