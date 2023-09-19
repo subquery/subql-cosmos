@@ -31,7 +31,15 @@ export class TestingService extends BaseTestingService<
   }
 
   async getTestRunner(): Promise<
-    TestRunner<CosmosClient, CosmosSafeClient, BlockContent, CosmosProjectDs>
+    [
+      close: () => Promise<void>,
+      runner: TestRunner<
+        CosmosClient,
+        CosmosSafeClient,
+        BlockContent,
+        CosmosProjectDs
+      >,
+    ]
   > {
     const testContext = await NestFactory.createApplicationContext(
       TestingModule,
@@ -42,10 +50,10 @@ export class TestingService extends BaseTestingService<
 
     await testContext.init();
 
-    const projectService: ProjectService = testContext.get(ProjectService);
+    const projectService: ProjectService = testContext.get('IProjectService');
     await projectService.init();
 
-    return testContext.get(TestRunner);
+    return [testContext.close.bind(testContext), testContext.get(TestRunner)];
   }
 
   async indexBlock(

@@ -3,6 +3,7 @@
 
 import { isMainThread } from 'worker_threads';
 import { Module } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import {
   StoreService,
   PoiService,
@@ -44,12 +45,17 @@ import { WorkerUnfinalizedBlocksService } from './worker/worker.unfinalizedBlock
       useFactory: async (
         project: SubqueryProject,
         connectionPoolService: ConnectionPoolService<CosmosClientConnection>,
+        eventEmitter: EventEmitter2,
       ) => {
-        const apiService = new ApiService(project, connectionPoolService);
+        const apiService = new ApiService(
+          project,
+          connectionPoolService,
+          eventEmitter,
+        );
         await apiService.init();
         return apiService;
       },
-      inject: ['ISubqueryProject', ConnectionPoolService],
+      inject: ['ISubqueryProject', ConnectionPoolService, EventEmitter2],
     },
     SandboxService,
     DsProcessorService,
