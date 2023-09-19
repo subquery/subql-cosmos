@@ -4535,7 +4535,7 @@ __metadata:
     "@protobufs/google": ^0.0.10
     "@protobufs/ibc": ^0.1.0
     "@protobufs/tendermint": ^0.0.10
-    "@subql/common": ^2.4.0
+    "@subql/common": 2.6.0
     "@subql/types-cosmos": "workspace:*"
     "@types/bn.js": 4.11.6
     "@types/ejs": ^3.1.2
@@ -4557,7 +4557,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@subql/common@npm:2.4.0, @subql/common@npm:^2.4.0":
+"@subql/common@npm:2.4.0":
   version: 2.4.0
   resolution: "@subql/common@npm:2.4.0"
   dependencies:
