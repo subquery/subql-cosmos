@@ -29,6 +29,8 @@
     "reflect-metadata": "^0.1.13"
   },
   "peerDependencies": {
+    "class-transformer": "*",
+    "class-validator": "*",
     "ejs": "*"
   },
   "devDependencies": {

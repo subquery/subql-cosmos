@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0
 
 import {SubqlCosmosDatasource} from '@subql/types-cosmos';
-import {plainToClass, plainToInstance} from 'class-transformer';
+import {plainToInstance} from 'class-transformer';
 import {ICosmosProjectManifest} from '../types';
 import {ProjectManifestV1_0_0Impl} from './v1_0_0';
 
