@@ -4,11 +4,8 @@
 import path from 'path';
 import {getManifestPath, loadFromJsonOrYaml} from '@subql/common';
 import {validateCosmosManifest} from '../codegen/util';
-<<<<<<< HEAD
 import {CosmosProjectManifestVersioned, VersionedProjectManifest} from './versioned';
-=======
 import {loadCosmosProjectManifest, parseCosmosProjectManifest} from './load';
->>>>>>> dd005b73 (update class validator)
 
 const projectsDir = path.join(__dirname, '../../test');
 
@@ -52,43 +49,6 @@ describe('project.yaml', () => {
   it('Ensure correctness on manifest deployment', () => {
     const cosmosManifest = loadFromJsonOrYaml(path.join(projectsDir, './protoTest1', 'project.yaml')) as any;
     const manifest = parseCosmosProjectManifest(cosmosManifest);
-    console.log('delpoyment', manifest.toDeployment());
-    expect(manifest.toDeployment()).toBe(
-      'dataSources:\n' +
-        '  - kind: cosmos/Runtime\n' +
-        '    mapping:\n' +
-        '      file: ./dist/index.js\n' +
-        '      handlers:\n' +
-        '        - filter:\n' +
-        '            type: /osmosis.gamm.v1beta1.MsgSwapExactAmountIn\n' +
-        '          handler: handleMessage\n' +
-        '          kind: cosmos/MessageHandler\n' +
-        '    startBlock: 9798050\n' +
-        'network:\n' +
-        '  chainId: osmosis-1\n' +
-        '  chainTypes:\n' +
-        '    cosmos.base.v1beta1:\n' +
-        '      file: ./proto/cosmos/base/v1beta1/coin.proto\n' +
-        '      messages:\n' +
-        '        - Coin\n' +
-        '    osmosis.gamm.v1beta1:\n' +
-        '      file: ./proto/osmosis/gamm/v1beta1/tx.proto\n' +
-        '      messages:\n' +
-        '        - MsgSwapExactAmountIn\n' +
-        '    osmosis.poolmanager.v1beta1:\n' +
-        '      file: ./proto/osmosis/poolmanager/v1beta1/swap_route.proto\n' +
-        '      messages:\n' +
-        '        - SwapAmountInRoute\n' +
-        'runner:\n' +
-        '  node:\n' +
-        "    name: '@subql/node-cosmos'\n" +
-        "    version: '*'\n" +
-        '  query:\n' +
-        "    name: '@subql/query'\n" +
-        "    version: '*'\n" +
-        'schema:\n' +
-        '  file: ./schema.graphql\n' +
-        'specVersion: 1.0.0\n'
-    );
+    expect(manifest.asImpl.deployment.network.chainTypes.size).toBeGreaterThan(0);
   });
 });

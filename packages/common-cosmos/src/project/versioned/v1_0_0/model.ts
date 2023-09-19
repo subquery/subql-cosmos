@@ -33,7 +33,6 @@ import {
   IsOptional,
   IsArray,
   IsNotEmpty,
-  Validate,
 } from 'class-validator';
 import {CosmosCustomDataSourceBase, CosmosRuntimeDataSourceBase} from '../../models';
 import {ChainTypesImp} from '../../utils';
