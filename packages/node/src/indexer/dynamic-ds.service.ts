@@ -26,7 +26,7 @@ export class DynamicDsService extends BaseDynamicDsService<CosmosProjectDs> {
   protected async getDatasource(
     params: DatasourceParams,
   ): Promise<CosmosProjectDs> {
-    const template = cloneDeep(
+    const { name, ...template } = cloneDeep(
       this.project.templates.find((t) => t.name === params.templateName),
     );
 
@@ -44,7 +44,6 @@ export class DynamicDsService extends BaseDynamicDsService<CosmosProjectDs> {
       ...template,
       startBlock: params.startBlock,
     } as CosmosProjectDs;
-    delete dsObj.name;
     try {
       if (isCustomCosmosDs(dsObj)) {
         dsObj.processor.options = {

@@ -3,11 +3,23 @@
 
 import {CosmWasmClient} from '@cosmjs/cosmwasm-stargate';
 import {Registry} from '@cosmjs/proto-signing';
+import {
+  BaseTemplateDataSource,
+  IProjectNetworkConfig,
+  CommonSubqueryProject,
+  DictionaryQueryEntry,
+  FileReference,
+  Processor,
+  ProjectManifestV1_0_0,
+} from '@subql/types-core';
 import {CosmosBlock, CosmosTransaction, CosmosMessage, CosmosEvent} from './interfaces';
 
-export interface FileReference {
-  file: string;
-}
+export type RuntimeDatasourceTemplate = BaseTemplateDataSource<SubqlCosmosDatasource>;
+export type CustomDatasourceTemplate = BaseTemplateDataSource<SubqlCosmosCustomDatasource>;
+
+export type CosmosProjectManifestV1_0_0 = ProjectManifestV1_0_0<
+  SubqlCosmosRuntimeDatasource | SubqlCosmosCustomDatasource
+>;
 
 export interface CustomModule {
   file: string;
@@ -15,8 +27,6 @@ export interface CustomModule {
 }
 
 export type CustomDataSourceAsset = FileReference;
-
-export type Processor<O = any> = FileReference & {options?: O};
 
 export enum SubqlCosmosDatasourceKind {
   Runtime = 'cosmos/Runtime',
@@ -44,26 +54,9 @@ type CosmosRuntimeFilterMap = {
   [SubqlCosmosHandlerKind.Event]: SubqlCosmosEventFilter;
 };
 
-export interface CosmosProjectManifest {
-  specVersion: string;
-  description: string;
-  repository: string;
-
-  schema: {
-    file: string;
-  };
-
-  network: CosmosNetwork;
-
-  dataSources: SubqlCosmosDatasource[];
-}
-
-export interface CosmosNetwork {
-  genesisHash: string;
-  endpoint: string;
-  chainId: string;
+export type CosmosNetworkConfig = IProjectNetworkConfig & {
   chainTypes?: Map<string, CustomModule>;
-}
+};
 
 export interface SubqlCosmosBlockFilter {
   modulo?: number;
@@ -215,18 +208,6 @@ export interface SubqlCosmosDatasourceProcessor<
   handlerProcessors: P;
 }
 
-export interface DictionaryQueryCondition {
-  field: string;
-  // value: string | Record<string, string> | Array<Record<string, string>>;
-  value: string | string[];
-  matcher?: string; // defaults to "equalTo", use "contains" for JSON
-}
-
-export interface DictionaryQueryEntry {
-  entity: string;
-  conditions: DictionaryQueryCondition[];
-}
-
 interface SecondLayerHandlerProcessorBase<
   K extends SubqlCosmosHandlerKind,
   F,
@@ -271,3 +252,9 @@ export type SecondLayerHandlerProcessor<
   E,
   DS extends SubqlCosmosCustomDatasource = SubqlCosmosCustomDatasource
 > = SecondLayerHandlerProcessor_0_0_0<K, F, E, DS> | SecondLayerHandlerProcessor_1_0_0<K, F, E, DS>;
+
+export type CosmosProject<DS extends SubqlCosmosDatasource = SubqlCosmosRuntimeDatasource> = CommonSubqueryProject<
+  CosmosNetworkConfig,
+  SubqlCosmosRuntimeDatasource | DS,
+  BaseTemplateDataSource<SubqlCosmosRuntimeDatasource> | BaseTemplateDataSource<DS>
+>;

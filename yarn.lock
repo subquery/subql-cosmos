@@ -4096,7 +4096,8 @@ __metadata:
     "@protobufs/google": ^0.0.10
     "@protobufs/ibc": ^0.1.0
     "@protobufs/tendermint": ^0.0.10
-    "@subql/common": 2.7.1-0
+    "@subql/common": 2.7.1-3
+    "@subql/types-core": 0.0.0-2
     "@subql/types-cosmos": "workspace:*"
     "@types/bn.js": 4.11.6
     "@types/ejs": ^3.1.2
@@ -4118,10 +4119,11 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@subql/common@npm:2.7.1-0":
-  version: 2.7.1-0
-  resolution: "@subql/common@npm:2.7.1-0"
+"@subql/common@npm:2.7.1-3":
+  version: 2.7.1-3
+  resolution: "@subql/common@npm:2.7.1-3"
   dependencies:
+    "@subql/types-core": 0.0.0-1
     axios: ^0.27.2
     class-transformer: ^0.5.1
     class-validator: ^0.14.0
@@ -4131,22 +4133,22 @@ __metadata:
     reflect-metadata: ^0.1.13
     semver: ^7.5.2
     update-notifier: 5.1.0
-  checksum: d4bf3b39d817c966a0b30944b21c47653a303039e65df341c3464c6f7a3f913e27ea1f0ce2e14a86f35c0fb172bb1e92b3191aed104603ecbc832fd754acd2cd
+  checksum: f05dcc0089f4e10abb438f5beb6dfc1156d2b1fb8b2053ebfbf9417e3f393df1ce5e14a50fcc57e429002704dfc2246b380649b9a3d0845bbb924165e6eb1861
   languageName: node
   linkType: hard
 
-"@subql/node-core@npm:4.2.4-16":
-  version: 4.2.4-16
-  resolution: "@subql/node-core@npm:4.2.4-16"
+"@subql/node-core@npm:4.2.4-25":
+  version: 4.2.4-25
+  resolution: "@subql/node-core@npm:4.2.4-25"
   dependencies:
     "@apollo/client": ^3.7.16
     "@nestjs/common": ^9.4.0
     "@nestjs/event-emitter": ^2.0.0
     "@nestjs/schedule": ^3.0.1
     "@subql/apollo-links": ^1.0.2
-    "@subql/common": 2.7.1-0
-    "@subql/testing": 2.0.2
-    "@subql/types": 2.2.1-1
+    "@subql/common": 2.7.1-3
+    "@subql/testing": 2.0.3-0
+    "@subql/types": 2.2.1-2
     "@subql/utils": 2.4.4-1
     "@subql/x-sequelize": 6.32.0-0.0.2
     "@willsoto/nestjs-prometheus": ^5.4.0
@@ -4162,7 +4164,7 @@ __metadata:
     tar: ^6.1.11
     vm2: ^3.9.19
     yargs: ^16.2.0
-  checksum: a837fef368287bdefff825d1e2f434b41e706b6f1453e40adf77f23b4bde54edaa86ff1e208645cefd9ef8a8a885ab6871f57f8c863a210b0dee60f35b2c2ddc
+  checksum: 4bc02d901941c8b23fa2182bd92526aceb1c02e42234dca3dbdbae997213b4e1dc06462bd5e1bae7c0fbb6225114d8fae286a052528782544fb217f347d4a595
   languageName: node
   linkType: hard
 
@@ -4181,9 +4183,10 @@ __metadata:
     "@nestjs/schedule": ^3.0.1
     "@nestjs/schematics": ^9.2.0
     "@nestjs/testing": ^9.4.0
-    "@subql/common": 2.7.1-0
+    "@subql/common": 2.7.1-3
     "@subql/common-cosmos": "workspace:*"
-    "@subql/node-core": 4.2.4-16
+    "@subql/node-core": 4.2.4-25
+    "@subql/types-core": 0.0.0-2
     "@subql/types-cosmos": "workspace:*"
     "@types/express": ^4.17.13
     "@types/jest": ^27.4.0
@@ -4211,12 +4214,39 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@subql/testing@npm:2.0.2":
-  version: 2.0.2
-  resolution: "@subql/testing@npm:2.0.2"
+"@subql/testing@npm:2.0.3-0":
+  version: 2.0.3-0
+  resolution: "@subql/testing@npm:2.0.3-0"
   dependencies:
-    "@subql/types": ^2.1.3
-  checksum: c564a80d226509c5343b2ffb8f10f6836a16ace8767bd8805db68ae0b01f000ec5e66b889049d1ff3fc401b5e343d447a5407f14515dc572e5695e15c862a37a
+    "@subql/types-core": ^0.0.0-1
+  checksum: ded64670e266309115f1f8003dbf0cef1219ceff7fa30c2f1389588d1e659685b74e44e70d3f3389654a0e2ba2d04dddb239b19253d35af494cc8a93548955b5
+  languageName: node
+  linkType: hard
+
+"@subql/types-core@npm:0.0.0-1":
+  version: 0.0.0-1
+  resolution: "@subql/types-core@npm:0.0.0-1"
+  dependencies:
+    package-json-type: ^1.0.3
+  checksum: fd39376cd64622e34711dfc86c660e1cbc4fac5c72e7ee410d19b0753601024a7455b0b144fe4a1c9903f788686eb2f1c3cb50a7c9a1eb39933102b729958a42
+  languageName: node
+  linkType: hard
+
+"@subql/types-core@npm:0.0.0-2":
+  version: 0.0.0-2
+  resolution: "@subql/types-core@npm:0.0.0-2"
+  dependencies:
+    package-json-type: ^1.0.3
+  checksum: 3cd6a90391a8d206d0140bc84fff3b019a54488b711ce4f3d8c59f5b326dba9fc8b76d233add90b6a8dc953b09a7d3057f5132ec04a4b46e18c1aac49e8c685f
+  languageName: node
+  linkType: hard
+
+"@subql/types-core@npm:^0.0.0-1":
+  version: 0.0.0-0-ts-manifest
+  resolution: "@subql/types-core@npm:0.0.0-0-ts-manifest"
+  dependencies:
+    package-json-type: ^1.0.3
+  checksum: e37e0df66471d763200baa00cf2bea526cdf0a5ee81b496473675e5404fe9553d56a6f7ebb6a6a22916981f6a2a2e2d303c538d8d3120fcd81267cc4703a88d2
   languageName: node
   linkType: hard
 
@@ -11355,6 +11385,13 @@ __metadata:
   version: 2.2.0
   resolution: "p-try@npm:2.2.0"
   checksum: f8a8e9a7693659383f06aec604ad5ead237c7a261c18048a6e1b5b85a5f8a067e469aa24f5bc009b991ea3b058a87f5065ef4176793a200d4917349881216cae
+  languageName: node
+  linkType: hard
+
+"package-json-type@npm:^1.0.3":
+  version: 1.0.3
+  resolution: "package-json-type@npm:1.0.3"
+  checksum: ea93a2ee1cbc480feee94974158605463b8ce8f899e8a09dc008ac83c060fd10d8f38bfdd5f28222196dba1f57de4e65b46b057dc889a704967714da393c2ad9
   languageName: node
   linkType: hard
 

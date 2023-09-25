@@ -17,7 +17,10 @@ import {
 } from '@subql/common-cosmos';
 
 import { NodeConfig, BaseFetchService, getModulos } from '@subql/node-core';
-import { DictionaryQueryEntry, DictionaryQueryCondition } from '@subql/types';
+import {
+  DictionaryQueryEntry,
+  DictionaryQueryCondition,
+} from '@subql/types-core';
 
 import {
   SubqlCosmosEventHandler,

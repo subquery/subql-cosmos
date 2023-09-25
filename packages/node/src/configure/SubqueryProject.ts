@@ -3,12 +3,7 @@
 
 import assert from 'assert';
 import { Injectable } from '@nestjs/common';
-import {
-  ParentProject,
-  Reader,
-  RunnerSpecs,
-  validateSemver,
-} from '@subql/common';
+import { validateSemver } from '@subql/common';
 import {
   CosmosProjectNetworkConfig,
   parseCosmosProjectManifest,
@@ -17,8 +12,6 @@ import {
   isRuntimeCosmosDs,
   CosmosBlockFilter,
   isCustomCosmosDs,
-  RuntimeDatasourceTemplate,
-  CustomDatasourceTemplate,
 } from '@subql/common-cosmos';
 import {
   insertBlockFiltersCronSchedules,
@@ -27,7 +20,12 @@ import {
   SubqlProjectDs,
   updateDataSourcesV1_0_0,
 } from '@subql/node-core';
-import { SubqlCosmosHandlerKind } from '@subql/types-cosmos';
+import { ParentProject, Reader, RunnerSpecs } from '@subql/types-core';
+import {
+  CustomDatasourceTemplate,
+  RuntimeDatasourceTemplate,
+  SubqlCosmosHandlerKind,
+} from '@subql/types-cosmos';
 import { buildSchemaFromString } from '@subql/utils';
 import Cron from 'cron-converter';
 import { GraphQLSchema } from 'graphql';
