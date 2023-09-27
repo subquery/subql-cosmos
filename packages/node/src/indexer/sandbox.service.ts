@@ -20,6 +20,7 @@ export class SandboxService<Api extends CosmosSafeClient> {
 
   constructor(
     private readonly apiService: ApiService,
+    @Inject(isMainThread ? StoreService : 'Null')
     private readonly storeService: StoreService,
     private readonly nodeConfig: NodeConfig,
     @Inject('ISubqueryProject') private readonly project: ISubqueryProject,

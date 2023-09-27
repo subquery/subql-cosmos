@@ -29,7 +29,7 @@ import { CosmosClient } from '../indexer/api.service';
 import { HttpClient } from '../indexer/rpc-clients';
 import { filterMessageData, wrapEvent } from './cosmos';
 
-const ENDPOINT = 'https://rpc-juno.itastakers.com/';
+const ENDPOINT = 'https://rpc-archive.junonetwork.io/';
 const CHAINID = 'juno-1';
 
 const TEST_BLOCKNUMBER = 4136538;

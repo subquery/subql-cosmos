@@ -1,6 +1,7 @@
 // Copyright 2020-2023 SubQuery Pte Ltd authors & contributors
 // SPDX-License-Identifier: GPL-3.0
 
+import { isMainThread } from 'worker_threads';
 import { toRfc3339WithNanoseconds } from '@cosmjs/tendermint-rpc';
 import { Inject, Injectable } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
@@ -10,6 +11,7 @@ import {
   PoiService,
   BaseProjectService,
   IProjectUpgradeService,
+  mainThreadOnly,
 } from '@subql/node-core';
 import { Sequelize } from '@subql/x-sequelize';
 import { SubqueryProject, CosmosProjectDs } from '../configure/SubqueryProject';
@@ -31,12 +33,12 @@ export class ProjectService extends BaseProjectService<
   constructor(
     dsProcessorService: DsProcessorService,
     apiService: ApiService,
-    poiService: PoiService,
-    sequelize: Sequelize,
+    @Inject(isMainThread ? PoiService : 'Null') poiService: PoiService,
+    @Inject(isMainThread ? Sequelize : 'Null') sequelize: Sequelize,
     @Inject('ISubqueryProject') project: SubqueryProject,
     @Inject('IProjectUpgradeService')
     protected readonly projectUpgradeService: IProjectUpgradeService<SubqueryProject>,
-    storeService: StoreService,
+    @Inject(isMainThread ? StoreService : 'Null') storeService: StoreService,
     nodeConfig: NodeConfig,
     dynamicDsService: DynamicDsService,
     eventEmitter: EventEmitter2,
@@ -61,6 +63,7 @@ export class ProjectService extends BaseProjectService<
     return new Date(toRfc3339WithNanoseconds(response.block.header.time));
   }
 
+  @mainThreadOnly()
   protected onProjectChange(project: SubqueryProject): void | Promise<void> {
     // TODO update this when implementing skipBlock feature for Eth
     // this.apiService.updateBlockFetching();
