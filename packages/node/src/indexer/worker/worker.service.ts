@@ -17,7 +17,9 @@ import { ApiService } from '../api.service';
 import { IndexerManager } from '../indexer.manager';
 import { BlockContent } from '../types';
 
-export type FetchBlockResponse = undefined;
+export type FetchBlockResponse = {
+  parentHash: string;
+};
 
 export type WorkerStatusResponse = {
   threadId: number;
@@ -55,8 +57,10 @@ export class WorkerService extends BaseWorkerService<
     return block;
   }
 
-  protected toBlockResponse(block: BlockContent): undefined {
-    return undefined;
+  protected toBlockResponse(block: BlockContent): FetchBlockResponse {
+    return {
+      parentHash: block.block.header.lastBlockId.hash.toString(),
+    };
   }
 
   protected async processFetchedBlock(
