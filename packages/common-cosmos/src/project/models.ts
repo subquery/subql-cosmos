@@ -1,8 +1,8 @@
 // Copyright 2020-2023 SubQuery Pte Ltd authors & contributors
 // SPDX-License-Identifier: GPL-3.0
 
-import {BlockFilterImpl, ProcessorImpl} from '@subql/common';
-import {BaseMapping, FileReference, Processor} from '@subql/types-core';
+import {ProcessorImpl} from '@subql/common';
+import {FileReference, Processor} from '@subql/types-core';
 import {
   SubqlCosmosEventFilter,
   SubqlCosmosHandlerKind,

@@ -1,7 +1,7 @@
 // Copyright 2020-2023 SubQuery Pte Ltd authors & contributors
 // SPDX-License-Identifier: GPL-3.0
 
-import { isMainThread } from 'worker_threads';
+import { isMainThread } from 'node:worker_threads';
 import { toRfc3339WithNanoseconds } from '@cosmjs/tendermint-rpc';
 import { Inject, Injectable } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
@@ -11,7 +11,6 @@ import {
   PoiService,
   BaseProjectService,
   IProjectUpgradeService,
-  mainThreadOnly,
 } from '@subql/node-core';
 import { Sequelize } from '@subql/x-sequelize';
 import { SubqueryProject, CosmosProjectDs } from '../configure/SubqueryProject';
@@ -63,7 +62,6 @@ export class ProjectService extends BaseProjectService<
     return new Date(toRfc3339WithNanoseconds(response.block.header.time));
   }
 
-  @mainThreadOnly()
   protected onProjectChange(project: SubqueryProject): void | Promise<void> {
     // TODO update this when implementing skipBlock feature for Eth
     // this.apiService.updateBlockFetching();

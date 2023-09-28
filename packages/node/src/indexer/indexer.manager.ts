@@ -36,7 +36,6 @@ import {
   DsProcessorService,
 } from './ds-processor.service';
 import { DynamicDsService } from './dynamic-ds.service';
-import { ProjectService } from './project.service';
 import { SandboxService } from './sandbox.service';
 import { BlockContent } from './types';
 import { UnfinalizedBlocksService } from './unfinalizedBlocks.service';
@@ -66,7 +65,6 @@ export class IndexerManager extends BaseIndexerManager<
     dsProcessorService: DsProcessorService,
     dynamicDsService: DynamicDsService,
     unfinalizedBlocksService: UnfinalizedBlocksService,
-    @Inject('IProjectService') private projectService: ProjectService,
   ) {
     super(
       apiService,
@@ -78,11 +76,6 @@ export class IndexerManager extends BaseIndexerManager<
       FilterTypeMap,
       ProcessorTypeMap,
     );
-  }
-
-  async start(): Promise<void> {
-    await this.projectService.init();
-    logger.info('indexer manager started');
   }
 
   @profiler()

@@ -47,6 +47,7 @@ async function createIndexerWorker(
   unfinalizedBlocksService: IUnfinalizedBlocksService<BlockContent>,
   connectionPoolState: ConnectionPoolStateManager<CosmosClientConnection>,
   root: string,
+  startHeight: number,
 ): Promise<IndexerWorker> {
   const indexerWorker = Worker.create<
     IInitIndexerWorker,
@@ -69,7 +70,7 @@ async function createIndexerWorker(
     root,
   );
 
-  await indexerWorker.initWorker();
+  await indexerWorker.initWorker(startHeight);
 
   return indexerWorker;
 }
@@ -112,6 +113,7 @@ export class WorkerBlockDispatcherService
           unfinalizedBlocksSevice,
           connectionPoolState,
           project.root,
+          projectService.startHeight,
         ),
     );
   }

@@ -21,11 +21,9 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import { CosmosProjectNetConfig } from '@subql/common-cosmos';
 import {
   getLogger,
-  NetworkMetadataPayload,
   ConnectionPoolService,
   ApiService as BaseApiService,
 } from '@subql/node-core';
-import { CosmosNetworkConfig } from '@subql/types-cosmos';
 import { CosmWasmSafeClient } from '@subql/types-cosmos/interfaces';
 import {
   MsgClearAdmin,
