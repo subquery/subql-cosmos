@@ -12,6 +12,10 @@ import {
   Processor,
   ProjectManifestV1_0_0,
   BlockFilter,
+  BaseHandler,
+  BaseMapping,
+  BaseDataSource,
+  BaseCustomDataSource,
 } from '@subql/types-core';
 import {CosmosBlock, CosmosTransaction, CosmosMessage, CosmosEvent} from './interfaces';
 
@@ -200,7 +204,8 @@ export type SubqlCosmosEventHandler = SubqlCosmosCustomHandler<SubqlCosmosHandle
  * @template K - The kind of the handler (default: string).
  * @template F - The filter type for the handler (default: Record<string, unknown>).
  */
-export interface SubqlCosmosCustomHandler<K extends string = string, F = Record<string, unknown>> {
+export interface SubqlCosmosCustomHandler<K extends string = string, F = Record<string, unknown>>
+  extends BaseHandler<F, K> {
   /**
    * The kind of handler. For `cosmos/Runtime` datasources this is either `Block`, `Transaction`, `Message` or `Event` kinds.
    * The value of this will determine the filter options as well as the data provided to your handler function
@@ -211,13 +216,6 @@ export interface SubqlCosmosCustomHandler<K extends string = string, F = Record<
    * kind: 'cosmos/EthermintEvmEvent' // Defined with a string, this is used with custom datasources
    */
   kind: K;
-  /**
-   * The name of your handler function. This must be defined and exported from your code.
-   * @type {string}
-   * @example
-   * handler: 'handleBlock'
-   */
-  handler: string;
   /**
    * The filter for the handler. The handler kind will determine the possible filters (optional).
    *
@@ -243,7 +241,7 @@ export type SubqlCosmosHandler = SubqlCosmosRuntimeHandler | SubqlCosmosCustomHa
  * @interface
  * @extends {FileReference}
  */
-export interface SubqlCosmosMapping<T extends SubqlCosmosHandler = SubqlCosmosHandler> extends FileReference {
+export interface SubqlCosmosMapping<T extends SubqlCosmosHandler = SubqlCosmosHandler> extends BaseMapping<T> {
   /**
    * An array of handlers associated with the mapping.
    * @type {T[]}
@@ -264,25 +262,7 @@ export interface SubqlCosmosMapping<T extends SubqlCosmosHandler = SubqlCosmosHa
  * @interface
  * @template M - The mapping type for the datasource.
  */
-interface ISubqlCosmosDatasource<M extends SubqlCosmosMapping> {
-  /**
-   * The kind of the datasource.
-   * @type {string}
-   */
-  kind: string;
-  /**
-   * The starting block number for the datasource. If not specified, 1 will be used (optional).
-   * @type {number}
-   * @default 1
-   */
-  startBlock?: number;
-  /**
-   * The mapping associated with the datasource.
-   * This contains the handlers.
-   * @type {M}
-   */
-  mapping: M;
-}
+type ISubqlCosmosDatasource<M extends SubqlCosmosMapping> = BaseDataSource<SubqlCosmosHandler, M>;
 
 export interface SubqlCosmosProcessorOptions {
   /**
@@ -340,19 +320,14 @@ export interface SubqlCosmosCustomDatasource<
   K extends string = string,
   M extends SubqlCosmosMapping = SubqlCosmosMapping<SubqlCosmosCustomHandler>,
   O = any
-> extends ISubqlCosmosDatasource<M> {
+> extends BaseCustomDataSource<SubqlCosmosHandler, M> {
   /**
    * The kind of the custom datasource. This should follow the pattern `cosmos/*`.
    * @type {K}
    * @example
-   * kind: 'cosmos/FrontierEvm'
+   * kind: 'cosmos/EthermintEvm'
    */
   kind: K;
-  /**
-   * A map of custom datasource assets. These typically include ABIs or other files used to decode data.
-   * @type {Map<string, CustomCosmosDataSourceAsset>}
-   */
-  assets: Map<string, CustomCosmosDataSourceAsset>;
   /**
    * The processor used for the custom datasource.
    * @type {Processor<O>}
