@@ -283,8 +283,8 @@ export interface SubqlCosmosRuntimeDatasource<
   M extends SubqlCosmosMapping<SubqlCosmosRuntimeHandler> = SubqlCosmosMapping<SubqlCosmosRuntimeHandler>
 > extends ISubqlCosmosDatasource<M> {
   /**
-   * The kind of the datasource, which is `substrate/Runtime`.
-   * @type {SubstrateDatasourceKind.Runtime}
+   * The kind of the datasource, which is `cosmos/Runtime`.
+   * @type {SubqlCosmosDatasourceKind.Runtime}
    */
   kind: SubqlCosmosDatasourceKind.Runtime;
   /**
@@ -309,11 +309,10 @@ export type SubqlCosmosDatasource = SubqlCosmosRuntimeDatasource | SubqlCosmosCu
 export type CustomCosmosDataSourceAsset = FileReference;
 
 /**
- * Represents a custom datasource for Substrate.
+ * Represents a custom datasource for Cosmos.
  * @interface
  * @template K - The kind of the datasource (default: string).
- * @template T - The filter type for the datasource (default: SubstrateNetworkFilter).
- * @template M - The mapping type for the datasource (default: SubstrateMapping<SubstrateCustomHandler>).
+ * @template M - The mapping type for the datasource (default: SubqlCosmosMapping<SubqlCosmosCustomHandler>).
  * @template O - The processor options (default: any).
  */
 export interface SubqlCosmosCustomDatasource<
@@ -348,7 +347,7 @@ export interface HandlerInputTransformer_0_0_0<
   E,
   DS extends SubqlCosmosCustomDatasource = SubqlCosmosCustomDatasource
 > {
-  (input: CosmosRuntimeHandlerInputMap[T], ds: DS, api: CosmWasmClient, assets?: Record<string, string>): Promise<E>; //  | SubstrateBuiltinDataSource
+  (input: CosmosRuntimeHandlerInputMap[T], ds: DS, api: CosmWasmClient, assets?: Record<string, string>): Promise<E>;
 }
 
 export interface HandlerInputTransformer_1_0_0<
@@ -363,7 +362,7 @@ export interface HandlerInputTransformer_1_0_0<
     filter?: F;
     api: CosmWasmClient;
     assets?: Record<string, string>;
-  }): Promise<E[]>; //  | SubstrateBuiltinDataSource
+  }): Promise<E[]>;
 }
 
 export type SecondLayerHandlerProcessorArray<

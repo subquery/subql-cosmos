@@ -11,7 +11,7 @@ import {
   RunnerQueryBaseModel,
   validateObject,
 } from '@subql/common';
-import {BaseMapping, NodeSpec, ParentProject, QuerySpec, RunnerSpecs} from '@subql/types-core';
+import {NodeSpec, ParentProject, QuerySpec, RunnerSpecs} from '@subql/types-core';
 import {
   CustomModule,
   SubqlCosmosCustomDatasource,
@@ -23,7 +23,7 @@ import {
   CustomDatasourceTemplate,
   CosmosProjectManifestV1_0_0,
 } from '@subql/types-cosmos';
-import {plainToClass, Transform, TransformFnParams, Type} from 'class-transformer';
+import {Transform, TransformFnParams, Type} from 'class-transformer';
 import {
   Equals,
   IsObject,

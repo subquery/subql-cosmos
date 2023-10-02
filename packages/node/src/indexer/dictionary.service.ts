@@ -7,6 +7,7 @@ import {
   NodeConfig,
   DictionaryService as CoreDictionaryService,
 } from '@subql/node-core';
+import { MetaData } from '@subql/utils';
 import { SubqueryProject } from '../configure/SubqueryProject';
 
 @Injectable()
@@ -23,5 +24,10 @@ export class DictionaryService extends CoreDictionaryService {
       eventEmitter,
       ['lastProcessedHeight', 'chain'],
     );
+  }
+
+  protected validateChainMeta(metaData: MetaData): boolean {
+    // Override node-core method, this should be strict validate chainId only
+    return this.chainId === metaData.chain;
   }
 }
