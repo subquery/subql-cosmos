@@ -40,7 +40,7 @@ describe('project.yaml', () => {
     expect(validateCosmosManifest(cosmosManifest)).toBe(true);
     expect(validateCosmosManifest(ethManifest)).toBe(false);
   });
-  it('Should fail on incorrect chaintypes', () => {
+  it('Validate incorrect chaintypes', () => {
     const cosmosManifest = loadFromJsonOrYaml(
       path.join(projectsDir, './protoTest1', 'bad-chaintypes-project.yaml')
     ) as any;
