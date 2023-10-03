@@ -13,7 +13,6 @@ import {
 } from '@subql/common';
 import {NodeSpec, ParentProject, QuerySpec, RunnerSpecs} from '@subql/types-core';
 import {
-  CustomModule,
   SubqlCosmosCustomDatasource,
   SubqlCosmosCustomHandler,
   SubqlCosmosMapping,
@@ -25,7 +24,12 @@ import {
 } from '@subql/types-cosmos';
 import {Transform, TransformFnParams, Type} from 'class-transformer';
 import {Equals, IsObject, IsString, ValidateNested, IsOptional, IsArray, IsNotEmpty} from 'class-validator';
-import {CosmosCustomDataSourceBase, CosmosCustomModuleImpl, CosmosRuntimeDataSourceBase} from '../../models';
+import {
+  CosmosChainTypes,
+  CosmosCustomDataSourceBase,
+  CosmosCustomModuleImpl,
+  CosmosRuntimeDataSourceBase,
+} from '../../models';
 
 const COSMOS_NODE_NAME = `@subql/node-cosmos`;
 
@@ -66,14 +70,14 @@ export class CosmosProjectNetworkDeployment {
   @IsOptional()
   @Type(() => CosmosCustomModuleImpl)
   @ValidateNested({each: true})
-  chainTypes?: Map<string, CosmosCustomModuleImpl>;
+  chainTypes?: CosmosChainTypes;
 }
 
-export class CosmosProjectNetwork extends CommonProjectNetworkV1_0_0<Map<string, CosmosCustomModuleImpl>> {
+export class CosmosProjectNetwork extends CommonProjectNetworkV1_0_0<CosmosChainTypes> {
   @Type(() => CosmosCustomModuleImpl)
   @IsOptional()
   @ValidateNested({each: true})
-  chainTypes?: Map<string, CosmosCustomModuleImpl>;
+  chainTypes?: CosmosChainTypes;
 }
 
 export class RuntimeDatasourceTemplateImpl extends CosmosRuntimeDataSourceImpl implements RuntimeDatasourceTemplate {
