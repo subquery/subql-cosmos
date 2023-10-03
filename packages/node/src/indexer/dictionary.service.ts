@@ -25,9 +25,4 @@ export class DictionaryService extends CoreDictionaryService {
       ['lastProcessedHeight', 'chain'],
     );
   }
-
-  protected validateChainMeta(metaData: MetaData): boolean {
-    // Override node-core method, this should be strict validate chainId only
-    return this.chainId === metaData.chain;
-  }
 }
