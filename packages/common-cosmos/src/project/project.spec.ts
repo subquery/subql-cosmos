@@ -46,7 +46,7 @@ describe('project.yaml', () => {
     ) as any;
     expect(() => parseCosmosProjectManifest(cosmosManifest)).toThrow('failed to parse project.yaml');
   });
-  it('Ensure correctness on manifest deployment', () => {
+  it('Ensure chainTypes existence on manifest deployment', () => {
     const cosmosManifest = loadFromJsonOrYaml(path.join(projectsDir, './protoTest1', 'project.yaml')) as any;
     const manifest = parseCosmosProjectManifest(cosmosManifest);
     expect(manifest.asImpl.network.chainTypes.size).toBeGreaterThan(0);
