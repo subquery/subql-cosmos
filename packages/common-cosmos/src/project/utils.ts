@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0
 
 import {FileReference} from '@subql/types-core';
-import {CosmosCustomModuleImpl} from '@subql/common-cosmos/project/models';
 import {
   SecondLayerHandlerProcessor,
   SubqlCosmosCustomDatasource,
