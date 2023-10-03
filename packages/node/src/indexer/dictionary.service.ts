@@ -7,7 +7,6 @@ import {
   NodeConfig,
   DictionaryService as CoreDictionaryService,
 } from '@subql/node-core';
-import { MetaData } from '@subql/utils';
 import { SubqueryProject } from '../configure/SubqueryProject';
 
 @Injectable()
