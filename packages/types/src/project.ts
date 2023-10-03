@@ -23,7 +23,9 @@ export type RuntimeDatasourceTemplate = BaseTemplateDataSource<SubqlCosmosDataso
 export type CustomDatasourceTemplate = BaseTemplateDataSource<SubqlCosmosCustomDatasource>;
 
 export type CosmosProjectManifestV1_0_0 = ProjectManifestV1_0_0<
-  SubqlCosmosRuntimeDatasource | SubqlCosmosCustomDatasource
+  SubqlCosmosRuntimeDatasource | SubqlCosmosCustomDatasource,
+  RuntimeDatasourceTemplate | CustomDatasourceTemplate,
+  CosmosNetworkConfig
 >;
 
 export interface CustomModule extends FileReference {

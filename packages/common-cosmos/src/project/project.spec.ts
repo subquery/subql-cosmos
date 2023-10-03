@@ -4,8 +4,8 @@
 import path from 'path';
 import {getManifestPath, loadFromJsonOrYaml} from '@subql/common';
 import {validateCosmosManifest} from '../codegen/util';
+import {parseCosmosProjectManifest} from './load';
 import {CosmosProjectManifestVersioned, VersionedProjectManifest} from './versioned';
-import {loadCosmosProjectManifest, parseCosmosProjectManifest} from './load';
 
 const projectsDir = path.join(__dirname, '../../test');
 
@@ -49,6 +49,6 @@ describe('project.yaml', () => {
   it('Ensure correctness on manifest deployment', () => {
     const cosmosManifest = loadFromJsonOrYaml(path.join(projectsDir, './protoTest1', 'project.yaml')) as any;
     const manifest = parseCosmosProjectManifest(cosmosManifest);
-    expect(manifest.asImpl.deployment.network.chainTypes.size).toBeGreaterThan(0);
+    expect(manifest.asImpl.network.chainTypes.size).toBeGreaterThan(0);
   });
 });

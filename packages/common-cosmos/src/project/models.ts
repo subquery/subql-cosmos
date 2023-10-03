@@ -220,15 +220,8 @@ export class CosmosCustomDataSourceBase<
   assets: Map<string, CustomDataSourceAsset>;
   @Type(() => ProcessorImpl)
   @IsObject()
-<<<<<<< HEAD
   processor: Processor<O>;
   @Type(() => CosmosCustomModuleImpl)
   @ValidateNested({each: true})
-  chainTypes: Map<string, CustomModule>;
-=======
-  processor: FileReference;
-  @Type(() => CosmosCustomModuleImpl)
-  @ValidateNested({each: true})
   chainTypes: Map<string, CosmosCustomModuleImpl>;
->>>>>>> dd005b73 (update class validator)
 }
