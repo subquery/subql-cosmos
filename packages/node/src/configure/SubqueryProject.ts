@@ -10,7 +10,6 @@ import {
   SubqlCosmosDataSource,
   ProjectManifestV1_0_0Impl,
   isRuntimeCosmosDs,
-  CosmosBlockFilter,
   isCustomCosmosDs,
 } from '@subql/common-cosmos';
 import {
@@ -38,13 +37,6 @@ export type CosmosProjectDs = SubqlProjectDs<SubqlCosmosDataSource>;
 export type CosmosProjectDsTemplate =
   | SubqlProjectDs<RuntimeDatasourceTemplate>
   | SubqlProjectDs<CustomDatasourceTemplate>;
-
-export type SubqlProjectBlockFilter = CosmosBlockFilter & {
-  cronSchedule?: {
-    schedule: Cron.Seeker;
-    next: number;
-  };
-};
 
 const NOT_SUPPORT = (name: string) => {
   throw new Error(`Manifest specVersion ${name} is not supported`);
