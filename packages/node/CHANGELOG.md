@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Changed
-- Updated NetworkConfig to use `chaintypes` instead of `chainTypes`
+- Updated NetworkConfig to use `chaintypes` instead of `chainTypes` (#180)
 
 ## [2.10.3] - 2023-09-20
 ### Changed
