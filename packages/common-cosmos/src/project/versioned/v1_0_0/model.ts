@@ -69,7 +69,7 @@ export class CosmosProjectNetworkDeployment {
   chainTypes?: Map<string, CosmosCustomModuleImpl>;
 }
 
-export class CosmosProjectNetwork extends CommonProjectNetworkV1_0_0<CosmosChainTypes<CosmosCustomModuleImpl>> {
+export class CosmosProjectNetwork extends CommonProjectNetworkV1_0_0<CosmosChainTypes> {
   @Type(() => CosmosCustomModuleImpl)
   @IsOptional()
   @ValidateNested({each: true})
