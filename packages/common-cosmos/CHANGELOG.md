@@ -83,7 +83,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.0.5] - 2022-06-15
 [Unreleased]: https://github.com/subquery/subql-cosmos/compare/common-cosmos/3.0.0...HEAD
-[2.5.1]: https://github.com/subquery/subql-cosmos/compare/common-cosmos/2.5.1...common-cosmos/3.0.0
+[3.0.0]: https://github.com/subquery/subql-cosmos/compare/common-cosmos/2.5.1...common-cosmos/3.0.0
 [2.5.1]: https://github.com/subquery/subql-cosmos/compare/common-cosmos/2.5.0...common-cosmos/2.5.1
 [2.5.0]: https://github.com/subquery/subql-cosmos/compare/common-cosmos/2.4.1...common-cosmos/2.5.0
 [2.4.1]: https://github.com/subquery/subql-cosmos/compare/common-cosmos/2.4.0...common-cosmos/2.4.1
