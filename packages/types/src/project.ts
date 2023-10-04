@@ -37,6 +37,8 @@ export interface CustomModule extends FileReference {
   messages: string[];
 }
 
+export type CosmosChainTypes = Map<string, CustomModule>;
+
 export type CustomDataSourceAsset = FileReference;
 
 export enum SubqlCosmosDatasourceKind {
@@ -103,7 +105,7 @@ export type CosmosNetworkConfig = IProjectNetworkConfig & {
       }
     }
    * */
-  chainTypes?: Map<string, CustomModule>;
+  chainTypes?: CosmosChainTypes;
 };
 
 export type SubqlCosmosBlockFilter = BlockFilter;
