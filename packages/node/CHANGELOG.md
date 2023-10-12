@@ -277,8 +277,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Init release
 
-[Unreleased]: https://github.com/subquery/subql-cosmos/compare/v3.0.2...HEAD
-[3.0.2]: https://github.com/subquery/subql-cosmos/compare/v3.0.1...v3.0.2
+[Unreleased]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/3.0.2...HEAD
+[3.0.2]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/3.0.1...node-cosmos/3.0.2
 [3.0.1]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/3.0.0...node-cosmos/3.0.1
 [3.0.0]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/2.10.3...node-cosmos/3.0.0
 [2.10.3]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/2.10.2...node-cosmos/2.10.3
