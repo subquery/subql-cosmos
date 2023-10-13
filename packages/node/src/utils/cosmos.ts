@@ -15,14 +15,14 @@ import {
 } from '@cosmjs/tendermint-rpc/build/tendermint37';
 import { getLogger } from '@subql/node-core';
 import {
-  SubqlCosmosEventFilter,
-  SubqlCosmosMessageFilter,
+  CosmosEventFilter,
+  CosmosMessageFilter,
   CosmosBlock,
   CosmosEvent,
   CosmosTransaction,
   CosmosMessage,
-  SubqlCosmosBlockFilter,
-  SubqlCosmosTxFilter,
+  CosmosBlockFilter,
+  CosmosTxFilter,
 } from '@subql/types-cosmos';
 import { isLong } from 'long';
 import { CosmosClient } from '../indexer/api.service';
@@ -32,7 +32,7 @@ const logger = getLogger('fetch');
 
 export function filterBlock(
   data: CosmosBlock,
-  filter?: SubqlCosmosBlockFilter,
+  filter?: CosmosBlockFilter,
 ): boolean {
   if (!filter) {
     return true;
@@ -45,7 +45,7 @@ export function filterBlock(
 
 export function filterTx(
   data: CosmosTransaction,
-  filter?: SubqlCosmosTxFilter,
+  filter?: CosmosTxFilter,
 ): boolean {
   if ((!filter || !filter.includeFailedTx) && data.tx.code !== 0) {
     logger.debug(`filtered out failed tx {${data.hash}}`);
@@ -59,7 +59,7 @@ export function filterTx(
 
 export function filterMessageData(
   data: CosmosMessage,
-  filter?: SubqlCosmosMessageFilter,
+  filter?: CosmosMessageFilter,
 ): boolean {
   if (!filter) return true;
   if (!filterTx(data.tx, filter)) {
@@ -102,10 +102,7 @@ export function filterMessageData(
 
 export function filterMessages(
   messages: CosmosMessage[],
-  filterOrFilters?:
-    | SubqlCosmosMessageFilter
-    | SubqlCosmosMessageFilter[]
-    | undefined,
+  filterOrFilters?: CosmosMessageFilter | CosmosMessageFilter[] | undefined,
 ): CosmosMessage[] {
   if (messages === null) {
     return [];
@@ -129,7 +126,7 @@ export function filterMessages(
 
 export function filterEvent(
   event: CosmosEvent,
-  filter?: SubqlCosmosEventFilter,
+  filter?: CosmosEventFilter,
 ): boolean {
   if (!filter) return true;
   if (filter.type !== event.event.type) {
@@ -159,10 +156,7 @@ export function filterEvent(
 
 export function filterEvents(
   events: CosmosEvent[],
-  filterOrFilters?:
-    | SubqlCosmosEventFilter
-    | SubqlCosmosEventFilter[]
-    | undefined,
+  filterOrFilters?: CosmosEventFilter | CosmosEventFilter[] | undefined,
 ): CosmosEvent[] {
   if (
     !filterOrFilters ||
