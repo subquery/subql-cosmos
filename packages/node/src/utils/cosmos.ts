@@ -88,7 +88,6 @@ export function filterMessageData(
       }
     }
   }
-  console.log(data.msg.decodedMsg.msg);
   if (
     filter.type === '/cosmwasm.wasm.v1.MsgExecuteContract' &&
     filter.contractCall &&
