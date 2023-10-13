@@ -24,6 +24,7 @@ import {
   SubqlCosmosBlockFilter,
   SubqlCosmosTxFilter,
 } from '@subql/types-cosmos';
+import { isObjectLike } from 'lodash';
 import { isLong } from 'long';
 import { CosmosClient } from '../indexer/api.service';
 import { BlockContent } from '../indexer/types';
@@ -87,12 +88,14 @@ export function filterMessageData(
       }
     }
   }
+  console.log(data.msg.decodedMsg.msg);
   if (
     filter.type === '/cosmwasm.wasm.v1.MsgExecuteContract' &&
     filter.contractCall &&
     !(
       filter.contractCall === data.msg.decodedMsg.msg ||
-      filter.contractCall in data.msg.decodedMsg.msg
+      (isObjectLike(data.msg.decodedMsg.msg) &&
+        filter.contractCall in data.msg.decodedMsg.msg)
     )
   ) {
     return false;
