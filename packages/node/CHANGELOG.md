@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Changed
 - Update type names to be consistent with main SDK (#189)
+### Fixed
+- Fix contractCall filtering issue on non-object calls (#188)
 
 ## [3.0.2] - 2023-10-12
 ### Changed
