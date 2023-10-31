@@ -229,6 +229,6 @@ export async function generateProto(
       : '';
     throw new Error(`Failed to generate from protobufs. ${e.message}, ${errorMessage}`);
   } finally {
-    // fs.rmSync(tmpPath, {recursive: true, force: true});
+    fs.rmSync(tmpPath, {recursive: true, force: true});
   }
 }
