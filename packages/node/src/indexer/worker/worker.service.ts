@@ -59,7 +59,7 @@ export class WorkerService extends BaseWorkerService<
 
   protected toBlockResponse(block: BlockContent): FetchBlockResponse {
     return {
-      parentHash: block.block.header.lastBlockId.hash.toString(),
+      parentHash: block.block.header.lastBlockId?.hash.toString(),
     };
   }
 
