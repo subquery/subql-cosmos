@@ -18,7 +18,7 @@ import { IndexerManager } from '../indexer.manager';
 import { BlockContent } from '../types';
 
 export type FetchBlockResponse = {
-  parentHash: string | null;
+  parentHash: string | undefined;
 };
 
 export type WorkerStatusResponse = {
