@@ -5,8 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [3.3.2] - 2023-11-13
 ### Changed
-- Updates to match changes in `@subql/node-core` (#209)
+- Updates to match changes in 
   - Dictionary service to use dictionary registry
   - Use yargs from node core
 
@@ -318,7 +320,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Init release
 
-[Unreleased]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/3.3.1...HEAD
+[Unreleased]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/3.3.2...HEAD
+[3.3.2]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/3.3.1...node-cosmos/3.3.2
 [3.3.1]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/3.3.0...node-cosmos/3.3.1
 [3.3.0]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/3.2.0...node-cosmos/3.3.0
 [3.2.0]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/3.1.1...node-cosmos/3.2.0
