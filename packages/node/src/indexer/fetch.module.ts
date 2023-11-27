@@ -108,7 +108,6 @@ import { UnfinalizedBlocksService } from './unfinalizedBlocks.service';
         InMemoryCacheService,
         StoreService,
         StoreCacheService,
-        PoiService,
         PoiSyncService,
         'ISubqueryProject',
         DynamicDsService,
