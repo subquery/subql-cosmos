@@ -46,7 +46,7 @@
     "test:all": "node --expose-gc ./node_modules/.bin/jest --logHeapUsage --testRegex='.*\\.(spec|test)\\.ts$' --forceExit --ci -w=2 --clearMocks",
     "test:docker": "docker-compose -f test/docker-compose.yaml up --remove-orphans --abort-on-container-exit --build test",
     "test-jest": "jest --testRegex='.*\\.(spec|test)\\.ts$' --forceExit",
-    "postinstall": "husky install"
+    "postinstall": "husky install && patch-package"
   },
   "lint-staged": {
     "*.ts": [
@@ -59,6 +59,7 @@
   },
   "packageManager": "yarn@3.1.1",
   "dependencies": {
-    "@geut/chan": "^3.2.9"
+    "@geut/chan": "^3.2.9",
+    "patch-package": "^8.0.0"
   }
 }
