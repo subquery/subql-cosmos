@@ -142,6 +142,7 @@ describe('ApiService Chihuahua', () => {
     await prepareApiService();
   });
 
+  // This is to test https://github.com/cosmos/cosmjs/issues/1543
   it('chihuahua test, can query block result', async () => {
     const api = apiService.api;
     const blockInfo = await api.blockInfo(TEST_CHIHUAHUA);
