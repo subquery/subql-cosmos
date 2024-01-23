@@ -4307,7 +4307,33 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@subql/common-cosmos@workspace:*, @subql/common-cosmos@workspace:packages/common-cosmos":
+"@subql/common-cosmos@npm:3.2.2-0":
+  version: 3.2.2-0
+  resolution: "@subql/common-cosmos@npm:3.2.2-0"
+  dependencies:
+    "@cosmology/telescope": ^0.104.0
+    "@cosmwasm/ts-codegen": ^0.35.3
+    "@protobufs/cosmos": ^0.1.0
+    "@protobufs/cosmos_proto": ^0.0.10
+    "@protobufs/cosmwasm": ^0.1.1
+    "@protobufs/gogoproto": ^0.0.10
+    "@protobufs/google": ^0.0.10
+    "@protobufs/ibc": ^0.1.0
+    "@protobufs/tendermint": ^0.0.10
+    "@subql/common": ^3.3.1
+    "@subql/types-cosmos": 3.2.2
+    fs-extra: ^11.1.1
+    js-yaml: ^4.1.0
+    reflect-metadata: ^0.1.13
+  peerDependencies:
+    class-transformer: "*"
+    class-validator: "*"
+    ejs: "*"
+  checksum: d05c0db913fd9b074277cc0642441fa66b1c4ffc88060ede4f616c226a74e5173fdae034988d14c6ddaff3a9a8eb97d065d2c0c4305d1101a7a433f2588c19bc
+  languageName: node
+  linkType: hard
+
+"@subql/common-cosmos@workspace:packages/common-cosmos":
   version: 0.0.0-use.local
   resolution: "@subql/common-cosmos@workspace:packages/common-cosmos"
   dependencies:
@@ -4420,9 +4446,9 @@ __metadata:
     "@nestjs/schematics": ^9.2.0
     "@nestjs/testing": ^9.4.0
     "@subql/common": ^3.3.1
-    "@subql/common-cosmos": "workspace:*"
+    "@subql/common-cosmos": 3.2.2-0
     "@subql/node-core": ^7.0.6
-    "@subql/types-cosmos": "workspace:*"
+    "@subql/types-cosmos": 3.2.2
     "@types/express": ^4.17.13
     "@types/jest": ^27.4.0
     "@types/lodash": ^4.14.178
@@ -4444,7 +4470,7 @@ __metadata:
     vm2: ^3.9.9
     yargs: ^16.2.0
   peerDependencies:
-    "@subql/utils": "*"
+    "@subql/utils": 2.6.3-0
   bin:
     subql-node-cosmos: ./bin/run
   languageName: unknown
@@ -4477,7 +4503,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@subql/types-cosmos@workspace:*, @subql/types-cosmos@workspace:packages/types":
+"@subql/types-cosmos@3.2.2, @subql/types-cosmos@workspace:*, @subql/types-cosmos@workspace:packages/types":
   version: 0.0.0-use.local
   resolution: "@subql/types-cosmos@workspace:packages/types"
   dependencies:

@@ -1,6 +1,6 @@
 {
   "name": "@subql/node-cosmos",
-  "version": "3.4.7-0",
+  "version": "3.4.7-3",
   "description": "",
   "author": "SubQuery Pte Ltd",
   "license": "GPL-3.0",
@@ -30,9 +30,9 @@
     "@nestjs/platform-express": "^9.4.0",
     "@nestjs/schedule": "^3.0.1",
     "@subql/common": "^3.3.1",
-    "@subql/common-cosmos": "workspace:*",
+    "@subql/common-cosmos": "3.2.2-0",
     "@subql/node-core": "^7.0.6",
-    "@subql/types-cosmos": "workspace:*",
+    "@subql/types-cosmos": "3.2.2",
     "cosmjs-types": "^0.7.0",
     "cron-converter": "^1.0.2",
     "eventemitter2": "^6.4.5",
@@ -59,10 +59,11 @@
     "nodemon": "^2.0.15"
   },
   "peerDependencies": {
-    "@subql/utils": "*"
+    "@subql/utils": "2.6.3-0"
   },
   "files": [
     "/dist",
-    "/bin"
+    "/bin",
+    "patches"
   ]
 }
