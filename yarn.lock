@@ -4373,9 +4373,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@subql/node-core@npm:^7.0.8":
-  version: 7.0.8
-  resolution: "@subql/node-core@npm:7.0.8"
+"@subql/node-core@npm:^7.1.0":
+  version: 7.1.0
+  resolution: "@subql/node-core@npm:7.1.0"
   dependencies:
     "@apollo/client": ^3.8.8
     "@nestjs/common": ^9.4.0
@@ -4385,11 +4385,12 @@ __metadata:
     "@subql/common": 3.3.1
     "@subql/testing": 2.1.0
     "@subql/types": 3.3.0
-    "@subql/utils": 2.6.2
+    "@subql/utils": 2.7.0
     "@willsoto/nestjs-prometheus": ^5.4.0
     async-lock: ^1.4.0
     async-mutex: ^0.4.0
     cross-fetch: ^3.1.6
+    csv-stringify: ^6.4.5
     dayjs: ^1.10.7
     lodash: ^4.17.21
     lru-cache: 10.1.0
@@ -4399,7 +4400,7 @@ __metadata:
     tar: ^6.1.11
     vm2: ^3.9.19
     yargs: ^16.2.0
-  checksum: 502b257e0b759f1d9032ed28421c12ea49ba00e5817215ac4961d8885a0efbe1acd69e566a9d03f66373f6a7880443446f58e42ede1738e70342c4986d5e2ee1
+  checksum: e7bd14075f04771851d658aace3690ea09b032267d42ab73bd27cc1340726a667e7bf668d9583b197475c9d9fc6ff6df69725acfead17fc4d7360d5ce900ad84
   languageName: node
   linkType: hard
 
@@ -4420,7 +4421,7 @@ __metadata:
     "@nestjs/testing": ^9.4.0
     "@subql/common": ^3.3.1
     "@subql/common-cosmos": "workspace:*"
-    "@subql/node-core": ^7.0.8
+    "@subql/node-core": ^7.1.0
     "@subql/types-cosmos": "workspace:*"
     "@types/express": ^4.17.13
     "@types/jest": ^27.4.0
@@ -4495,9 +4496,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@subql/utils@npm:2.6.2":
-  version: 2.6.2
-  resolution: "@subql/utils@npm:2.6.2"
+"@subql/utils@npm:2.7.0":
+  version: 2.7.0
+  resolution: "@subql/utils@npm:2.7.0"
   dependencies:
     "@polkadot/util": ^12.5.1
     "@polkadot/util-crypto": ^12.5.1
@@ -4513,7 +4514,7 @@ __metadata:
     rotating-file-stream: ^3.0.2
     semver: ^7.5.2
     tar: ^6.1.11
-  checksum: 1d24b0a4cfc57fa01d6940c887176ac339f369f9f638ebc1314698bf531b4a627377fc5ca0236728d6f74e9055235665a23660fa82d895574e8e1ad8b66d70e4
+  checksum: fd0b783a1b648d3364670cbfdc173685f76c04c14868849a336206a1ae308036e11d48a7ed48561c29f5a2ba1bb964d3a2fab08f2676fb61fba1f1385099ea24
   languageName: node
   linkType: hard
 
@@ -7022,6 +7023,13 @@ __metadata:
   dependencies:
     cssom: ~0.3.6
   checksum: 5f05e6fd2e3df0b44695c2f08b9ef38b011862b274e320665176467c0725e44a53e341bc4959a41176e83b66064ab786262e7380fd1cabeae6efee0d255bb4e3
+  languageName: node
+  linkType: hard
+
+"csv-stringify@npm:^6.4.5":
+  version: 6.4.5
+  resolution: "csv-stringify@npm:6.4.5"
+  checksum: 4da6ceb911735294c970880f295afc8f5e140702bb3f239f2cee2feb7f88f989e25238bae59558ad6b6f16adeb9407e74259f614ed3a9d49d06656aaac4d222e
   languageName: node
   linkType: hard
 
