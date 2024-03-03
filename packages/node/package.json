@@ -23,6 +23,8 @@
     "@cosmjs/cosmwasm-stargate": "^0.32.3",
     "@cosmjs/proto-signing": "^0.32.3",
     "@cosmjs/stargate": "^0.32.3",
+    "@kyvejs/protocol": "^1.0.12",
+    "@kyvejs/sdk": "^1.1.1",
     "@nestjs/common": "^9.4.0",
     "@nestjs/core": "^9.4.0",
     "@nestjs/event-emitter": "^2.0.0",

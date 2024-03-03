@@ -334,6 +334,7 @@ export async function fetchBlocksBatches(
   blockArray: number[],
 ): Promise<IBlock<BlockContent>[]> {
   const blocks = await fetchCosmosBlocksArray(api, blockArray);
+  // todo add kyve support here
   return blocks.map(([blockInfo, blockResults]) => {
     try {
       assert(
