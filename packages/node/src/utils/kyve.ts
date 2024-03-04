@@ -19,7 +19,7 @@ export class KyveApi {
   private respAdaptor = adaptor37.responses;
   private poolId: string;
   private currentBundleId = 1;
-  // add a mem array for the unzipped data
+  // TODO in memory unzipped blocks
 
   constructor(
     private chainId: string,
