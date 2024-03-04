@@ -14,6 +14,11 @@ describe('KyveClient', () => {
     await kyveApi.init();
   });
 
+  it('getBundleById', async () => {
+    const v = await (kyveApi as any).getBundleById('113773');
+    console.log(v);
+  });
+
   it('ensure correct bundle ID on binary search', async () => {
     const a = Date.now();
     const v = await (kyveApi as any).getBundleId(3489747); // https://app.kyve.network/#/pools/2/bundles/5149474

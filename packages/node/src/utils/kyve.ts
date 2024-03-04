@@ -1,6 +1,7 @@
 // Copyright 2020-2024 SubQuery Pte Ltd authors & contributors
 // SPDX-License-Identifier: GPL-3.0
 
+import { JsonRpcSuccessResponse } from '@cosmjs/json-rpc';
 import { adaptor37 } from '@cosmjs/tendermint-rpc/build/tendermint37/adaptor';
 import {
   BlockResponse,
@@ -11,15 +12,22 @@ import { Arweave } from '@kyvejs/protocol/dist/src/reactors/storageProviders/Arw
 import { Bundlr } from '@kyvejs/protocol/dist/src/reactors/storageProviders/Bundlr';
 import KyveSDK, { KyveLCDClientType } from '@kyvejs/sdk';
 import { SupportedChains } from '@kyvejs/sdk/src/constants';
+import kyveQueryBundles from '@kyvejs/types/client/kyve/query/v1beta1/bundles';
 
 const BUNDLE_TIMEOUT = 10000; //ms
+
+interface UnZippedKyveBlockReponse {
+  // DataItem (if using kyve types)
+  value: { block: any; block_results: any };
+  key: string;
+}
 
 export class KyveApi {
   private lcdClient: KyveLCDClientType;
   private respAdaptor = adaptor37.responses;
   private poolId: string;
   private currentBundleId = 1;
-  // TODO in memory unzipped blocks
+  private cachedBlocks: UnZippedKyveBlockReponse[];
 
   constructor(
     private chainId: string,
@@ -72,7 +80,7 @@ export class KyveApi {
   private async unzipStorageData(
     compressionId: string,
     storageData: any,
-  ): Promise<any> {
+  ): Promise<UnZippedKyveBlockReponse[]> {
     const g = new Gzip();
     if (parseInt(compressionId) === 0) {
       throw new Error('No Compression');
@@ -84,7 +92,7 @@ export class KyveApi {
     return JSON.parse(parsedString);
   }
 
-  private decodeBlock(block: any) {
+  private decodeBlock(block: JsonRpcSuccessResponse): BlockResponse {
     return this.respAdaptor.decodeBlock({
       id: 10,
       jsonrpc: '2.0',
@@ -92,7 +100,9 @@ export class KyveApi {
     });
   }
 
-  private decodeBlockResult(blockResult: any) {
+  private decodeBlockResult(
+    blockResult: JsonRpcSuccessResponse,
+  ): BlockResultsResponse {
     return this.respAdaptor.decodeBlockResults({
       id: 10,
       jsonrpc: '2.0',
@@ -100,7 +110,7 @@ export class KyveApi {
     });
   }
 
-  // TODO types
+  // TODO types kyveQueryBundles.QueryFinalizedBundleResponse, but I think the type is wrong
   private async getBundleById(bundleId: string): Promise<any> {
     return this.lcdClient.kyve.query.v1beta1.finalizedBundle({
       pool_id: this.poolId,
@@ -108,8 +118,9 @@ export class KyveApi {
     });
   }
 
-  private async getLatestBundleId() {
+  private async getLatestBundleId(): Promise<string> {
     // TODO see if there is a better query that can get bundle total
+    // type: kyveQueryBundlesRes.QueryFinalizedBundlesResponse
     return (
       await this.lcdClient.kyve.query.v1beta1.finalizedBundles({
         pool_id: this.poolId,
@@ -121,19 +132,9 @@ export class KyveApi {
     ).pagination.total;
   }
 
-  // TODO should use this for binary search to improve performance
-  private async getBundles(key?: string, offset?: string) {
-    return this.lcdClient.kyve.query.v1beta1.finalizedBundles({
-      pool_id: this.poolId,
-      index: '160', // useless field kyve has wrong typing
-      pagination: {
-        key: key,
-        offset: offset,
-      },
-    });
-  }
-  private async getBundleId(height: number) {
+  private async getBundleId(height: number): Promise<number> {
     // TODO use pagination instead
+    // TODO can cache the results here as well
     const latestBundleId = parseInt(await this.getLatestBundleId());
 
     let low = this.currentBundleId;
@@ -161,6 +162,12 @@ export class KyveApi {
     return startBundleId;
   }
 
+  private findBlockByHeight(height: number): UnZippedKyveBlockReponse {
+    return this.cachedBlocks.find(
+      (bk: UnZippedKyveBlockReponse) => bk.key === height.toString(),
+    );
+  }
+
   async getBlockByHeight(
     height: number,
   ): Promise<[BlockResponse, BlockResultsResponse]> {
@@ -168,16 +175,29 @@ export class KyveApi {
     const rawBundle = await this.getBundleById(bundleId.toString());
     const bundleData = await this.retrieveBundleData(rawBundle);
 
-    const blockData = (
-      await this.unzipStorageData(
+    if (!this.cachedBlocks) {
+      this.cachedBlocks = await this.unzipStorageData(
         rawBundle.compression_id,
         bundleData.storageData,
-      )
-    ).find((bk: { value: any; key: string }) => bk.key === height.toString());
+      );
+    }
+    const blockData = this.findBlockByHeight(height);
 
     return [
       this.decodeBlock(blockData.value.block),
       this.decodeBlockResult(blockData.value.block_results),
     ];
+  }
+
+  // TODO should use this for binary search to improve performance
+  private async getBundles(key?: string, offset?: string) {
+    return this.lcdClient.kyve.query.v1beta1.finalizedBundles({
+      pool_id: this.poolId,
+      index: '160', // useless field kyve has wrong typing
+      pagination: {
+        key: key,
+        offset: offset,
+      },
+    });
   }
 }
