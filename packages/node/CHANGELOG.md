@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.9.1] - 2024-03-14
+### Changed
+- Update `@subql/node-core` to 4.7.2 with graphql comments escaping fix
+
 ## [3.9.0] - 2024-03-06
 ### Changed
 - Update `@subql/node-core` to 7.4.0
@@ -372,7 +376,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Init release
 
-[Unreleased]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/3.9.0...HEAD
+[Unreleased]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/3.9.1...HEAD
+[3.9.1]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/3.9.0...node-cosmos/3.9.1
 [3.9.0]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/3.8.1...node-cosmos/3.9.0
 [3.8.1]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/3.8.0...node-cosmos/3.8.1
 [3.8.0]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/3.5.1...node-cosmos/3.8.0
