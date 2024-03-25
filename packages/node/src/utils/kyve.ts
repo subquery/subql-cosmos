@@ -7,17 +7,16 @@ import {
   BlockResponse,
   BlockResultsResponse,
 } from '@cosmjs/tendermint-rpc/build/tendermint37/responses';
+// Currently these types are not exported
 import { Gzip } from '@kyvejs/protocol/dist/src/reactors/compression/Gzip';
 import { Arweave } from '@kyvejs/protocol/dist/src/reactors/storageProviders/Arweave';
 import { Bundlr } from '@kyvejs/protocol/dist/src/reactors/storageProviders/Bundlr';
 import KyveSDK, { KyveLCDClientType } from '@kyvejs/sdk';
 import { SupportedChains } from '@kyvejs/sdk/src/constants';
-import kyveQueryBundles from '@kyvejs/types/client/kyve/query/v1beta1/bundles';
 
-const BUNDLE_TIMEOUT = 10000; //ms
+const BUNDLE_TIMEOUT = 100000; //ms
 
 interface UnZippedKyveBlockReponse {
-  // DataItem (if using kyve types)
   value: { block: any; block_results: any };
   key: string;
 }
@@ -26,7 +25,7 @@ export class KyveApi {
   private lcdClient: KyveLCDClientType;
   private respAdaptor = adaptor37.responses;
   private poolId: string;
-  private currentBundleId = 1;
+  private currentBundleId: number;
   private cachedBlocks: UnZippedKyveBlockReponse[];
 
   constructor(
@@ -36,7 +35,7 @@ export class KyveApi {
     this.lcdClient = new KyveSDK(kyveChainId).createLCDClient();
   }
   async init(): Promise<void> {
-    this.currentBundleId = 1; // should be start key provided by the pool
+    this.currentBundleId = 0;
     await this.setPoolId();
   }
   private async getAllPools() {
@@ -54,27 +53,24 @@ export class KyveApi {
     this.poolId = pool.id;
   }
 
-  // FinalizedBundle from kyve is not correct
   private async retrieveBundleData(
     bundleResponse: any,
   ): Promise<{ storageId: string; storageData: any }> {
-    let data: { storageId: string; storageData: any };
     const { storage_id, storage_provider_id } = bundleResponse;
-
-    if (storage_provider_id === '0') {
-      throw new Error('No storage, no existing stored data');
+    switch (parseInt(storage_provider_id) ?? 0) {
+      case 0:
+        throw new Error('No storage, no existing stored data');
+      case 1:
+        return new Arweave('1').retrieveBundle(storage_id, BUNDLE_TIMEOUT);
+      case 2:
+        return new Bundlr('1').retrieveBundle(storage_id, BUNDLE_TIMEOUT);
+      default:
+        throw new Error('Unsupported storage provider');
     }
+  }
 
-    if (storage_provider_id === '1') {
-      // todo temp storage priv
-      data = await new Arweave('1').retrieveBundle(storage_id, BUNDLE_TIMEOUT);
-    }
-
-    if (storage_provider_id === '2') {
-      // todo temp storage priv
-      data = await new Bundlr('1').retrieveBundle(storage_id, BUNDLE_TIMEOUT);
-    }
-    return data;
+  private async injectLogs() {
+    // TODO
   }
 
   private async unzipStorageData(
@@ -110,32 +106,31 @@ export class KyveApi {
     });
   }
 
-  // TODO types kyveQueryBundles.QueryFinalizedBundleResponse, but I think the type is wrong
-  private async getBundleById(bundleId: string): Promise<any> {
+  private async getBundleById(bundleId: number): Promise<any> {
     return this.lcdClient.kyve.query.v1beta1.finalizedBundle({
       pool_id: this.poolId,
-      id: bundleId,
+      id: bundleId.toString(),
     });
   }
 
-  private async getLatestBundleId(): Promise<string> {
-    // TODO see if there is a better query that can get bundle total
-    // type: kyveQueryBundlesRes.QueryFinalizedBundlesResponse
+  private async getLatestBundleId(): Promise<number> {
     return (
-      await this.lcdClient.kyve.query.v1beta1.finalizedBundles({
-        pool_id: this.poolId,
-        index: '160', // useless field kyve has wrong typing
-        pagination: {
-          limit: '1',
-        },
-      })
-    ).pagination.total;
+      parseInt(
+        (
+          await this.lcdClient.kyve.query.v1beta1.finalizedBundles({
+            pool_id: this.poolId,
+            index: '1',
+            pagination: {
+              limit: '1',
+            },
+          })
+        ).pagination.total,
+      ) - 1
+    ); // bundle id starts from 0
   }
 
   private async getBundleId(height: number): Promise<number> {
-    // TODO use pagination instead
-    // TODO can cache the results here as well
-    const latestBundleId = parseInt(await this.getLatestBundleId());
+    const latestBundleId = await this.getLatestBundleId();
 
     let low = this.currentBundleId;
     let high = latestBundleId;
@@ -143,23 +138,24 @@ export class KyveApi {
 
     while (low <= high) {
       const mid = Math.floor((low + high) / 2);
-      const midBundle = await this.getBundleById(mid.toString()); // You'll need to implement this method
+      const midBundle = await this.getBundleById(mid);
 
       const fromKey = parseInt(midBundle.from_key);
       const toKey = parseInt(midBundle.to_key);
 
+      if (height >= fromKey && height <= toKey) {
+        startBundleId = mid;
+        this.currentBundleId = startBundleId;
+        return startBundleId;
+      }
+
       if (height > toKey) {
         low = mid + 1;
-      } else if (height < fromKey) {
-        high = mid - 1;
       } else {
-        startBundleId = mid;
-        break;
+        high = mid - 1;
       }
     }
-
-    this.currentBundleId = startBundleId;
-    return startBundleId;
+    throw new Error('No suitable bundle found for the given height.');
   }
 
   private findBlockByHeight(height: number): UnZippedKyveBlockReponse {
@@ -172,7 +168,7 @@ export class KyveApi {
     height: number,
   ): Promise<[BlockResponse, BlockResultsResponse]> {
     const bundleId = await this.getBundleId(height);
-    const rawBundle = await this.getBundleById(bundleId.toString());
+    const rawBundle = await this.getBundleById(bundleId);
     const bundleData = await this.retrieveBundleData(rawBundle);
 
     if (!this.cachedBlocks) {
@@ -187,17 +183,5 @@ export class KyveApi {
       this.decodeBlock(blockData.value.block),
       this.decodeBlockResult(blockData.value.block_results),
     ];
-  }
-
-  // TODO should use this for binary search to improve performance
-  private async getBundles(key?: string, offset?: string) {
-    return this.lcdClient.kyve.query.v1beta1.finalizedBundles({
-      pool_id: this.poolId,
-      index: '160', // useless field kyve has wrong typing
-      pagination: {
-        key: key,
-        offset: offset,
-      },
-    });
   }
 }
