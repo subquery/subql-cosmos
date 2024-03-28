@@ -90,7 +90,7 @@ export class KyveApi {
 
   private decodeBlock(block: JsonRpcSuccessResponse): BlockResponse {
     return this.respAdaptor.decodeBlock({
-      id: 10,
+      id: 10, // todo
       jsonrpc: '2.0',
       result: block,
     });
