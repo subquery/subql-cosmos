@@ -193,6 +193,7 @@ export async function fetchCosmosBlocksArray(
   api: CosmosClient,
   blockArray: number[],
 ): Promise<[BlockResponse, BlockResultsResponse][]> {
+  // todo this is where kyve introduction should be.
   return Promise.all(
     blockArray.map(async (height) => getBlockByHeight(api, height)),
   );
@@ -275,6 +276,40 @@ export function wrapBlockBeginAndEndEvents(
       },
   );
 }
+// TODO this should be replacing the current implementation, but then, the rpc request should be source of truth.
+export function kyveWrapEvent(
+  block: CosmosBlock,
+  txs: CosmosTransaction[],
+  api: CosmosClient,
+  idxOffset: number, //use this offset to avoid clash with idx of begin block events
+): CosmosEvent[] {
+  const events: CosmosEvent[] = [];
+  for (const tx of txs) {
+    let msgIndex = -1;
+    for (const event of tx.tx.events) {
+      if (
+        event.type === 'message' &&
+        event.attributes.find((e) => e.key === 'action')
+      ) {
+        msgIndex += 1;
+      }
+
+      if (msgIndex >= 0) {
+        const msg = wrapCosmosMsg(block, tx, msgIndex, api);
+        const cosmosEvent: CosmosEvent = {
+          idx: idxOffset++,
+          msg,
+          tx,
+          block,
+          log: undefined,
+          event,
+        };
+        events.push(cosmosEvent);
+      }
+    }
+  }
+  return events;
+}
 
 export function wrapEvent(
   block: CosmosBlock,
@@ -342,7 +377,7 @@ export async function fetchBlocksBatches(
   });
 }
 
-class LazyBlockContent implements BlockContent {
+export class LazyBlockContent implements BlockContent {
   private _wrappedBlock: CosmosBlock;
   private _wrappedTransaction: CosmosTransaction[];
   private _wrappedMessage: CosmosMessage[];
@@ -355,6 +390,7 @@ class LazyBlockContent implements BlockContent {
     private _blockInfo: BlockResponse,
     private _results: BlockResultsResponse,
     private _api: CosmosClient,
+    private _kyveBlock = false,
   ) {}
 
   get block() {
@@ -382,12 +418,14 @@ class LazyBlockContent implements BlockContent {
 
   get events() {
     if (!this._wrappedEvent) {
-      this._wrappedEvent = wrapEvent(
-        this.block,
-        this.transactions,
-        this._api,
-        this._eventIdx,
-      );
+      this._wrappedEvent = this._kyveBlock
+        ? kyveWrapEvent(
+            this.block,
+            this.transactions,
+            this._api,
+            this._eventIdx,
+          )
+        : wrapEvent(this.block, this.transactions, this._api, this._eventIdx);
       this._eventIdx += this._wrappedEvent.length;
     }
     return this._wrappedEvent;
