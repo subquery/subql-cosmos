@@ -163,7 +163,6 @@ export class KyveApi {
   async getBlockByHeight(
     height: number,
   ): Promise<[BlockResponse, BlockResultsResponse]> {
-    console.log('using kyve get block');
     const bundleId = await this.getBundleId(height);
     const rawBundle = await this.getBundleById(bundleId);
     const bundleData = await this.retrieveBundleData(rawBundle);
