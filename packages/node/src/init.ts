@@ -36,6 +36,7 @@ export async function bootstrap(): Promise<void> {
     process.exit(1);
   }
 
+  console.log('argv at init', argv);
   if (argv.unsafe) {
     logger.warn(
       'UNSAFE MODE IS ENABLED. This is not recommended for most projects and will not be supported by our hosted service',

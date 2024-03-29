@@ -91,7 +91,7 @@ describe('KyveApi', () => {
         tendermintBlockResult,
         api,
       );
-      kyveLazyBlockContent = new LazyBlockContent(bi, br, api, true);
+      kyveLazyBlockContent = new LazyBlockContent(bi, br, api, kyveApi);
     });
     it('wrapTransaction', () => {
       // note: kyve log is undefined
