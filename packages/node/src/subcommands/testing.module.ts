@@ -9,6 +9,7 @@ import {
   ConnectionPoolStateManager,
   DbModule,
   InMemoryCacheService,
+  NodeConfig,
   PoiService,
   PoiSyncService,
   StoreCacheService,
@@ -50,11 +51,13 @@ import { UnfinalizedBlocksService } from '../indexer/unfinalizedBlocks.service';
         project: SubqueryProject,
         connectionPoolService: ConnectionPoolService<CosmosClientConnection>,
         eventEmitter: EventEmitter2,
+        nodeConfig: NodeConfig,
       ) => {
         const apiService = new ApiService(
           project,
           connectionPoolService,
           eventEmitter,
+          nodeConfig,
         );
         await apiService.init();
         return apiService;

@@ -1,6 +1,7 @@
 // Copyright 2020-2024 SubQuery Pte Ltd authors & contributors
 // SPDX-License-Identifier: GPL-3.0
 
+import path from 'path';
 import { GeneratedType, Registry } from '@cosmjs/proto-signing';
 import { defaultRegistryTypes } from '@cosmjs/stargate';
 import { Tendermint37Client } from '@cosmjs/tendermint-rpc';
@@ -13,9 +14,9 @@ import {
   MsgUpdateAdmin,
 } from 'cosmjs-types/cosmwasm/wasm/v1/tx';
 import { isEqual } from 'lodash';
-import { CosmosClient } from '../indexer/api.service';
-import { HttpClient } from '../indexer/rpc-clients';
-import { LazyBlockContent } from './cosmos';
+import { CosmosClient } from '../../indexer/api.service';
+import { HttpClient } from '../../indexer/rpc-clients';
+import { LazyBlockContent } from '../cosmos';
 import { KyveApi } from './kyve';
 
 const wasmTypes: ReadonlyArray<[string, GeneratedType]> = [
@@ -27,6 +28,12 @@ const wasmTypes: ReadonlyArray<[string, GeneratedType]> = [
   ['/cosmwasm.wasm.v1.MsgUpdateAdmin', MsgUpdateAdmin],
 ];
 
+const kyveBundlePath = path.join(
+  __dirname,
+  '../../../test/kyve_block/bundle.json',
+);
+const bundle_3856726 = require(kyveBundlePath);
+
 jest.setTimeout(100000);
 describe('KyveApi', () => {
   let kyveApi: KyveApi;
@@ -37,7 +44,7 @@ describe('KyveApi', () => {
   beforeAll(async () => {
     registry = new Registry([...defaultRegistryTypes, ...wasmTypes]);
     api = new CosmosClient(tendermint, registry);
-    kyveApi = new KyveApi('archway-1');
+    kyveApi = new KyveApi('archway-1', 'https://arweave.net');
     await kyveApi.init();
     const client = new HttpClient('https://rpc.mainnet.archway.io:443');
     tendermint = await Tendermint37Client.create(client);
@@ -46,15 +53,40 @@ describe('KyveApi', () => {
   // TODO: all the test to fetch bundle from arweave is failing on timeout.
   it('getBundle by height', async () => {
     const [, blockResponse] = await kyveApi.getBlockByHeight(3856726);
-    expect(blockResponse).toEqual(require('./bundle.json'));
+    expect(blockResponse).toEqual(bundle_3856726);
   });
+  it('ensure bundleDetails', async () => {
+    const bundleDetails = await (kyveApi as any).getBundleById(0);
+    expect(bundleDetails).toEqual({
+      pool_id: '2',
+      id: '0',
+      storage_id: 'YLpTxtj_0ICoWq9HUEOx6VcIzKk8Qui1rnkhH4acbTU',
+      uploader: 'kyve1z6wduz3psfuhp87r4enfnaelhcf94uksgjs0qj',
+      from_index: '0',
+      to_index: '150',
+      from_key: '1',
+      to_key: '150',
+      bundle_summary: '150',
+      data_hash:
+        'a5915a350030e60224909c82c0c7058f7096d401202fb8a05724e059d89ff7a5',
+      finalized_at: { height: '2589775', timestamp: '2023-09-06T12:20:22Z' },
+      storage_provider_id: '2',
+      compression_id: '1',
+      stake_security: {
+        valid_vote_power: '954119472714',
+        total_vote_power: '1185083547399',
+      },
+    });
+  });
+
   it('ensure correct bundle ID on binary search', async () => {
+    await kyveApi.init(); // reset cached bundle Id
     const a = Date.now();
-    const laterBundle = await (kyveApi as any).getBundleId(3489747); // https://app.kyve.network/#/pools/2/bundles/5149474
+    const firstBundle = await (kyveApi as any).getBundleId(120); // https://app.kyve.network/#/pools/2/bundles/0
     const b = Date.now();
     console.log(`${b - a}ms`);
 
-    const firstBundle = await (kyveApi as any).getBundleId(120); // https://app.kyve.network/#/pools/2/bundles/0
+    const laterBundle = await (kyveApi as any).getBundleId(3489747); // https://app.kyve.network/#/pools/2/bundles/5149474
     expect(firstBundle).toBe(0);
     expect(laterBundle).toBe(113773);
   });
@@ -78,7 +110,6 @@ describe('KyveApi', () => {
         tendermint.block(height),
         tendermint.blockResults(height),
       ]);
-      const bundle_3856726 = require('./bundle.json');
 
       const blockInfo = bundle_3856726.value.block;
       const blockResults = bundle_3856726.value.block_results;

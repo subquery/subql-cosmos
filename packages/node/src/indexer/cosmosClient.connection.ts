@@ -12,7 +12,7 @@ import {
   NetworkMetadataPayload,
 } from '@subql/node-core';
 import { getLogger } from '@subql/node-core/dist';
-import { KyveApi } from '../utils/kyve';
+import { KyveApi } from '../utils/kyve/kyve';
 import { CosmosClient, CosmosSafeClient } from './api.service';
 import { HttpClient, WebsocketClient } from './rpc-clients';
 import { BlockContent } from './types';
@@ -39,7 +39,7 @@ export class CosmosClientConnection
 {
   private tmClient: Tendermint37Client;
   private registry: Registry;
-  private kyveApi?: KyveApi;
+  private kyve?: KyveApi;
   readonly networkMeta: NetworkMetadataPayload;
 
   constructor(
@@ -58,7 +58,7 @@ export class CosmosClientConnection
     endpoint: string,
     fetchBlocksBatches: FetchFunc,
     registry: Registry,
-    kyveApi?: KyveApi,
+    kyve?: KyveApi,
   ): Promise<CosmosClientConnection> {
     const httpEndpoint: HttpEndpoint = {
       url: endpoint,
@@ -89,8 +89,8 @@ export class CosmosClientConnection
 
     logger.info(`connected to ${endpoint}`);
 
-    if (kyveApi) {
-      connection.setKyveApi(kyveApi);
+    if (kyve) {
+      connection.setKyveApi(kyve);
     }
 
     return connection;
@@ -101,7 +101,7 @@ export class CosmosClientConnection
   }
 
   private setKyveApi(kyveApi: KyveApi): void {
-    this.kyveApi = kyveApi;
+    this.kyve = kyveApi;
   }
 
   private setTmClient(tmClient: Tendermint37Client): void {

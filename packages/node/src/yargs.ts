@@ -22,4 +22,11 @@ export const yargsOptions = yargsBuilder({
     const { reindexInit } = require('./subcommands/reindex.init');
     return reindexInit(targetHeight);
   },
+  runOptions: {
+    kyve: {
+      demandOption: false,
+      describe: 'Use blocks from kyve instead of rpc',
+      type: 'string',
+    },
+  },
 });
