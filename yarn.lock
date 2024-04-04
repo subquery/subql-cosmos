@@ -4115,7 +4115,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@subql/types-core@npm:0.5.0, @subql/types-core@npm:^0.5.0":
+"@subql/types-core@npm:0.5.0":
   version: 0.5.0
   resolution: "@subql/types-core@npm:0.5.0"
   dependencies:
@@ -4133,6 +4133,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@subql/types-core@npm:^0.6.0":
+  version: 0.6.0
+  resolution: "@subql/types-core@npm:0.6.0"
+  dependencies:
+    package-json-type: ^1.0.3
+  checksum: 0688f1973f830d1d2ab34864b00fc7efb105228b0328ac485c69950957da3a67a92d9477bc94945e57e3cccbf1b732bdea097c1a452a907e23704e9cbeff31fc
+  languageName: node
+  linkType: hard
+
 "@subql/types-cosmos@workspace:*, @subql/types-cosmos@workspace:packages/types":
   version: 0.0.0-use.local
   resolution: "@subql/types-cosmos@workspace:packages/types"
@@ -4140,7 +4149,7 @@ __metadata:
     "@cosmjs/cosmwasm-stargate": ^0.30.1
     "@cosmjs/proto-signing": ^0.30.1
     "@cosmjs/stargate": ^0.30.1
-    "@subql/types-core": ^0.5.0
+    "@subql/types-core": ^0.6.0
   languageName: unknown
   linkType: soft
 
