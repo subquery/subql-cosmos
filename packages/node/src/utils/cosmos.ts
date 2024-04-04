@@ -254,7 +254,6 @@ export function wrapCosmosMsg(
       typeUrl: rawMessage.typeUrl,
       get decodedMsg() {
         delete this.decodedMsg;
-        // TODO, unsure how this will impact the decode
         return (this.decodedMsg = decodeMsg(rawMessage, registry));
       },
     },
