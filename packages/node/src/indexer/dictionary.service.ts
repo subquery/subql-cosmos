@@ -1,6 +1,7 @@
 // Copyright 2020-2023 SubQuery Pte Ltd authors & contributors
 // SPDX-License-Identifier: GPL-3.0
 
+import assert from 'assert';
 import { Inject, Injectable } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { NETWORK_FAMILY } from '@subql/common';
@@ -18,13 +19,10 @@ export class DictionaryService extends CoreDictionaryService {
     eventEmitter: EventEmitter2,
     dictionaryUrl?: string,
   ) {
-    super(
-      dictionaryUrl ?? project.network.dictionary,
-      project.network.chainId,
-      nodeConfig,
-      eventEmitter,
-      ['lastProcessedHeight', 'chain'],
-    );
+    super(dictionaryUrl, project.network.chainId, nodeConfig, eventEmitter, [
+      'lastProcessedHeight',
+      'chain',
+    ]);
   }
 
   static async create(
@@ -39,6 +37,11 @@ export class DictionaryService extends CoreDictionaryService {
         project.network.chainId,
         nodeConfig.dictionaryRegistry,
       ));
+
+    assert(
+      typeof url === 'string',
+      `Cosmos doesn't yet support multiple dictionary endpoints`,
+    );
 
     return new DictionaryService(project, nodeConfig, eventEmitter, url);
   }
