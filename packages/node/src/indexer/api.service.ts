@@ -39,6 +39,7 @@ import { CosmosNodeConfig } from '../configure/NodeConfig';
 import { SubqueryProject } from '../configure/SubqueryProject';
 import * as CosmosUtil from '../utils/cosmos';
 import { KyveApi } from '../utils/kyve/kyve';
+import { KyveConnection } from '../utils/kyve/kyveConnection';
 import { CosmosClientConnection } from './cosmosClient.connection';
 import { BlockContent } from './types';
 
@@ -50,7 +51,6 @@ export class ApiService
   implements OnApplicationShutdown
 {
   private fetchBlocksBatches = CosmosUtil.fetchBlocksBatches;
-  private kyve: KyveApi;
   private nodeConfig: CosmosNodeConfig;
   registry: Registry;
 
@@ -94,26 +94,27 @@ export class ApiService
 
     this.registry = await this.buildRegistry();
 
-    if (this.nodeConfig.kyve) {
-      this.kyve = new KyveApi(network.chainId, this.nodeConfig.kyve);
-      await this.kyve.init();
-
-      this.fetchBlocksBatches = this.kyve.fetchBlocksBatches.bind(this.kyve);
+    if (this.nodeConfig.kyveEndpoint) {
+      await KyveConnection.create(
+        network.chainId,
+        this.nodeConfig.kyveEndpoint,
+        this.registry,
+      );
+    } else {
+      await this.createConnections(
+        network,
+        (endpoint) =>
+          CosmosClientConnection.create(
+            endpoint,
+            this.fetchBlocksBatches,
+            this.registry,
+          ),
+        (connection: CosmosClientConnection) => {
+          const api = connection.unsafeApi;
+          return api.getChainId();
+        },
+      );
     }
-
-    await this.createConnections(
-      network,
-      (endpoint) =>
-        CosmosClientConnection.create(
-          endpoint,
-          this.fetchBlocksBatches,
-          this.registry,
-        ),
-      (connection: CosmosClientConnection) => {
-        const api = connection.unsafeApi;
-        return api.getChainId();
-      },
-    );
 
     return this;
   }
@@ -184,25 +185,6 @@ export class CosmosClient extends CosmWasmClient {
   // eslint-disable-next-line @typescript-eslint/require-await
   async blockResults(height: number): Promise<BlockResultsResponse> {
     return this.tendermintClient.blockResults(height);
-  }
-
-  decodeMsg<T = unknown>(msg: DecodeObject): T {
-    try {
-      const decodedMsg = this.registry.decode(msg);
-      if (
-        [
-          '/cosmwasm.wasm.v1.MsgExecuteContract',
-          '/cosmwasm.wasm.v1.MsgMigrateContract',
-          '/cosmwasm.wasm.v1.MsgInstantiateContract',
-        ].includes(msg.typeUrl)
-      ) {
-        decodedMsg.msg = JSON.parse(new TextDecoder().decode(decodedMsg.msg));
-      }
-      return decodedMsg;
-    } catch (e) {
-      logger.error(e, 'Failed to decode message');
-      throw e;
-    }
   }
 
   static handleError(e: Error): Error {

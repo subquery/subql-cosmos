@@ -3,30 +3,35 @@
 
 import assert from 'assert';
 import { JsonRpcSuccessResponse } from '@cosmjs/json-rpc';
+import { Registry } from '@cosmjs/proto-signing';
 import { adaptor37 } from '@cosmjs/tendermint-rpc/build/tendermint37/adaptor';
 import {
   BlockResponse,
   BlockResultsResponse,
 } from '@cosmjs/tendermint-rpc/build/tendermint37/responses';
 // Currently these types are not exported
+import { StorageReceipt } from '@kyvejs/protocol';
 import { Gzip } from '@kyvejs/protocol/dist/src/reactors/compression/Gzip';
 import KyveSDK, { KyveLCDClientType } from '@kyvejs/sdk';
 import { SupportedChains } from '@kyvejs/sdk/src/constants';
+import { PoolResponse } from '@kyvejs/types/lcd/kyve/query/v1beta1/pools';
 import { getLogger } from '@subql/node-core';
 import {
   CosmosBlock,
   CosmosEvent,
   CosmosTransaction,
 } from '@subql/types-cosmos';
-import { CosmosClient } from '../../indexer/api.service';
+import axios, { AxiosRequestConfig } from 'axios';
 import { BlockContent } from '../../indexer/types';
 import { LazyBlockContent, wrapCosmosMsg } from '../cosmos';
 import { BundleDetails } from './kyveTypes';
-import { StorageRetriever } from './storageRetriever';
 
 const BUNDLE_TIMEOUT = 10000; //ms
+const RADIX = 10;
 
-const logger = getLogger('kyve-fetch');
+const parseIntRadix = (value: string) => parseInt(value, RADIX);
+
+const logger = getLogger('kyve');
 
 interface UnZippedKyveBlockReponse {
   value: { block: any; block_results: any };
@@ -53,7 +58,6 @@ export class KyveApi {
   async init(): Promise<void> {
     this.currentBundleId = 0;
     await this.setPoolId();
-    logger.info('kyve-api init');
   }
   private async getAllPools() {
     return this.lcdClient.kyve.query.v1beta1.pools();
@@ -61,22 +65,27 @@ export class KyveApi {
 
   private async setPoolId(): Promise<void> {
     const pools = await this.getAllPools();
-    const pool = pools.pools.find(
-      (p) => JSON.parse(p.data.config).network === this.chainId,
-    );
+
+    let pool: PoolResponse;
+    for (const p of pools.pools) {
+      try {
+        const config = JSON.parse(p.data.config);
+        if (config.network === this.chainId) {
+          pool = p as unknown as PoolResponse;
+          break;
+        }
+      } catch (error) {
+        throw new Error(
+          `Error parsing JSON for pool with id ${p.id}:, ${error}`,
+        );
+      }
+    }
+
     if (!pool) {
       throw new Error(`${this.chainId} is not available on Kyve network`);
     }
-    this.poolId = pool.id;
-  }
 
-  private async retrieveBundleData(
-    storageId: string,
-  ): Promise<{ storageId: string; storageData: any }> {
-    return new StorageRetriever(this.storageUrl).retrieveBundle(
-      storageId,
-      BUNDLE_TIMEOUT,
-    );
+    this.poolId = pool.id;
   }
 
   private async unzipStorageData(
@@ -84,7 +93,7 @@ export class KyveApi {
     storageData: any,
   ): Promise<UnZippedKyveBlockReponse[]> {
     const g = new Gzip();
-    if (parseInt(compressionId) === 0) {
+    if (parseIntRadix(compressionId) === 0) {
       throw new Error('No Compression');
     }
 
@@ -96,7 +105,7 @@ export class KyveApi {
 
   private decodeBlock(block: JsonRpcSuccessResponse): BlockResponse {
     return this.respAdaptor.decodeBlock({
-      id: 10, // todo
+      id: 1,
       jsonrpc: '2.0',
       result: block,
     });
@@ -106,7 +115,7 @@ export class KyveApi {
     blockResult: JsonRpcSuccessResponse,
   ): BlockResultsResponse {
     return this.respAdaptor.decodeBlockResults({
-      id: 10,
+      id: 1,
       jsonrpc: '2.0',
       result: blockResult,
     });
@@ -123,7 +132,7 @@ export class KyveApi {
 
   private async getLatestBundleId(): Promise<number> {
     return (
-      parseInt(
+      parseIntRadix(
         (
           await this.lcdClient.kyve.query.v1beta1.finalizedBundles({
             pool_id: this.poolId,
@@ -148,8 +157,8 @@ export class KyveApi {
       const mid = Math.floor((low + high) / 2);
       const midBundle = await this.getBundleById(mid);
 
-      const fromKey = parseInt(midBundle.from_key);
-      const toKey = parseInt(midBundle.to_key);
+      const fromKey = parseIntRadix(midBundle.from_key);
+      const toKey = parseIntRadix(midBundle.to_key);
 
       if (height >= fromKey && height <= toKey) {
         startBundleId = mid;
@@ -173,9 +182,10 @@ export class KyveApi {
   }
 
   private async validateCache(height: number, bundleDetails: BundleDetails) {
-    if (!this.cachedBundle || parseInt(bundleDetails.to_key) > height) {
+    if (!this.cachedBundle || parseIntRadix(bundleDetails.to_key) > height) {
       this.cachedBundle = await this.retrieveBundleData(
         bundleDetails.storage_id,
+        BUNDLE_TIMEOUT,
       );
 
       this.cachedBlocks = await this.unzipStorageData(
@@ -190,10 +200,8 @@ export class KyveApi {
   ): Promise<[BlockResponse, BlockResultsResponse]> {
     const bundleId = await this.getBundleId(height);
     const bundleDetails = await this.getBundleById(bundleId);
-    console.log('fetching from kyve');
 
     await this.validateCache(height, bundleDetails);
-    console.log('fetched from kyve');
 
     const blockData = this.findBlockByHeight(height);
 
@@ -206,7 +214,7 @@ export class KyveApi {
   wrapEvent(
     block: CosmosBlock,
     txs: CosmosTransaction[],
-    api: CosmosClient,
+    registry: Registry,
     idxOffset: number, //use this offset to avoid clash with idx of begin block events
   ): CosmosEvent[] {
     const events: CosmosEvent[] = [];
@@ -221,7 +229,7 @@ export class KyveApi {
         }
 
         if (msgIndex >= 0) {
-          const msg = wrapCosmosMsg(block, tx, msgIndex, api);
+          const msg = wrapCosmosMsg(block, tx, msgIndex, registry);
           const cosmosEvent: CosmosEvent = {
             idx: idxOffset++,
             msg,
@@ -240,14 +248,29 @@ export class KyveApi {
   private async fetchBlocksArray(
     blockArray: number[],
   ): Promise<[BlockResponse, BlockResultsResponse][]> {
-    logger.info('using kyve blocks');
     return Promise.all(
       blockArray.map(async (height) => this.getBlockByHeight(height)),
     );
   }
 
+  private async retrieveBundleData(
+    storageId: string,
+    timeout: number,
+  ): Promise<StorageReceipt> {
+    const axiosConfig: AxiosRequestConfig = {
+      method: 'get',
+      url: `/${storageId}`,
+      baseURL: this.storageUrl,
+      responseType: 'arraybuffer',
+      timeout,
+    };
+    const { data: storageData } = await axios(axiosConfig);
+
+    return { storageId, storageData };
+  }
+
   async fetchBlocksBatches(
-    api: CosmosClient,
+    registry: Registry,
     blockArray: number[],
   ): Promise<BlockContent[]> {
     const blocks = await this.fetchBlocksArray(blockArray);
@@ -258,7 +281,7 @@ export class KyveApi {
           `txInfos doesn't match up with block (${blockInfo.block.header.height}) transactions expected ${blockInfo.block.txs.length}, received: ${blockResults.results.length}`,
         );
 
-        return new LazyBlockContent(blockInfo, blockResults, api, this);
+        return new LazyBlockContent(blockInfo, blockResults, registry, this);
       } catch (e) {
         logger.error(
           e,

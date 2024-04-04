@@ -24,9 +24,10 @@ const RETRY_DELAY = 2_500;
 
 const logger = getLogger('cosmos-client-connection');
 
-type FetchFunc = (
-  api: CosmosClient,
+export type FetchFunc = (
+  registry: Registry,
   batch: number[],
+  api?: CosmosClient,
 ) => Promise<IBlock<BlockContent>[]>;
 
 export class CosmosClientConnection
@@ -58,7 +59,6 @@ export class CosmosClientConnection
     endpoint: string,
     fetchBlocksBatches: FetchFunc,
     registry: Registry,
-    kyve?: KyveApi,
   ): Promise<CosmosClientConnection> {
     const httpEndpoint: HttpEndpoint = {
       url: endpoint,
@@ -89,19 +89,11 @@ export class CosmosClientConnection
 
     logger.info(`connected to ${endpoint}`);
 
-    if (kyve) {
-      connection.setKyveApi(kyve);
-    }
-
     return connection;
   }
 
   safeApi(height: number): CosmosSafeClient {
     return new CosmosSafeClient(this.tmClient, height);
-  }
-
-  private setKyveApi(kyveApi: KyveApi): void {
-    this.kyve = kyveApi;
   }
 
   private setTmClient(tmClient: Tendermint37Client): void {

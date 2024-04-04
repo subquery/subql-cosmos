@@ -4,19 +4,19 @@
 import { IConfig, NodeConfig } from '@subql/node-core';
 
 export interface ICosmosConfig extends IConfig {
-  kyve: string;
+  kyveEndpoint: string;
 }
 
 export class CosmosNodeConfig extends NodeConfig<ICosmosConfig> {
   /**
    * This is a wrapper around the core NodeConfig to get additional properties that are provided through args or node runner options
-   * NOTE: This isn't injected anywhere so you need to wrap the injected node config
+   * NOTE: This isn't injected anywhere, so you need to wrap the injected node config
    *
    * @example
    * constructor(
    *   nodeConfig: NodeConfig,
    * ) {
-   *   this.nodeConfig = new EthereumNodeConfig(nodeConfig);
+   *   this.nodeConfig = new CosmosNodeConfig(nodeConfig);
    * }
    * */
   constructor(config: NodeConfig) {
@@ -24,7 +24,7 @@ export class CosmosNodeConfig extends NodeConfig<ICosmosConfig> {
     super((config as any)._config, (config as any)._isTest);
   }
 
-  get kyve(): string {
-    return this._config.kyve;
+  get kyveEndpoint(): string {
+    return this._config.kyveEndpoint;
   }
 }

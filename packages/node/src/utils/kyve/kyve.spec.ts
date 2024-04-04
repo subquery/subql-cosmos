@@ -120,9 +120,9 @@ describe('KyveApi', () => {
       rpcLazyBlockContent = new LazyBlockContent(
         tendermintBlockInfo,
         tendermintBlockResult,
-        api,
+        registry,
       );
-      kyveLazyBlockContent = new LazyBlockContent(bi, br, api, kyveApi);
+      kyveLazyBlockContent = new LazyBlockContent(bi, br, registry, kyveApi);
     });
     it('wrapTransaction', () => {
       // note: kyve log is undefined
