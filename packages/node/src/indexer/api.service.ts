@@ -1,7 +1,6 @@
 // Copyright 2020-2024 SubQuery Pte Ltd authors & contributors
 // SPDX-License-Identifier: GPL-3.0
 
-import { TextDecoder } from 'util';
 import { CosmWasmClient, IndexedTx } from '@cosmjs/cosmwasm-stargate';
 import { toHex } from '@cosmjs/encoding';
 import { Uint53 } from '@cosmjs/math';
@@ -25,6 +24,8 @@ import {
   ApiService as BaseApiService,
   IBlock,
   NodeConfig,
+  IndexerEvent,
+  IApiConnectionSpecific,
 } from '@subql/node-core';
 import { CosmWasmSafeClient } from '@subql/types-cosmos/interfaces';
 import {
@@ -38,7 +39,6 @@ import {
 import { CosmosNodeConfig } from '../configure/NodeConfig';
 import { SubqueryProject } from '../configure/SubqueryProject';
 import * as CosmosUtil from '../utils/cosmos';
-import { KyveApi } from '../utils/kyve/kyve';
 import { KyveConnection } from '../utils/kyve/kyveConnection';
 import { CosmosClientConnection } from './cosmosClient.connection';
 import { BlockContent } from './types';
@@ -89,32 +89,47 @@ export class ApiService
     await this.connectionPoolService.onApplicationShutdown();
   }
 
+  private async createKyveConnection(
+    network: CosmosNetworkConfig,
+    createConnection: (chainId: string) => Promise<IApiConnectionSpecific>,
+  ) {
+    const connection = await createConnection(network.chainId);
+
+    this.eventEmitter.emit(IndexerEvent.ApiConnected, {
+      value: 1,
+      apiIndex: 0,
+      endpoint: this.nodeConfig.kyveEndpoint,
+    });
+  }
+
   async init(): Promise<ApiService> {
     const { network } = this.project;
 
     this.registry = await this.buildRegistry();
 
-    if (this.nodeConfig.kyveEndpoint) {
-      await KyveConnection.create(
-        network.chainId,
-        this.nodeConfig.kyveEndpoint,
-        this.registry,
-      );
-    } else {
-      await this.createConnections(
-        network,
-        (endpoint) =>
-          CosmosClientConnection.create(
-            endpoint,
-            this.fetchBlocksBatches,
-            this.registry,
-          ),
-        (connection: CosmosClientConnection) => {
-          const api = connection.unsafeApi;
-          return api.getChainId();
-        },
+    if (this.nodeConfig.kyveChainId || this.nodeConfig.kyveEndpoint) {
+      await this.createKyveConnection(network, () =>
+        KyveConnection.create(network.chainId, this.registry, {
+          storageUrl: this.nodeConfig.storageUrl ?? 'https://arweave.net',
+          kyveChainId: this.nodeConfig.kyveChainId ?? 'kyve-1',
+          kyveEndpoint: this.nodeConfig.kyveEndpoint,
+        }),
       );
     }
+
+    await this.createConnections(
+      network,
+      (endpoint) =>
+        CosmosClientConnection.create(
+          endpoint,
+          this.fetchBlocksBatches,
+          this.registry,
+        ),
+      (connection: CosmosClientConnection) => {
+        const api = connection.unsafeApi;
+        return api.getChainId();
+      },
+    );
 
     return this;
   }

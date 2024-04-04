@@ -14,9 +14,8 @@ import {
   MsgUpdateAdmin,
 } from 'cosmjs-types/cosmwasm/wasm/v1/tx';
 import { isEqual } from 'lodash';
-import { CosmosClient } from '../../indexer/api.service';
 import { HttpClient } from '../../indexer/rpc-clients';
-import { LazyBlockContent } from '../cosmos';
+import { LazyBlockContent, wrapEvent } from '../cosmos';
 import { KyveApi } from './kyve';
 
 const wasmTypes: ReadonlyArray<[string, GeneratedType]> = [
@@ -38,14 +37,11 @@ jest.setTimeout(100000);
 describe('KyveApi', () => {
   let kyveApi: KyveApi;
   let tendermint: Tendermint37Client;
-  let api: CosmosClient;
   let registry: Registry;
 
   beforeAll(async () => {
     registry = new Registry([...defaultRegistryTypes, ...wasmTypes]);
-    api = new CosmosClient(tendermint, registry);
-    kyveApi = new KyveApi('archway-1', 'https://arweave.net');
-    await kyveApi.init();
+    kyveApi = await KyveApi.create('archway-1');
     const client = new HttpClient('https://rpc.mainnet.archway.io:443');
     tendermint = await Tendermint37Client.create(client);
   });
@@ -80,7 +76,7 @@ describe('KyveApi', () => {
   });
 
   it('ensure correct bundle ID on binary search', async () => {
-    await kyveApi.init(); // reset cached bundle Id
+    (kyveApi as any).currentBundleId = 0; // reset cached bundle Id
     const a = Date.now();
     const firstBundle = await (kyveApi as any).getBundleId(120); // https://app.kyve.network/#/pools/2/bundles/0
     const b = Date.now();
@@ -121,8 +117,14 @@ describe('KyveApi', () => {
         tendermintBlockInfo,
         tendermintBlockResult,
         registry,
+        wrapEvent,
       );
-      kyveLazyBlockContent = new LazyBlockContent(bi, br, registry, kyveApi);
+      kyveLazyBlockContent = new LazyBlockContent(
+        bi,
+        br,
+        registry,
+        kyveApi.wrapEvent.bind(kyveApi),
+      );
     });
     it('wrapTransaction', () => {
       // note: kyve log is undefined

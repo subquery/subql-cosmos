@@ -12,7 +12,12 @@ import {
   NetworkMetadataPayload,
 } from '@subql/node-core';
 import { getLogger } from '@subql/node-core/dist';
-import { KyveApi } from '../utils/kyve/kyve';
+import {
+  CosmosBlock,
+  CosmosEvent,
+  CosmosTransaction,
+} from '@subql/types-cosmos';
+import { wrapEvent } from '../utils/cosmos';
 import { CosmosClient, CosmosSafeClient } from './api.service';
 import { HttpClient, WebsocketClient } from './rpc-clients';
 import { BlockContent } from './types';
@@ -24,10 +29,16 @@ const RETRY_DELAY = 2_500;
 
 const logger = getLogger('cosmos-client-connection');
 
-export type FetchFunc = (
+type FetchFunc = (
   registry: Registry,
   batch: number[],
-  api?: CosmosClient,
+  api: CosmosClient,
+  wrapEventsFunc: (
+    block: CosmosBlock,
+    txs: CosmosTransaction[],
+    registry: Registry,
+    eventIdx: number,
+  ) => CosmosEvent[],
 ) => Promise<IBlock<BlockContent>[]>;
 
 export class CosmosClientConnection
@@ -40,7 +51,6 @@ export class CosmosClientConnection
 {
   private tmClient: Tendermint37Client;
   private registry: Registry;
-  private kyve?: KyveApi;
   readonly networkMeta: NetworkMetadataPayload;
 
   constructor(

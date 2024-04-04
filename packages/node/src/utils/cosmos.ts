@@ -28,7 +28,6 @@ import {
 import { isObjectLike } from 'lodash';
 import { CosmosClient } from '../indexer/api.service';
 import { BlockContent } from '../indexer/types';
-import { KyveApi } from './kyve/kyve';
 
 const logger = getLogger('fetch');
 
@@ -191,8 +190,8 @@ export function filterEvents(
 }
 
 async function getBlockByHeightByRpc(
-  height: number,
   api: CosmosClient,
+  height: number,
 ): Promise<[BlockResponse, BlockResultsResponse]> {
   return Promise.all([
     api.blockInfo(height).catch((e) => {
@@ -207,13 +206,11 @@ async function getBlockByHeightByRpc(
 export async function fetchCosmosBlocksArray<T>(
   getBlockByHeight: (
     height: number,
-    api: T,
   ) => Promise<[BlockResponse, BlockResultsResponse]>,
   blockArray: number[],
-  api: T,
 ): Promise<[BlockResponse, BlockResultsResponse][]> {
   return Promise.all(
-    blockArray.map(async (height) => getBlockByHeight(height, api)),
+    blockArray.map(async (height) => getBlockByHeight(height)),
   );
 }
 
@@ -361,8 +358,13 @@ export function formatBlockUtil<B extends BlockContent>(block: B): IBlock<B> {
 export async function fetchBlocksBatches(
   registry: Registry,
   blockArray: number[],
+  api: CosmosClient,
 ): Promise<IBlock<BlockContent>[]> {
-  const blocks = await fetchCosmosBlocksArray(api, blockArray, kyveApi);
+  const blocks = await fetchCosmosBlocksArray(
+    (height: number) => getBlockByHeightByRpc(api, height),
+    blockArray,
+  );
+
   return blocks.map(([blockInfo, blockResults]) => {
     try {
       assert(
@@ -371,7 +373,7 @@ export async function fetchBlocksBatches(
       );
 
       return formatBlockUtil(
-        new LazyBlockContent(blockInfo, blockResults, api),
+          new LazyBlockContent(blockInfo, blockResults, registry, wrapEvent)
       );
     } catch (e) {
       logger.error(
@@ -396,7 +398,12 @@ export class LazyBlockContent implements BlockContent {
     private _blockInfo: BlockResponse,
     private _results: BlockResultsResponse,
     private _registry: Registry,
-    private _kyve?: KyveApi,
+    private wrapEventsFunc: (
+      block: CosmosBlock,
+      txs: CosmosTransaction[],
+      registry: Registry,
+      eventIdx: number,
+    ) => CosmosEvent[],
   ) {}
 
   get block() {
@@ -428,19 +435,12 @@ export class LazyBlockContent implements BlockContent {
 
   get events() {
     if (!this._wrappedEvent) {
-      this._wrappedEvent = this._kyve
-        ? this._kyve.wrapEvent(
-            this.block,
-            this.transactions,
-            this._registry,
-            this._eventIdx,
-          )
-        : wrapEvent(
-            this.block,
-            this.transactions,
-            this._registry,
-            this._eventIdx,
-          );
+      this._wrappedEvent = this.wrapEventsFunc(
+        this.block,
+        this.transactions,
+        this._registry,
+        this._eventIdx,
+      );
       this._eventIdx += this._wrappedEvent.length;
     }
     return this._wrappedEvent;

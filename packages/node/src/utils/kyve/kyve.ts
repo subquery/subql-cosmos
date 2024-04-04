@@ -14,7 +14,10 @@ import { StorageReceipt } from '@kyvejs/protocol';
 import { Gzip } from '@kyvejs/protocol/dist/src/reactors/compression/Gzip';
 import KyveSDK, { KyveLCDClientType } from '@kyvejs/sdk';
 import { SupportedChains } from '@kyvejs/sdk/src/constants';
-import { PoolResponse } from '@kyvejs/types/lcd/kyve/query/v1beta1/pools';
+import {
+  PoolResponse,
+  QueryPoolsResponse,
+} from '@kyvejs/types/lcd/kyve/query/v1beta1/pools';
 import { getLogger } from '@subql/node-core';
 import {
   CosmosBlock,
@@ -27,9 +30,8 @@ import { LazyBlockContent, wrapCosmosMsg } from '../cosmos';
 import { BundleDetails } from './kyveTypes';
 
 const BUNDLE_TIMEOUT = 10000; //ms
-const RADIX = 10;
 
-const parseIntRadix = (value: string) => parseInt(value, RADIX);
+const parseDecimal = (value: string) => parseInt(value, 10);
 
 const logger = getLogger('kyve');
 
@@ -37,6 +39,12 @@ interface UnZippedKyveBlockReponse {
   value: { block: any; block_results: any };
   key: string;
 }
+
+export type KyveConnectionConfig = {
+  storageUrl?: string;
+  kyveEndpoint?: string;
+  kyveChainId?: SupportedChains;
+};
 
 export class KyveApi {
   private lcdClient: KyveLCDClientType;
@@ -47,20 +55,33 @@ export class KyveApi {
   private cachedBundle: any; // storage Data
   private storageUrl: string;
 
-  constructor(
-    private chainId: string,
-    storageUrl: string,
-    kyveChainId: SupportedChains = 'kyve-1',
-  ) {
-    this.storageUrl = storageUrl;
-    this.lcdClient = new KyveSDK(kyveChainId).createLCDClient();
+  private constructor(private chainId: string) {}
+
+  static async create(
+    chainId: string, // chainId for indexing chain
+    kyveConfig?: KyveConnectionConfig,
+  ): Promise<KyveApi> {
+    const kyve = new KyveApi(chainId);
+
+    kyve.lcdClient = new KyveSDK(
+      kyveConfig.kyveChainId,
+      kyveConfig.kyveEndpoint ? { rpc: kyveConfig.kyveEndpoint } : undefined,
+    ).createLCDClient();
+
+    kyve.storageUrl = kyveConfig.storageUrl;
+    kyve.currentBundleId = 0;
+
+    await kyve.setPoolId();
+
+    return kyve;
   }
-  async init(): Promise<void> {
-    this.currentBundleId = 0;
-    await this.setPoolId();
+
+  get getLcdClient(): KyveLCDClientType {
+    return this.lcdClient;
   }
-  private async getAllPools() {
-    return this.lcdClient.kyve.query.v1beta1.pools();
+
+  private async getAllPools(): Promise<QueryPoolsResponse> {
+    return (await this.lcdClient.kyve.query.v1beta1.pools()) as unknown as QueryPoolsResponse;
   }
 
   private async setPoolId(): Promise<void> {
@@ -90,11 +111,11 @@ export class KyveApi {
 
   private async unzipStorageData(
     compressionId: string,
-    storageData: any,
+    storageData: Buffer,
   ): Promise<UnZippedKyveBlockReponse[]> {
     const g = new Gzip();
-    if (parseIntRadix(compressionId) === 0) {
-      throw new Error('No Compression');
+    if (parseDecimal(compressionId) === 0) {
+      return storageData as any;
     }
 
     const buffer = await g.decompress(storageData);
@@ -132,7 +153,7 @@ export class KyveApi {
 
   private async getLatestBundleId(): Promise<number> {
     return (
-      parseIntRadix(
+      parseDecimal(
         (
           await this.lcdClient.kyve.query.v1beta1.finalizedBundles({
             pool_id: this.poolId,
@@ -157,8 +178,8 @@ export class KyveApi {
       const mid = Math.floor((low + high) / 2);
       const midBundle = await this.getBundleById(mid);
 
-      const fromKey = parseIntRadix(midBundle.from_key);
-      const toKey = parseIntRadix(midBundle.to_key);
+      const fromKey = parseDecimal(midBundle.from_key);
+      const toKey = parseDecimal(midBundle.to_key);
 
       if (height >= fromKey && height <= toKey) {
         startBundleId = mid;
@@ -182,7 +203,7 @@ export class KyveApi {
   }
 
   private async validateCache(height: number, bundleDetails: BundleDetails) {
-    if (!this.cachedBundle || parseIntRadix(bundleDetails.to_key) > height) {
+    if (!this.cachedBundle || parseDecimal(bundleDetails.to_key) > height) {
       this.cachedBundle = await this.retrieveBundleData(
         bundleDetails.storage_id,
         BUNDLE_TIMEOUT,
@@ -281,7 +302,12 @@ export class KyveApi {
           `txInfos doesn't match up with block (${blockInfo.block.header.height}) transactions expected ${blockInfo.block.txs.length}, received: ${blockResults.results.length}`,
         );
 
-        return new LazyBlockContent(blockInfo, blockResults, registry, this);
+        return new LazyBlockContent(
+          blockInfo,
+          blockResults,
+          registry,
+          this.wrapEvent.bind(this),
+        );
       } catch (e) {
         logger.error(
           e,

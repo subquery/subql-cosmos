@@ -1,10 +1,13 @@
 // Copyright 2020-2024 SubQuery Pte Ltd authors & contributors
 // SPDX-License-Identifier: GPL-3.0
 
+import { SupportedChains } from '@kyvejs/sdk/src/constants';
 import { IConfig, NodeConfig } from '@subql/node-core';
 
 export interface ICosmosConfig extends IConfig {
+  kyveChainId: SupportedChains;
   kyveEndpoint: string;
+  storageUrl: string;
 }
 
 export class CosmosNodeConfig extends NodeConfig<ICosmosConfig> {
@@ -26,5 +29,13 @@ export class CosmosNodeConfig extends NodeConfig<ICosmosConfig> {
 
   get kyveEndpoint(): string {
     return this._config.kyveEndpoint;
+  }
+
+  get kyveChainId(): SupportedChains {
+    return this._config.kyveChainId;
+  }
+
+  get storageUrl(): string {
+    return this._config.storageUrl;
   }
 }

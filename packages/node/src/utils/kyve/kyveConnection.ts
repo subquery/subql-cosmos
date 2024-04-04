@@ -9,24 +9,27 @@ import {
   IApiConnectionSpecific,
   NetworkMetadataPayload,
 } from '@subql/node-core';
-import { FetchFunc } from '../../indexer/cosmosClient.connection';
 import { BlockContent } from '../../indexer/types';
-import { KyveApi } from './kyve';
+import { KyveApi, KyveConnectionConfig } from './kyve';
 
 const logger = getLogger('kyve-API');
+
+type KyveFetchFunc = (
+  registry: Registry,
+  batch: number[],
+) => Promise<BlockContent[]>;
 
 export class KyveConnection
   implements IApiConnectionSpecific<KyveApi, undefined, BlockContent[]>
 {
-  readonly networkMeta: NetworkMetadataPayload; // this is not needed
-  unsafeApi: any; // this isnt needed
-  private registry: Registry;
+  unsafeApi: any;
+  readonly networkMeta: NetworkMetadataPayload;
 
-  constructor(
-    private fetchBlocksBatches: FetchFunc,
+  private constructor(
+    private fetchBlocksBatches: KyveFetchFunc,
     private chainId: string,
-  ) // todo do i need registry ?
-  {
+    private registry: Registry,
+  ) {
     this.networkMeta = {
       chain: this.chainId,
       specName: undefined,
@@ -36,19 +39,18 @@ export class KyveConnection
 
   static async create(
     chainId: string,
-    kyveEndpoint: string,
     registry: Registry,
+    kyveConfig: KyveConnectionConfig,
   ): Promise<KyveConnection> {
-    const kyveApi = new KyveApi(chainId, kyveEndpoint);
-    await kyveApi.init();
+    const kyveApi = await KyveApi.create(chainId, kyveConfig);
 
     const connection = new KyveConnection(
       kyveApi.fetchBlocksBatches.bind(kyveApi),
       chainId,
+      registry,
     );
-    connection.setRegistry(registry);
 
-    logger.info(`connected to Kyve via ${kyveEndpoint}`);
+    logger.info(`connected to Kyve via ${kyveConfig.storageUrl}`);
 
     return connection;
   }
@@ -68,20 +70,15 @@ export class KyveConnection
     );
   }
 
-  private setRegistry(registry: Registry): void {
-    this.registry = registry;
-  }
-
-  // No safeAPi
   safeApi(height: number): any {
-    return undefined;
+    throw new Error('SafeApi should not be used for kyve-connection');
   }
 
   async apiConnect(): Promise<void> {
-    return Promise.resolve(undefined);
+    //
   }
 
   async apiDisconnect(): Promise<void> {
-    return Promise.resolve(undefined);
+    //
   }
 }
