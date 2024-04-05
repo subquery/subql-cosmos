@@ -103,7 +103,10 @@ describe('KyveApi', () => {
       'YLpTxtj_0ICoWq9HUEOx6VcIzKk8Qui1rnkhH4acbTU',
       100000,
     );
-    const unzipped = await (kyveApi as any).unzipStorageData('1', data);
+    const unzipped = await (kyveApi as any).unzipStorageData(
+      '1',
+      data.storageData,
+    );
     expect(unzipped).toBeDefined();
   });
   it('Should increment bundleId when height exceeds cache', async () => {
