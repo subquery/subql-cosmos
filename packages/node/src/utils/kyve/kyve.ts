@@ -4,6 +4,7 @@
 import assert from 'assert';
 import { JsonRpcSuccessResponse } from '@cosmjs/json-rpc';
 import { Registry } from '@cosmjs/proto-signing';
+import { Log } from '@cosmjs/stargate/build/logs';
 import { adaptor37 } from '@cosmjs/tendermint-rpc/build/tendermint37/adaptor';
 import {
   BlockResponse,
@@ -19,14 +20,9 @@ import {
   QueryPoolsResponse,
 } from '@kyvejs/types/lcd/kyve/query/v1beta1/pools';
 import { getLogger } from '@subql/node-core';
-import {
-  CosmosBlock,
-  CosmosEvent,
-  CosmosTransaction,
-} from '@subql/types-cosmos';
 import axios, { AxiosRequestConfig } from 'axios';
 import { BlockContent } from '../../indexer/types';
-import { LazyBlockContent, wrapCosmosMsg } from '../cosmos';
+import { LazyBlockContent } from '../cosmos';
 import { BundleDetails } from './kyveTypes';
 
 const BUNDLE_TIMEOUT = 10000; //ms
@@ -35,42 +31,41 @@ const parseDecimal = (value: string) => parseInt(value, 10);
 
 const logger = getLogger('kyve');
 
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const { version: packageVersion } = require('../../../package.json');
+
 interface UnZippedKyveBlockReponse {
   value: { block: any; block_results: any };
   key: string;
 }
 
-export type KyveConnectionConfig = {
-  storageUrl?: string;
-  kyveEndpoint?: string;
-  kyveChainId?: SupportedChains;
-};
-
 export class KyveApi {
   private lcdClient: KyveLCDClientType;
   private respAdaptor = adaptor37.responses;
   private poolId: string;
-  private currentBundleId: number;
+  private currentBundleId = -1;
   private cachedBlocks: UnZippedKyveBlockReponse[];
-  private cachedBundle: any; // storage Data
-  private storageUrl: string;
+  private cachedBundle: StorageReceipt; // storage Data
 
-  private constructor(private chainId: string) {}
+  private constructor(
+    private chainId: string,
+    private endpoint: string,
+    private readonly storageUrl: string,
+    private readonly kyveChainId: SupportedChains,
+  ) {
+    this.lcdClient = new KyveSDK(kyveChainId, {
+      rpc: this.endpoint,
+    }).createLCDClient();
+    this.storageUrl = storageUrl;
+  }
 
   static async create(
     chainId: string, // chainId for indexing chain
-    kyveConfig?: KyveConnectionConfig,
+    endpoint: string,
+    storageUrl: string,
+    kyveChainId: SupportedChains,
   ): Promise<KyveApi> {
-    const kyve = new KyveApi(chainId);
-
-    kyve.lcdClient = new KyveSDK(
-      kyveConfig.kyveChainId,
-      kyveConfig.kyveEndpoint ? { rpc: kyveConfig.kyveEndpoint } : undefined,
-    ).createLCDClient();
-
-    kyve.storageUrl = kyveConfig.storageUrl;
-    kyve.currentBundleId = 0;
-
+    const kyve = new KyveApi(chainId, endpoint, storageUrl, kyveChainId);
     await kyve.setPoolId();
 
     return kyve;
@@ -91,6 +86,7 @@ export class KyveApi {
     for (const p of pools.pools) {
       try {
         const config = JSON.parse(p.data.config);
+
         if (config.network === this.chainId) {
           pool = p as unknown as PoolResponse;
           break;
@@ -121,7 +117,11 @@ export class KyveApi {
     const buffer = await g.decompress(storageData);
     const parsedString = buffer.toString('utf-8');
 
-    return JSON.parse(parsedString);
+    try {
+      return JSON.parse(parsedString);
+    } catch (e) {
+      throw new Error(`Failed to parse storageData. ${e}`);
+    }
   }
 
   private decodeBlock(block: JsonRpcSuccessResponse): BlockResponse {
@@ -204,6 +204,8 @@ export class KyveApi {
 
   private async validateCache(height: number, bundleDetails: BundleDetails) {
     if (!this.cachedBundle || parseDecimal(bundleDetails.to_key) > height) {
+      this.currentBundleId++;
+
       this.cachedBundle = await this.retrieveBundleData(
         bundleDetails.storage_id,
         BUNDLE_TIMEOUT,
@@ -219,51 +221,67 @@ export class KyveApi {
   async getBlockByHeight(
     height: number,
   ): Promise<[BlockResponse, BlockResultsResponse]> {
-    const bundleId = await this.getBundleId(height);
-    const bundleDetails = await this.getBundleById(bundleId);
+    const bundleId =
+      this.currentBundleId === -1
+        ? await this.getBundleId(height)
+        : this.currentBundleId;
 
+    const bundleDetails = await this.getBundleById(bundleId);
     await this.validateCache(height, bundleDetails);
 
     const blockData = this.findBlockByHeight(height);
 
     return [
       this.decodeBlock(blockData.value.block),
-      this.decodeBlockResult(blockData.value.block_results),
+      this.injectLogs(this.decodeBlockResult(blockData.value.block_results)),
     ];
   }
 
-  wrapEvent(
-    block: CosmosBlock,
-    txs: CosmosTransaction[],
-    registry: Registry,
-    idxOffset: number, //use this offset to avoid clash with idx of begin block events
-  ): CosmosEvent[] {
-    const events: CosmosEvent[] = [];
-    for (const tx of txs) {
+  private injectLogs(kyveBlockResult: BlockResultsResponse) {
+    try {
+      kyveBlockResult.results.forEach((b) => {
+        // log is readonly hence needing to cast it
+        (b.log as any) = JSON.stringify(this.reconstructLogs(kyveBlockResult));
+      });
+    } catch (e) {
+      throw new Error(`Failed to inject kyveBlock`);
+    }
+    return kyveBlockResult;
+  }
+
+  private reconstructLogs(blockResultResponse: BlockResultsResponse): Log[] {
+    const logs: Log[] = [];
+
+    for (const tx of blockResultResponse.results) {
+      let currentLog: any = {
+        msg_index: -1,
+        events: [],
+      };
+
       let msgIndex = -1;
-      for (const event of tx.tx.events) {
-        if (
+      for (const event of tx.events) {
+        const isMessageEvent =
           event.type === 'message' &&
-          event.attributes.find((e) => e.key === 'action')
-        ) {
+          event.attributes.some((e) => e.key === 'action');
+
+        if (isMessageEvent) {
+          if (msgIndex >= 0) {
+            logs.push(currentLog);
+          }
           msgIndex += 1;
+          currentLog = { msg_index: msgIndex, events: [] };
         }
 
         if (msgIndex >= 0) {
-          const msg = wrapCosmosMsg(block, tx, msgIndex, registry);
-          const cosmosEvent: CosmosEvent = {
-            idx: idxOffset++,
-            msg,
-            tx,
-            block,
-            log: undefined,
-            event,
-          };
-          events.push(cosmosEvent);
+          currentLog.events.push(event);
         }
       }
+
+      if (currentLog.events.length > 0) {
+        logs.push(currentLog);
+      }
     }
-    return events;
+    return logs;
   }
 
   private async fetchBlocksArray(
@@ -280,10 +298,15 @@ export class KyveApi {
   ): Promise<StorageReceipt> {
     const axiosConfig: AxiosRequestConfig = {
       method: 'get',
-      url: `/${storageId}`,
+      url: `${storageId}`,
       baseURL: this.storageUrl,
       responseType: 'arraybuffer',
       timeout,
+      headers: {
+        'User-Agent': `SubQuery-Node ${packageVersion}`,
+        Connection: 'keep-alive',
+        'Content-Encoding': 'gzip',
+      },
     };
     const { data: storageData } = await axios(axiosConfig);
 
@@ -302,12 +325,7 @@ export class KyveApi {
           `txInfos doesn't match up with block (${blockInfo.block.header.height}) transactions expected ${blockInfo.block.txs.length}, received: ${blockResults.results.length}`,
         );
 
-        return new LazyBlockContent(
-          blockInfo,
-          blockResults,
-          registry,
-          this.wrapEvent.bind(this),
-        );
+        return new LazyBlockContent(blockInfo, blockResults, registry);
       } catch (e) {
         logger.error(
           e,

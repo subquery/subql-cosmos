@@ -63,6 +63,7 @@ export async function bootstrap(): Promise<void> {
 
     logger.info(`Node started on port: ${port}`);
   } catch (e) {
+    console.trace(e);
     logger.error(e, 'Node failed to start');
     process.exit(1);
   }

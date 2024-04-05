@@ -6,6 +6,11 @@ import { GeneratedType, Registry } from '@cosmjs/proto-signing';
 import { defaultRegistryTypes } from '@cosmjs/stargate';
 import { Tendermint37Client } from '@cosmjs/tendermint-rpc';
 import {
+  BlockResponse,
+  BlockResultsResponse,
+} from '@cosmjs/tendermint-rpc/build/tendermint37/responses';
+import axios from 'axios';
+import {
   MsgClearAdmin,
   MsgExecuteContract,
   MsgInstantiateContract,
@@ -15,7 +20,7 @@ import {
 } from 'cosmjs-types/cosmwasm/wasm/v1/tx';
 import { isEqual } from 'lodash';
 import { HttpClient } from '../../indexer/rpc-clients';
-import { LazyBlockContent, wrapEvent } from '../cosmos';
+import { LazyBlockContent } from '../cosmos';
 import { KyveApi } from './kyve';
 
 const wasmTypes: ReadonlyArray<[string, GeneratedType]> = [
@@ -41,7 +46,12 @@ describe('KyveApi', () => {
 
   beforeAll(async () => {
     registry = new Registry([...defaultRegistryTypes, ...wasmTypes]);
-    kyveApi = await KyveApi.create('archway-1');
+    kyveApi = await KyveApi.create(
+      'archway-1',
+      'https://rpc-eu-1.kyve.network',
+      'https://arweave.net',
+      'kyve-1',
+    );
     const client = new HttpClient('https://rpc.mainnet.archway.io:443');
     tendermint = await Tendermint37Client.create(client);
   });
@@ -76,7 +86,7 @@ describe('KyveApi', () => {
   });
 
   it('ensure correct bundle ID on binary search', async () => {
-    (kyveApi as any).currentBundleId = 0; // reset cached bundle Id
+    (kyveApi as any).currentBundleId = -1; // reset cached bundle Id
     const a = Date.now();
     const firstBundle = await (kyveApi as any).getBundleId(120); // https://app.kyve.network/#/pools/2/bundles/0
     const b = Date.now();
@@ -85,6 +95,37 @@ describe('KyveApi', () => {
     const laterBundle = await (kyveApi as any).getBundleId(3489747); // https://app.kyve.network/#/pools/2/bundles/5149474
     expect(firstBundle).toBe(0);
     expect(laterBundle).toBe(113773);
+  });
+  it('retreive and unzip storage data', async () => {
+    // const data = await (kyveApi as any).retrieveBundleData(
+    //     'YLpTxtj_0ICoWq9HUEOx6VcIzKk8Qui1rnkhH4acbTU',
+    //     100000
+    // )
+    console.log('ji test ');
+    const d = await axios.get(
+      'https://arweave.net/YLpTxtj_0ICoWq9HUEOx6VcIzKk8Qui1rnkhH4acbTU',
+      {
+        headers: {
+          'User-Agent': `SubQuery-Node 3.9.2`,
+          Connection: 'keep-alive',
+          'Content-Encoding': 'gzip',
+          'Content-Type': 'application/gzip',
+        },
+        timeout: 60000,
+      },
+    );
+    console.log('!!?!');
+    console.log('claimed data');
+    // const unzipped = await (kyveApi as any).unzipStorageData('1', data)
+    // console.log(unzipped)
+  });
+  it('Should increment bundleId when height exceeds cache', async () => {
+    (kyveApi as any).currentBundleId = 0;
+    (kyveApi as any).cachedBundle = 'value';
+
+    await (kyveApi as any).validateCache(160, { to_key: '150' } as any);
+
+    expect((kyveApi as any).currentBundleId).toBe(1);
   });
   it('compare block info', async () => {
     const height = 3901476;
@@ -99,10 +140,12 @@ describe('KyveApi', () => {
   describe('able to wrap kyveBlock', () => {
     let rpcLazyBlockContent: LazyBlockContent;
     let kyveLazyBlockContent: LazyBlockContent;
+    let tendermintBlockInfo: BlockResponse;
+    let tendermintBlockResult: BlockResultsResponse;
 
     beforeAll(async () => {
       const height = 3856726;
-      const [tendermintBlockInfo, tendermintBlockResult] = await Promise.all([
+      [tendermintBlockInfo, tendermintBlockResult] = await Promise.all([
         tendermint.block(height),
         tendermint.blockResults(height),
       ]);
@@ -117,17 +160,23 @@ describe('KyveApi', () => {
         tendermintBlockInfo,
         tendermintBlockResult,
         registry,
-        wrapEvent,
       );
-      kyveLazyBlockContent = new LazyBlockContent(
-        bi,
-        br,
-        registry,
-        kyveApi.wrapEvent.bind(kyveApi),
-      );
+      kyveLazyBlockContent = new LazyBlockContent(bi, br, registry);
+    });
+    it('compare kyve wrapped results with rpc results', () => {
+      const blockResults = bundle_3856726.value.block_results;
+
+      const br = (kyveApi as any).decodeBlockResult(blockResults);
+
+      const logs = (kyveApi as any).reconstructLogs(br);
+      expect(logs.length).toBe(2);
+      expect(logs[0].events.length).toBe(3);
+      expect(logs[1].events.length).toBe(5);
+
+      const reconstructedKyveBlock = (kyveApi as any).injectLogs(br);
+      expect(reconstructedKyveBlock.results[0].log).toBeDefined();
     });
     it('wrapTransaction', () => {
-      // note: kyve log is undefined
       expect(kyveLazyBlockContent.transactions[0].tx.data.length).toBe(
         rpcLazyBlockContent.transactions[0].tx.data.length,
       );

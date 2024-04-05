@@ -25,14 +25,14 @@ export const yargsOptions = yargsBuilder({
   runOptions: {
     kyveChainId: {
       demandOption: false,
-      describe:
-        'When indexing from Kyve, please implement a supported kyve chain-id, it is defaulted to "kyve-1"',
+      describe: 'When indexing from Kyve, supported kyve chain-id',
       type: 'string',
+      default: 'kyve-1',
     },
     kyveEndpoint: {
       demandOption: false,
       describe:
-        'If indexing a network that Kyve supports adding a Kyve RPC endpoint will fetch blocks from Kyve',
+        'If indexing a network that Kyve supports adding a Kyve LCD endpoint will fetch blocks from Kyve',
       type: 'string',
     },
     storageUrl: {
@@ -40,6 +40,7 @@ export const yargsOptions = yargsBuilder({
       describe:
         'When indexing from kyve, you can alternatively provide a different storageUrl to index data from, it is defaulted to arweave.',
       type: 'string',
+      default: 'https://arweave.net',
     },
   },
 });

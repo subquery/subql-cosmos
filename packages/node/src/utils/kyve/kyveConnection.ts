@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0
 
 import { Registry } from '@cosmjs/proto-signing';
+import { SupportedChains } from '@kyvejs/sdk/src/constants';
 import {
   ApiConnectionError,
   ApiErrorType,
@@ -9,8 +10,10 @@ import {
   IApiConnectionSpecific,
   NetworkMetadataPayload,
 } from '@subql/node-core';
+import { CosmosClient } from '../../indexer/api.service';
+import { CosmosClientConnection } from '../../indexer/cosmosClient.connection';
 import { BlockContent } from '../../indexer/types';
-import { KyveApi, KyveConnectionConfig } from './kyve';
+import { KyveApi } from './kyve';
 
 const logger = getLogger('kyve-API');
 
@@ -20,37 +23,48 @@ type KyveFetchFunc = (
 ) => Promise<BlockContent[]>;
 
 export class KyveConnection
-  implements IApiConnectionSpecific<KyveApi, undefined, BlockContent[]>
+  implements IApiConnectionSpecific<CosmosClient, undefined, BlockContent[]>
 {
-  unsafeApi: any;
+  unsafeApi: CosmosClient;
   readonly networkMeta: NetworkMetadataPayload;
 
   private constructor(
     private fetchBlocksBatches: KyveFetchFunc,
-    private chainId: string,
+    chainId: string,
     private registry: Registry,
+    cosmosClient: CosmosClientConnection,
   ) {
     this.networkMeta = {
-      chain: this.chainId,
+      chain: chainId,
       specName: undefined,
       genesisHash: undefined,
     };
+    this.unsafeApi = cosmosClient.unsafeApi;
   }
 
   static async create(
+    endpoint: string, // kyve LCD Endpoint
     chainId: string,
     registry: Registry,
-    kyveConfig: KyveConnectionConfig,
+    storageUrl: string,
+    kyveChainId: SupportedChains,
+    cosmosClient: CosmosClientConnection,
   ): Promise<KyveConnection> {
-    const kyveApi = await KyveApi.create(chainId, kyveConfig);
+    const kyveApi = await KyveApi.create(
+      chainId,
+      endpoint,
+      storageUrl,
+      kyveChainId,
+    );
 
     const connection = new KyveConnection(
       kyveApi.fetchBlocksBatches.bind(kyveApi),
       chainId,
       registry,
+      cosmosClient,
     );
 
-    logger.info(`connected to Kyve via ${kyveConfig.storageUrl}`);
+    logger.info(`connected to Kyve via ${endpoint}`);
 
     return connection;
   }
@@ -75,10 +89,10 @@ export class KyveConnection
   }
 
   async apiConnect(): Promise<void> {
-    //
+    return Promise.resolve();
   }
 
   async apiDisconnect(): Promise<void> {
-    //
+    return Promise.resolve();
   }
 }

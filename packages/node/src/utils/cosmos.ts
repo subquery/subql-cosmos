@@ -203,7 +203,7 @@ async function getBlockByHeightByRpc(
   ]);
 }
 
-export async function fetchCosmosBlocksArray<T>(
+export async function fetchCosmosBlocksArray(
   getBlockByHeight: (
     height: number,
   ) => Promise<[BlockResponse, BlockResultsResponse]>,
@@ -355,7 +355,6 @@ export function formatBlockUtil<B extends BlockContent>(block: B): IBlock<B> {
 }
 
 export async function fetchBlocksBatches(
-  registry: Registry,
   blockArray: number[],
   api: CosmosClient,
 ): Promise<IBlock<BlockContent>[]> {
@@ -372,7 +371,7 @@ export async function fetchBlocksBatches(
       );
 
       return formatBlockUtil(
-          new LazyBlockContent(blockInfo, blockResults, registry, wrapEvent)
+          new LazyBlockContent(blockInfo, blockResults,  api.registry)
       );
     } catch (e) {
       logger.error(
@@ -397,12 +396,6 @@ export class LazyBlockContent implements BlockContent {
     private _blockInfo: BlockResponse,
     private _results: BlockResultsResponse,
     private _registry: Registry,
-    private wrapEventsFunc: (
-      block: CosmosBlock,
-      txs: CosmosTransaction[],
-      registry: Registry,
-      eventIdx: number,
-    ) => CosmosEvent[],
   ) {}
 
   get block() {
@@ -434,7 +427,7 @@ export class LazyBlockContent implements BlockContent {
 
   get events() {
     if (!this._wrappedEvent) {
-      this._wrappedEvent = this.wrapEventsFunc(
+      this._wrappedEvent = wrapEvent(
         this.block,
         this.transactions,
         this._registry,
