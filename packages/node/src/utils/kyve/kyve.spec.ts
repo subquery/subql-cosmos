@@ -56,6 +56,10 @@ describe('KyveApi', () => {
     tendermint = await Tendermint37Client.create(client);
   });
 
+  afterEach(() => {
+    (kyveApi as any).currentBundleId = -1; // reset bundleId
+  });
+
   // TODO: all the test to fetch bundle from arweave is failing on timeout.
   it('getBundle by height', async () => {
     const [, blockResponse] = await kyveApi.getBlockByHeight(3856726);
@@ -96,35 +100,18 @@ describe('KyveApi', () => {
     expect(firstBundle).toBe(0);
     expect(laterBundle).toBe(113773);
   });
-  it('retreive and unzip storage data', async () => {
-    // const data = await (kyveApi as any).retrieveBundleData(
-    //     'YLpTxtj_0ICoWq9HUEOx6VcIzKk8Qui1rnkhH4acbTU',
-    //     100000
-    // )
-    console.log('ji test ');
-    const d = await axios.get(
-      'https://arweave.net/YLpTxtj_0ICoWq9HUEOx6VcIzKk8Qui1rnkhH4acbTU',
-      {
-        headers: {
-          'User-Agent': `SubQuery-Node 3.9.2`,
-          Connection: 'keep-alive',
-          'Content-Encoding': 'gzip',
-          'Content-Type': 'application/gzip',
-        },
-        timeout: 60000,
-      },
+  it('retrieve and unzip storage data', async () => {
+    const data = await (kyveApi as any).retrieveBundleData(
+      'YLpTxtj_0ICoWq9HUEOx6VcIzKk8Qui1rnkhH4acbTU',
+      100000,
     );
-    console.log('!!?!');
-    console.log('claimed data');
-    // const unzipped = await (kyveApi as any).unzipStorageData('1', data)
-    // console.log(unzipped)
+    const unzipped = await (kyveApi as any).unzipStorageData('1', data);
+    expect(unzipped).toBeDefined();
   });
   it('Should increment bundleId when height exceeds cache', async () => {
     (kyveApi as any).currentBundleId = 0;
     (kyveApi as any).cachedBundle = 'value';
-
     await (kyveApi as any).validateCache(160, { to_key: '150' } as any);
-
     expect((kyveApi as any).currentBundleId).toBe(1);
   });
   it('compare block info', async () => {

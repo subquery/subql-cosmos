@@ -203,7 +203,7 @@ export class KyveApi {
   }
 
   private async validateCache(height: number, bundleDetails: BundleDetails) {
-    if (!this.cachedBundle || parseDecimal(bundleDetails.to_key) > height) {
+    if (!this.cachedBundle || height > parseDecimal(bundleDetails.to_key)) {
       this.currentBundleId++;
 
       this.cachedBundle = await this.retrieveBundleData(
