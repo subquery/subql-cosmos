@@ -9,7 +9,6 @@ import {
   BlockResponse,
   BlockResultsResponse,
 } from '@cosmjs/tendermint-rpc/build/tendermint37/responses';
-import axios from 'axios';
 import {
   MsgClearAdmin,
   MsgExecuteContract,
@@ -60,11 +59,6 @@ describe('KyveApi', () => {
     (kyveApi as any).currentBundleId = -1; // reset bundleId
   });
 
-  // TODO: all the test to fetch bundle from arweave is failing on timeout.
-  it('getBundle by height', async () => {
-    const [, blockResponse] = await kyveApi.getBlockByHeight(3856726);
-    expect(blockResponse).toEqual(bundle_3856726);
-  });
   it('ensure bundleDetails', async () => {
     const bundleDetails = await (kyveApi as any).getBundleById(0);
     expect(bundleDetails).toEqual({
@@ -111,7 +105,12 @@ describe('KyveApi', () => {
   it('Should increment bundleId when height exceeds cache', async () => {
     (kyveApi as any).currentBundleId = 0;
     (kyveApi as any).cachedBundle = 'value';
-    await (kyveApi as any).validateCache(160, { to_key: '150' } as any);
+    (kyveApi as any).cachedBundleDetails = {
+      to_key: '150',
+      storage_id: 'YLpTxtj_0ICoWq9HUEOx6VcIzKk8Qui1rnkhH4acbTU',
+      compression_id: '1',
+    } as any;
+    await (kyveApi as any).updateCurrentBundleAndDetails(160);
     expect((kyveApi as any).currentBundleId).toBe(1);
   });
   it('compare block info', async () => {

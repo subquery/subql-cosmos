@@ -44,8 +44,9 @@ export class KyveApi {
   private respAdaptor = adaptor37.responses;
   private poolId: string;
   private currentBundleId = -1;
+  private cachedBundleDetails: BundleDetails;
   private cachedBlocks: UnZippedKyveBlockReponse[];
-  private cachedBundle: StorageReceipt; // storage Data
+  private cachedBundle: StorageReceipt;
 
   private constructor(
     private chainId: string,
@@ -202,17 +203,28 @@ export class KyveApi {
     );
   }
 
-  private async validateCache(height: number, bundleDetails: BundleDetails) {
-    if (!this.cachedBundle || height > parseDecimal(bundleDetails.to_key)) {
-      this.currentBundleId++;
+  async updateCurrentBundleAndDetails(height: number): Promise<void> {
+    if (
+      this.currentBundleId === -1 ||
+      parseDecimal(this.cachedBundleDetails.to_key) < height
+    ) {
+      this.currentBundleId =
+        this.currentBundleId === -1
+          ? await this.getBundleId(height)
+          : this.currentBundleId + 1;
+      this.cachedBundleDetails = await this.getBundleById(this.currentBundleId);
+    }
+  }
 
+  async initializeOrUpdateCachedBundle(): Promise<void> {
+    if (!this.cachedBundle) {
       this.cachedBundle = await this.retrieveBundleData(
-        bundleDetails.storage_id,
+        this.cachedBundleDetails.storage_id,
         BUNDLE_TIMEOUT,
       );
 
       this.cachedBlocks = await this.unzipStorageData(
-        bundleDetails.compression_id,
+        this.cachedBundleDetails.compression_id,
         this.cachedBundle.storageData,
       );
     }
@@ -221,13 +233,8 @@ export class KyveApi {
   async getBlockByHeight(
     height: number,
   ): Promise<[BlockResponse, BlockResultsResponse]> {
-    const bundleId =
-      this.currentBundleId === -1
-        ? await this.getBundleId(height)
-        : this.currentBundleId;
-
-    const bundleDetails = await this.getBundleById(bundleId);
-    await this.validateCache(height, bundleDetails);
+    await this.updateCurrentBundleAndDetails(height);
+    await this.initializeOrUpdateCachedBundle();
 
     const blockData = this.findBlockByHeight(height);
 
