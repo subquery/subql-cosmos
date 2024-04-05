@@ -56,7 +56,11 @@ describe('KyveApi', () => {
   });
 
   afterEach(() => {
-    (kyveApi as any).currentBundleId = -1; // reset bundleId
+    // reset cache
+    (kyveApi as any).currentBundleId = -1;
+    (kyveApi as any).cachedBundleDetails = undefined;
+    (kyveApi as any).cachedBundle = undefined;
+    (kyveApi as any).cachedBlocks = undefined;
   });
 
   it('ensure bundleDetails', async () => {
