@@ -61,6 +61,13 @@ export class ApiService
     super(connectionPoolService, eventEmitter);
     this.nodeConfig = new CosmosNodeConfig(nodeConfig);
   }
+  // create a temp file
+  // download the block content
+
+  // the first worker that would load the bundle
+  // file lock to control permission on doing it
+
+  // clean up old bundles
 
   private async buildRegistry(): Promise<Registry> {
     const chaintypes = await this.getChainType(this.project.network);
@@ -93,12 +100,6 @@ export class ApiService
     this.registry = await this.buildRegistry();
 
     if (this.nodeConfig.kyveEndpoint) {
-      if (this.nodeConfig.workers > 0 || this.nodeConfig.unfinalizedBlocks) {
-        throw new Error(
-          `Unfinalized blocks and workers are not supported by kyve indexing`,
-        );
-      }
-
       // still need to use cosmosClient to proxy rpcCalls
       const cosmosClient = await CosmosClientConnection.create(
         (network.endpoint as string[])[0],

@@ -54,7 +54,7 @@ export class KyveApi {
     private readonly storageUrl: string,
     private readonly kyveChainId: SupportedChains,
   ) {
-    this.lcdClient = new KyveSDK(kyveChainId, {
+    this.lcdClient = new KyveSDK(this.kyveChainId, {
       rpc: this.endpoint,
     }).createLCDClient();
     this.storageUrl = storageUrl;
