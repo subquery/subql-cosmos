@@ -49,12 +49,14 @@ export class KyveConnection
     storageUrl: string,
     kyveChainId: SupportedChains,
     cosmosClient: CosmosClientConnection,
+    tmpCacheDir: string,
   ): Promise<KyveConnection> {
     const kyveApi = await KyveApi.create(
       chainId,
       endpoint,
       storageUrl,
       kyveChainId,
+      tmpCacheDir,
     );
 
     const connection = new KyveConnection(

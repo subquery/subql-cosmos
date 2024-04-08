@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: GPL-3.0
 
 import assert from 'assert';
+import fs from 'fs';
+import path from 'path';
 import { JsonRpcSuccessResponse } from '@cosmjs/json-rpc';
 import { Registry } from '@cosmjs/proto-signing';
 import { Log } from '@cosmjs/stargate/build/logs';
@@ -26,6 +28,7 @@ import { LazyBlockContent } from '../cosmos';
 import { BundleDetails } from './kyveTypes';
 
 const BUNDLE_TIMEOUT = 10000; //ms
+const POLL_TIMER = 1000; // ms
 
 const parseDecimal = (value: string) => parseInt(value, 10);
 
@@ -40,19 +43,18 @@ interface UnZippedKyveBlockReponse {
 }
 
 export class KyveApi {
-  private lcdClient: KyveLCDClientType;
+  private readonly lcdClient: KyveLCDClientType;
   private respAdaptor = adaptor37.responses;
   private poolId: string;
   private currentBundleId = -1;
   private cachedBundleDetails: BundleDetails;
-  private cachedBlocks: UnZippedKyveBlockReponse[];
-  private cachedBundle: StorageReceipt;
 
   private constructor(
     private chainId: string,
     private endpoint: string,
     private readonly storageUrl: string,
     private readonly kyveChainId: SupportedChains,
+    private readonly tmpCacheDir: string,
   ) {
     this.lcdClient = new KyveSDK(this.kyveChainId, {
       rpc: this.endpoint,
@@ -65,8 +67,15 @@ export class KyveApi {
     endpoint: string,
     storageUrl: string,
     kyveChainId: SupportedChains,
+    tmpCacheDir: string,
   ): Promise<KyveApi> {
-    const kyve = new KyveApi(chainId, endpoint, storageUrl, kyveChainId);
+    const kyve = new KyveApi(
+      chainId,
+      endpoint,
+      storageUrl,
+      kyveChainId,
+      tmpCacheDir,
+    );
     await kyve.setPoolId();
 
     return kyve;
@@ -109,20 +118,13 @@ export class KyveApi {
   private async unzipStorageData(
     compressionId: string,
     storageData: Buffer,
-  ): Promise<UnZippedKyveBlockReponse[]> {
+  ): Promise<Buffer> {
     const g = new Gzip();
     if (parseDecimal(compressionId) === 0) {
       return storageData as any;
     }
 
-    const buffer = await g.decompress(storageData);
-    const parsedString = buffer.toString('utf-8');
-
-    try {
-      return JSON.parse(parsedString);
-    } catch (e) {
-      throw new Error(`Failed to parse storageData. ${e}`);
-    }
+    return g.decompress(storageData);
   }
 
   private decodeBlock(block: JsonRpcSuccessResponse): BlockResponse {
@@ -197,13 +199,21 @@ export class KyveApi {
     throw new Error(`No suitable bundle found for height ${height}}`);
   }
 
-  private findBlockByHeight(height: number): UnZippedKyveBlockReponse {
-    return this.cachedBlocks.find(
+  private async findBlockByHeight(
+    height: number,
+  ): Promise<UnZippedKyveBlockReponse> {
+    const bundleFilePath = path.join(
+      this.tmpCacheDir,
+      `bundle_${this.cachedBundleDetails.id}`,
+    );
+
+    return (await this.readFromFile(bundleFilePath)).find(
       (bk: UnZippedKyveBlockReponse) => bk.key === height.toString(),
     );
   }
 
   async updateCurrentBundleAndDetails(height: number): Promise<void> {
+    // this is on init, and then when height is greater than current cache
     if (
       this.currentBundleId === -1 ||
       parseDecimal(this.cachedBundleDetails.to_key) < height
@@ -213,30 +223,106 @@ export class KyveApi {
           ? await this.getBundleId(height)
           : this.currentBundleId + 1;
       this.cachedBundleDetails = await this.getBundleById(this.currentBundleId);
+
+      if (parseDecimal(this.cachedBundleDetails.to_key) < height) {
+        await this.clearFileCache();
+      }
+
+      const lockFilePath = path.join(
+        this.tmpCacheDir,
+        `bundle_${this.cachedBundleDetails.id}.lock`,
+      );
+      try {
+        await this.downloadAndWriteToFile(lockFilePath);
+      } catch (e: any) {
+        if (e?.code !== 'EACCES') {
+          throw e;
+        }
+
+        await this.pollUntilUnlocked(lockFilePath);
+      }
     }
   }
 
-  async initializeOrUpdateCachedBundle(): Promise<void> {
-    if (!this.cachedBundle) {
-      this.cachedBundle = await this.retrieveBundleData(
+  async isLocked(lockFilePath: string): Promise<boolean> {
+    try {
+      await fs.promises.access(lockFilePath);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  private async lockFile(lockFilePath: string): Promise<void> {
+    await fs.promises.writeFile(lockFilePath, 'locked');
+  }
+
+  private async unlockFile(lockFilePath: string): Promise<void> {
+    await fs.promises.unlink(lockFilePath);
+  }
+
+  // Poll until the file is unlocked
+  async pollUntilUnlocked(lockFilePath: string): Promise<void> {
+    while (await this.isLocked(lockFilePath)) {
+      await new Promise((resolve) => setTimeout(resolve, POLL_TIMER));
+    }
+  }
+
+  async downloadAndWriteToFile(lockFilePath: string): Promise<void> {
+    const bundleFilePath = path.join(
+      this.tmpCacheDir,
+      `bundle_${this.cachedBundleDetails.id}`,
+    );
+
+    if (await this.isLocked(lockFilePath)) {
+      // no op for other workers.
+      await this.pollUntilUnlocked(lockFilePath);
+    } else {
+      await this.lockFile(lockFilePath);
+
+      const zippedBundleData = await this.retrieveBundleData(
         this.cachedBundleDetails.storage_id,
         BUNDLE_TIMEOUT,
       );
-
-      this.cachedBlocks = await this.unzipStorageData(
+      // TODO: unsure if i need to use the zipper
+      const unzippedBundleData = await this.unzipStorageData(
         this.cachedBundleDetails.compression_id,
-        this.cachedBundle.storageData,
+        zippedBundleData.storageData,
       );
+
+      await this.writeToFile(bundleFilePath, unzippedBundleData);
+
+      await this.unlockFile(lockFilePath); // to lock it so other won't start reading until it is done writing
     }
+  }
+
+  async writeToFile(bundleFilePath: string, data: Buffer): Promise<void> {
+    await fs.promises.writeFile(bundleFilePath, data, { flag: 'w' });
+    await fs.promises.chmod(bundleFilePath, 0o444);
+  }
+
+  async readFromFile(
+    bundleFilePath: string,
+  ): Promise<UnZippedKyveBlockReponse[]> {
+    try {
+      return JSON.parse(await fs.promises.readFile(bundleFilePath, 'utf-8'));
+    } catch (e) {
+      throw new Error(`Failed to parse storageData. ${e}`);
+    }
+  }
+
+  async clearFileCache(): Promise<void> {
+    await fs.promises.unlink(
+      path.join(this.tmpCacheDir, `bundle_${this.cachedBundleDetails.id}`),
+    );
   }
 
   async getBlockByHeight(
     height: number,
   ): Promise<[BlockResponse, BlockResultsResponse]> {
     await this.updateCurrentBundleAndDetails(height);
-    await this.initializeOrUpdateCachedBundle();
 
-    const blockData = this.findBlockByHeight(height);
+    const blockData = await this.findBlockByHeight(height);
 
     return [
       this.decodeBlock(blockData.value.block),

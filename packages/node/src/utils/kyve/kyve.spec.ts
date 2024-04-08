@@ -9,6 +9,7 @@ import {
   BlockResponse,
   BlockResultsResponse,
 } from '@cosmjs/tendermint-rpc/build/tendermint37/responses';
+import { makeTempDir } from '@subql/common';
 import {
   MsgClearAdmin,
   MsgExecuteContract,
@@ -43,13 +44,20 @@ describe('KyveApi', () => {
   let tendermint: Tendermint37Client;
   let registry: Registry;
 
+  let tmpPath: string;
+  let retrieveBundleDataSpy: jest.SpyInstance;
+  let unzipStorageDataSpy: jest.SpyInstance;
+
   beforeAll(async () => {
+    tmpPath = await makeTempDir();
+
     registry = new Registry([...defaultRegistryTypes, ...wasmTypes]);
     kyveApi = await KyveApi.create(
       'archway-1',
       'https://rpc-eu-1.kyve.network',
       'https://arweave.net',
       'kyve-1',
+      tmpPath,
     );
     const client = new HttpClient('https://rpc.mainnet.archway.io:443');
     tendermint = await Tendermint37Client.create(client);
@@ -61,6 +69,9 @@ describe('KyveApi', () => {
     (kyveApi as any).cachedBundleDetails = undefined;
     (kyveApi as any).cachedBundle = undefined;
     (kyveApi as any).cachedBlocks = undefined;
+
+    retrieveBundleDataSpy.mockRestore();
+    unzipStorageDataSpy.mockRestore();
   });
 
   it('ensure bundleDetails', async () => {
@@ -129,6 +140,81 @@ describe('KyveApi', () => {
   it('determine correct pool', () => {
     expect((kyveApi as any).poolId).toBe('2');
     expect((kyveApi as any).chainId).toBe('archway-1');
+  });
+  it('able to download and write to file', async () => {
+    (kyveApi as any).cachedBundleDetails = {
+      id: '1',
+      to_key: '150',
+      storage_id: 'YLpTxtj_0ICoWq9HUEOx6VcIzKk8Qui1rnkhH4acbTU',
+      compression_id: '1',
+    } as any;
+
+    retrieveBundleDataSpy = jest
+      .spyOn(kyveApi as any, 'retrieveBundleData')
+      .mockImplementation(() =>
+        Promise.resolve({
+          storageData: Buffer.from(JSON.stringify(bundle_3856726)),
+        }),
+      );
+
+    unzipStorageDataSpy = jest
+      .spyOn(kyveApi as any, 'unzipStorageData')
+      .mockImplementation(() =>
+        Promise.resolve(Buffer.from(JSON.stringify(bundle_3856726))),
+      );
+
+    const writerSpy = jest.spyOn(kyveApi as any, 'writeToFile');
+    const height = 160;
+
+    await kyveApi.updateCurrentBundleAndDetails(height);
+
+    await expect(
+      Promise.all([
+        kyveApi.updateCurrentBundleAndDetails(height),
+        kyveApi.updateCurrentBundleAndDetails(height),
+      ]),
+    ).resolves.not.toThrow();
+
+    await expect(
+      (kyveApi as any).readFromFile(
+        path.join(tmpPath, `bundle_${(kyveApi as any).cachedBundleDetails.id}`),
+      ),
+    ).resolves.toEqual(bundle_3856726);
+
+    expect(writerSpy).toHaveBeenCalledTimes(1);
+    expect((kyveApi as any).cachedBundleDetails.to_index).toBe('300');
+  });
+  it('race condition on file cache', async () => {
+    (kyveApi as any).cachedBundleDetails = {
+      id: '1',
+      to_key: '150',
+      storage_id: 'YLpTxtj_0ICoWq9HUEOx6VcIzKk8Qui1rnkhH4acbTU',
+      compression_id: '1',
+    } as any;
+    const height = 160;
+
+    retrieveBundleDataSpy = jest
+      .spyOn(kyveApi as any, 'retrieveBundleData')
+      .mockImplementation(() =>
+        Promise.resolve({
+          storageData: Buffer.from(JSON.stringify(bundle_3856726)),
+        }),
+      );
+
+    unzipStorageDataSpy = jest
+      .spyOn(kyveApi as any, 'unzipStorageData')
+      .mockImplementation(() =>
+        Promise.resolve(Buffer.from(JSON.stringify(bundle_3856726))),
+      );
+
+    await Promise.all([
+      kyveApi.updateCurrentBundleAndDetails(height),
+      kyveApi.updateCurrentBundleAndDetails(height),
+      kyveApi.updateCurrentBundleAndDetails(height),
+      kyveApi.updateCurrentBundleAndDetails(height),
+    ]);
+
+    // read from folder and ensure that there is content
   });
   describe('able to wrap kyveBlock', () => {
     let rpcLazyBlockContent: LazyBlockContent;
