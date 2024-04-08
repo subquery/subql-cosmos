@@ -3975,7 +3975,7 @@ __metadata:
     "@protobufs/google": ^0.0.10
     "@protobufs/ibc": ^0.1.0
     "@protobufs/tendermint": ^0.0.10
-    "@subql/common": ^3.4.1
+    "@subql/common": ^3.5.0
     "@subql/types-cosmos": "workspace:*"
     "@subql/x-cosmology-telescope": ^1.4.14
     "@types/bn.js": 4.11.6
@@ -3998,7 +3998,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@subql/common@npm:3.4.1, @subql/common@npm:^3.4.1":
+"@subql/common@npm:3.4.1":
   version: 3.4.1
   resolution: "@subql/common@npm:3.4.1"
   dependencies:
@@ -4013,6 +4013,24 @@ __metadata:
     semver: ^7.5.2
     update-notifier: 5.1.0
   checksum: 334d1c4f937d16bd50106ffd14425cfc7f1ae6ea8046da8dadb6c6ce685a3de7acb81243f05de986a61fa918802730e5d4f788b5a20d86052841a12d7cbbc380
+  languageName: node
+  linkType: hard
+
+"@subql/common@npm:^3.5.0":
+  version: 3.5.0
+  resolution: "@subql/common@npm:3.5.0"
+  dependencies:
+    "@subql/types-core": 0.6.0
+    axios: ^0.28.0
+    class-transformer: ^0.5.1
+    class-validator: ^0.14.0
+    fs-extra: ^10.1.0
+    ipfs-http-client: 56
+    js-yaml: ^4.1.0
+    reflect-metadata: ^0.1.13
+    semver: ^7.5.2
+    update-notifier: 5.1.0
+  checksum: 63c374b82de90f2db5c76d8f3808e37100d3616707736806d3f43249ea0ca63f0c115104815cb842becb0d350e16e893a8d3942c0e865d62890e43362a455799
   languageName: node
   linkType: hard
 
@@ -4076,7 +4094,7 @@ __metadata:
     "@nestjs/schedule": ^3.0.1
     "@nestjs/schematics": ^9.2.0
     "@nestjs/testing": ^9.4.0
-    "@subql/common": ^3.4.1
+    "@subql/common": ^3.5.0
     "@subql/common-cosmos": "workspace:*"
     "@subql/node-core": ^7.4.3
     "@subql/types-cosmos": "workspace:*"
@@ -4124,21 +4142,21 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@subql/types-core@npm:0.6.0, @subql/types-core@npm:^0.6.0":
+  version: 0.6.0
+  resolution: "@subql/types-core@npm:0.6.0"
+  dependencies:
+    package-json-type: ^1.0.3
+  checksum: 0688f1973f830d1d2ab34864b00fc7efb105228b0328ac485c69950957da3a67a92d9477bc94945e57e3cccbf1b732bdea097c1a452a907e23704e9cbeff31fc
+  languageName: node
+  linkType: hard
+
 "@subql/types-core@npm:^0.4.1-0":
   version: 0.4.1-0
   resolution: "@subql/types-core@npm:0.4.1-0"
   dependencies:
     package-json-type: ^1.0.3
   checksum: f7a51202b6e350e65f65a55136a2b48c8d6ae403850e96215995648656b3ef0779ef33ae526c7ffaa51b221b29255137e84ffd0abb5c1155095b1abfb15ef340
-  languageName: node
-  linkType: hard
-
-"@subql/types-core@npm:^0.6.0":
-  version: 0.6.0
-  resolution: "@subql/types-core@npm:0.6.0"
-  dependencies:
-    package-json-type: ^1.0.3
-  checksum: 0688f1973f830d1d2ab34864b00fc7efb105228b0328ac485c69950957da3a67a92d9477bc94945e57e3cccbf1b732bdea097c1a452a907e23704e9cbeff31fc
   languageName: node
   linkType: hard
 
