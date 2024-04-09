@@ -1,4 +1,4 @@
-// Copyright 2020-2023 SubQuery Pte Ltd authors & contributors
+// Copyright 2020-2024 SubQuery Pte Ltd authors & contributors
 // SPDX-License-Identifier: GPL-3.0
 
 // initlogger and yargs must be imported before all other imports
@@ -34,7 +34,7 @@ const logger = getLogger(`worker #${threadId}`);
 async function initWorker(startHeight: number): Promise<void> {
   try {
     const app = await NestFactory.create(WorkerModule, {
-      logger: new NestLogger(!!argv.debug), // TIP: If the worker is crashing comment out this line for better logging
+       logger: new NestLogger(!!argv.debug), // TIP: If the worker is crashing comment out this line for better logging
     });
 
     await app.init();

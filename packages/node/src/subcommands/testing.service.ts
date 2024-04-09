@@ -1,9 +1,10 @@
-// Copyright 2020-2023 SubQuery Pte Ltd authors & contributors
+// Copyright 2020-2024 SubQuery Pte Ltd authors & contributors
 // SPDX-License-Identifier: GPL-3.0
 
 import { Inject, Injectable } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import {
+  IBlock,
   NestLogger,
   NodeConfig,
   TestingService as BaseTestingService,
@@ -57,7 +58,7 @@ export class TestingService extends BaseTestingService<
   }
 
   async indexBlock(
-    block: BlockContent,
+    block: IBlock<BlockContent>,
     handler: string,
     indexerManager: IndexerManager,
   ): Promise<void> {

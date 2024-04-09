@@ -1,4 +1,4 @@
-// Copyright 2020-2023 SubQuery Pte Ltd authors & contributors
+// Copyright 2020-2024 SubQuery Pte Ltd authors & contributors
 // SPDX-License-Identifier: GPL-3.0
 
 import { isMainThread } from 'worker_threads';
@@ -6,10 +6,10 @@ import { Injectable } from '@nestjs/common';
 import {
   Header,
   HostUnfinalizedBlocks,
+  IBlock,
   IUnfinalizedBlocksService,
 } from '@subql/node-core';
 import { BlockContent } from '../types';
-import { cosmosBlockToHeader } from '../unfinalizedBlocks.service';
 
 @Injectable()
 export class WorkerUnfinalizedBlocksService
@@ -21,10 +21,10 @@ export class WorkerUnfinalizedBlocksService
     }
   }
 
-  async processUnfinalizedBlocks(block: BlockContent): Promise<number | null> {
-    return this.host.unfinalizedBlocksProcess(
-      cosmosBlockToHeader(block.block.header.height),
-    );
+  async processUnfinalizedBlocks(
+    block: IBlock<BlockContent>,
+  ): Promise<number | null> {
+    return this.host.unfinalizedBlocksProcess(block.getHeader());
   }
 
   async processUnfinalizedBlockHeader(header: Header): Promise<number | null> {

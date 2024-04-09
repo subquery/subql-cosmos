@@ -1,10 +1,11 @@
-// Copyright 2020-2023 SubQuery Pte Ltd authors & contributors
+// Copyright 2020-2024 SubQuery Pte Ltd authors & contributors
 // SPDX-License-Identifier: GPL-3.0
 
 import { Registry } from '@cosmjs/proto-signing';
 import { HttpEndpoint } from '@cosmjs/stargate';
 import { Tendermint37Client } from '@cosmjs/tendermint-rpc';
 import {
+  IBlock,
   ApiConnectionError,
   ApiErrorType,
   IApiConnectionSpecific,
@@ -25,11 +26,15 @@ const logger = getLogger('cosmos-client-connection');
 type FetchFunc = (
   api: CosmosClient,
   batch: number[],
-) => Promise<BlockContent[]>;
+) => Promise<IBlock<BlockContent>[]>;
 
 export class CosmosClientConnection
   implements
-    IApiConnectionSpecific<CosmosClient, CosmosSafeClient, BlockContent[]>
+    IApiConnectionSpecific<
+      CosmosClient,
+      CosmosSafeClient,
+      IBlock<BlockContent>[]
+    >
 {
   private tmClient: Tendermint37Client;
   private registry: Registry;
@@ -106,7 +111,7 @@ export class CosmosClientConnection
     this.unsafeApi.disconnect();
   }
 
-  async fetchBlocks(heights: number[]): Promise<BlockContent[]> {
+  async fetchBlocks(heights: number[]): Promise<IBlock<BlockContent>[]> {
     const blocks = await this.fetchBlocksBatches(this.unsafeApi, heights);
     return blocks;
   }
