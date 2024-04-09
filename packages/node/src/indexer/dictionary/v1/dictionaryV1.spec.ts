@@ -65,7 +65,9 @@ describe('Dictionary Queries', () => {
   let dictionary: DictionaryServicePrivate;
 
   beforeAll(async () => {
-    dictionary = await mockDictionaryService('http://localhost:3000'); // TODO get url
+    dictionary = await mockDictionaryService(
+      'https://gateway.subquery.network/query/QmPjq55mgUt9S8S491Q3wEbb87fXyEkdxymT6Gwe2xe1Z1',
+    );
   });
 
   describe('Message Filter Queries', () => {
