@@ -1,14 +1,37 @@
 // Copyright 2020-2023 SubQuery Pte Ltd authors & contributors
 // SPDX-License-Identifier: GPL-3.0
 
-import { EventEmitter2 } from '@nestjs/event-emitter';
 import { CosmosMessageFilter } from '@subql/common-cosmos';
 import { NodeConfig } from '@subql/node-core';
-import { DictionaryService } from './dictionary.service';
-import { messageFilterToQueryEntry } from './fetch.service';
+import { DictionaryV1, messageFilterToQueryEntry } from './dictionaryV1';
 
-type DictionaryQuery = DictionaryService['dictionaryQuery'];
-type DictionaryServicePrivate = DictionaryService & {
+// describe('dictionary service', () => {
+//   let dictionaryService: DictionaryV1;
+
+//   beforeEach(async () => {
+//     dictionaryService = await DictionaryV1.create(
+//       {
+//         network: {
+//           chainId: 'juno-1',
+//           dictionary:
+//             'https://api.subquery.network/sq/subquery/cosmos-juno-dictionary',
+//         },
+//       } as any,
+//       { dictionaryTimeout: 10000 } as NodeConfig,
+//       new EventEmitter2(),
+//     );
+//   });
+
+//   it('successfully validates metatada', async () => {
+//     /* Genesis hash is unused with cosmos, chainId is used from project instead */
+//     await expect(
+//       dictionaryService.initValidation('juno-1'),
+//     ).resolves.toBeTruthy();
+//   });
+// });
+
+type DictionaryQuery = DictionaryV1['dictionaryQuery'];
+type DictionaryServicePrivate = DictionaryV1 & {
   dictionaryQuery: DictionaryQuery;
 };
 
@@ -23,14 +46,18 @@ const nodeConfig = new NodeConfig({
 async function mockDictionaryService(
   url: string,
 ): Promise<DictionaryServicePrivate> {
-  return DictionaryService.create(
+  return DictionaryV1.create(
     {
       network: {
         dictionary: url,
+        chianId: 'juno-1',
       },
     } as any,
     nodeConfig,
-    new EventEmitter2(),
+    () => {
+      throw new Error(`Shouldn't be called`);
+    },
+    url,
   ) as DictionaryServicePrivate;
 }
 

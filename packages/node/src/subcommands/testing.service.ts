@@ -4,6 +4,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import {
+  IBlock,
   NestLogger,
   NodeConfig,
   TestingService as BaseTestingService,
@@ -57,7 +58,7 @@ export class TestingService extends BaseTestingService<
   }
 
   async indexBlock(
-    block: BlockContent,
+    block: IBlock<BlockContent>,
     handler: string,
     indexerManager: IndexerManager,
   ): Promise<void> {

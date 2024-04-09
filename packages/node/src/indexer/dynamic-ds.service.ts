@@ -26,15 +26,17 @@ export class DynamicDsService extends BaseDynamicDsService<CosmosProjectDs> {
   protected async getDatasource(
     params: DatasourceParams,
   ): Promise<CosmosProjectDs> {
-    const { name, ...template } = cloneDeep(
-      this.project.templates.find((t) => t.name === params.templateName),
+    const t = this.project.templates.find(
+      (t) => t.name === params.templateName,
     );
 
-    if (!template) {
+    if (!t) {
       throw new Error(
         `Unable to find matching template in project for name: "${params.templateName}"`,
       );
     }
+
+    const { name, ...template } = cloneDeep(t);
 
     logger.info(
       `Initialised dynamic datasource from template: "${params.templateName}"`,

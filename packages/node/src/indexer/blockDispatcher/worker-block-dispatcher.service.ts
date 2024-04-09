@@ -34,7 +34,7 @@ type IndexerWorker = IIndexerWorker & {
 
 @Injectable()
 export class WorkerBlockDispatcherService
-  extends WorkerBlockDispatcher<CosmosProjectDs, IndexerWorker>
+  extends WorkerBlockDispatcher<CosmosProjectDs, IndexerWorker, BlockContent>
   implements OnApplicationShutdown
 {
   constructor(

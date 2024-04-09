@@ -10,6 +10,7 @@ import {
   ProcessBlockResponse,
   BaseWorkerService,
   IProjectUpgradeService,
+  IBlock,
 } from '@subql/node-core';
 import { CosmosDatasource } from '@subql/types-cosmos';
 import { CosmosProjectDs } from '../../configure/SubqueryProject';
@@ -51,7 +52,7 @@ export class WorkerService extends BaseWorkerService<
   protected async fetchChainBlock(
     heights: number,
     extra: {},
-  ): Promise<BlockContent> {
+  ): Promise<IBlock<BlockContent>> {
     const [block] = await this.apiService.fetchBlocks([heights]);
 
     return block;
@@ -64,7 +65,7 @@ export class WorkerService extends BaseWorkerService<
   }
 
   protected async processFetchedBlock(
-    block: BlockContent,
+    block: IBlock<BlockContent>,
     dataSources: CosmosDatasource[],
   ): Promise<ProcessBlockResponse> {
     return this.indexerManager.indexBlock(block, dataSources);

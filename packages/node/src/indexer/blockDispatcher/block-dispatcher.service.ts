@@ -9,11 +9,11 @@ import {
   StoreCacheService,
   StoreService,
   IProjectService,
-  PoiService,
   PoiSyncService,
   BlockDispatcher,
   ProcessBlockResponse,
   IProjectUpgradeService,
+  IBlock,
 } from '@subql/node-core';
 import {
   CosmosProjectDs,
@@ -33,7 +33,7 @@ export class BlockDispatcherService
   implements OnApplicationShutdown
 {
   constructor(
-    private apiService: ApiService,
+    apiService: ApiService,
     nodeConfig: NodeConfig,
     private indexerManager: IndexerManager,
     eventEmitter: EventEmitter2,
@@ -58,11 +58,7 @@ export class BlockDispatcherService
       poiSyncService,
       project,
       dynamicDsService,
-      async (blockNums: number[]): Promise<BlockContent[]> => {
-        // If specVersion not changed, a known overallSpecVer will be pass in
-        // Otherwise use api to fetch runtimes
-        return this.apiService.fetchBlocks(blockNums);
-      },
+      apiService.fetchBlocks.bind(apiService),
     );
   }
 
@@ -77,11 +73,11 @@ export class BlockDispatcherService
   }
 
   protected async indexBlock(
-    block: BlockContent,
+    block: IBlock<BlockContent>,
   ): Promise<ProcessBlockResponse> {
     return this.indexerManager.indexBlock(
       block,
-      await this.projectService.getDataSources(this.getBlockHeight(block)),
+      await this.projectService.getDataSources(block.getHeader().blockHeight),
     );
   }
 }

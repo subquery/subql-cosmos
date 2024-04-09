@@ -13,12 +13,14 @@ import {
   CosmosRuntimeHandlerInputMap,
 } from '@subql/common-cosmos';
 import {
+  ApiService,
   NodeConfig,
   profiler,
   IndexerSandbox,
   ProcessBlockResponse,
   BaseIndexerManager,
   getLogger,
+  IBlock,
 } from '@subql/node-core';
 import {
   CosmosBlock,
@@ -30,7 +32,11 @@ import {
 } from '@subql/types-cosmos';
 import { CosmosProjectDs } from '../configure/SubqueryProject';
 import * as CosmosUtil from '../utils/cosmos';
-import { ApiService, CosmosClient, CosmosSafeClient } from './api.service';
+import {
+  ApiService as CosmosApiService,
+  CosmosClient,
+  CosmosSafeClient,
+} from './api.service';
 import {
   asSecondLayerHandlerProcessor_1_0_0,
   DsProcessorService,
@@ -47,7 +53,7 @@ export class IndexerManager extends BaseIndexerManager<
   CosmosSafeClient,
   CosmosClient,
   BlockContent,
-  ApiService,
+  CosmosApiService,
   CosmosDatasource,
   CosmosCustomDatasource,
   typeof FilterTypeMap,
@@ -59,7 +65,7 @@ export class IndexerManager extends BaseIndexerManager<
   protected updateCustomProcessor = asSecondLayerHandlerProcessor_1_0_0;
 
   constructor(
-    apiService: ApiService,
+    apiService: CosmosApiService,
     nodeConfig: NodeConfig,
     sandboxService: SandboxService<CosmosSafeClient>,
     dsProcessorService: DsProcessorService,
@@ -80,11 +86,11 @@ export class IndexerManager extends BaseIndexerManager<
 
   @profiler()
   async indexBlock(
-    block: BlockContent,
+    block: IBlock<BlockContent>,
     dataSources: CosmosDatasource[],
   ): Promise<ProcessBlockResponse> {
     return super.internalIndexBlock(block, dataSources, () =>
-      this.getApi(block),
+      this.getApi(block.block),
     );
   }
 
