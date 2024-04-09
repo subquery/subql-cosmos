@@ -101,7 +101,6 @@ export class ApiService
     this.registry = await this.buildRegistry();
 
     if (this.nodeConfig.kyveEndpoint) {
-      const tmpDir = await makeTempDir();
       // still need to use cosmosClient to proxy rpcCalls
       const cosmosClient = await CosmosClientConnection.create(
         (network.endpoint as string[])[0],
@@ -119,7 +118,7 @@ export class ApiService
             this.nodeConfig.storageUrl,
             this.nodeConfig.kyveChainId,
             cosmosClient,
-            tmpDir,
+            this.project.root,
           ),
         (connection: KyveConnection) => Promise.resolve(network.chainId),
       );
