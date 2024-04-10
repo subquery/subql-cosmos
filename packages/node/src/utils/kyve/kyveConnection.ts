@@ -10,7 +10,7 @@ import {
   IApiConnectionSpecific,
   NetworkMetadataPayload,
 } from '@subql/node-core';
-import { CosmosClient } from '../../indexer/api.service';
+import { CosmosClient, CosmosSafeClient } from '../../indexer/api.service';
 import { CosmosClientConnection } from '../../indexer/cosmosClient.connection';
 import { BlockContent } from '../../indexer/types';
 import { KyveApi } from './kyve';
@@ -32,14 +32,15 @@ export class KyveConnection
     private fetchBlocksBatches: KyveFetchFunc,
     chainId: string,
     private registry: Registry,
-    cosmosClient: CosmosClientConnection,
+    private _unsafeApi: CosmosClient,
+    private _safeApi: (height) => CosmosSafeClient,
   ) {
     this.networkMeta = {
       chain: chainId,
       specName: undefined,
       genesisHash: undefined,
     };
-    this.unsafeApi = cosmosClient.unsafeApi;
+    this.unsafeApi = this._unsafeApi;
   }
 
   static async create(
@@ -48,8 +49,9 @@ export class KyveConnection
     registry: Registry,
     storageUrl: string,
     kyveChainId: SupportedChains,
-    cosmosClient: CosmosClientConnection,
     tmpCacheDir: string,
+    unsafeApi: CosmosClient,
+    safeApi: (height: number) => CosmosSafeClient,
   ): Promise<KyveConnection> {
     const kyveApi = await KyveApi.create(
       chainId,
@@ -63,7 +65,8 @@ export class KyveConnection
       kyveApi.fetchBlocksBatches.bind(kyveApi),
       chainId,
       registry,
-      cosmosClient,
+      unsafeApi,
+      safeApi,
     );
 
     logger.info(`connected to Kyve via ${endpoint}`);
@@ -87,8 +90,7 @@ export class KyveConnection
   }
 
   safeApi(height: number): any {
-    // provide the same logic for as unsafe api
-    throw new Error('SafeApi should not be used for kyve-connection');
+    return this._safeApi(height);
   }
 
   async apiConnect(): Promise<void> {
