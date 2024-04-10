@@ -6,6 +6,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.10.0] - 2024-04-10
+### Changed
+- Updated with node-core. Now dictionary supports multiple endpoints, indexer will fetch and switch dictionaries based on available blocks
+
+### Fixed
+- Updated with node-core ,also fixed:
+  - Fix modulo block didn't apply correctly with multiple dataSources
+  - Now when `workers` set to 0, it will use block dispatcher instead of throw and exit
+
 ## [3.9.2] - 2024-03-15
 ### Changed
 - Update `@subql/node-core` to 4.7.3 with connection retry fixes
@@ -380,7 +389,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Init release
 
-[Unreleased]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/3.9.2...HEAD
+[Unreleased]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/3.10.0...HEAD
+[3.10.0]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/3.9.2...node-cosmos/3.10.0
 [3.9.2]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/3.9.1...node-cosmos/3.9.2
 [3.9.1]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/3.9.0...node-cosmos/3.9.1
 [3.9.0]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/3.8.1...node-cosmos/3.9.0

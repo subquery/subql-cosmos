@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.2.0] - 2024-04-10
+### Changed
+- version bump with `@subql/common`
+
 ## [4.1.1] - 2024-02-23
 ### Changed
 - version bump with `@subql/common`
@@ -130,7 +134,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix chainTypes not being in deployments
 
 ## [0.0.5] - 2022-06-15
-[Unreleased]: https://github.com/subquery/subql-cosmos/compare/common-cosmos/4.1.1...HEAD
+[Unreleased]: https://github.com/subquery/subql-cosmos/compare/common-cosmos/4.2.0...HEAD
+[4.2.0]: https://github.com/subquery/subql-cosmos/compare/common-cosmos/4.1.1...common-cosmos/4.2.0
 [4.1.1]: https://github.com/subquery/subql-cosmos/compare/common-cosmos/4.1.0...common-cosmos/4.1.1
 [4.1.0]: https://github.com/subquery/subql-cosmos/compare/common-cosmos/4.0.1...common-cosmos/4.1.0
 [4.0.1]: https://github.com/subquery/subql-cosmos/compare/common-cosmos/4.0.0...common-cosmos/4.0.1
