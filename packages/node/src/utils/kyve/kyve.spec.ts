@@ -22,7 +22,7 @@ import {
   MsgStoreCode,
   MsgUpdateAdmin,
 } from 'cosmjs-types/cosmwasm/wasm/v1/tx';
-import { isEqual } from 'lodash';
+import { isEqual, toLower } from 'lodash';
 import rimraf from 'rimraf';
 import { HttpClient } from '../../indexer/rpc-clients';
 import { LazyBlockContent } from '../cosmos';
@@ -85,7 +85,7 @@ describe('KyveApi', () => {
     retrieveBundleDataSpy.mockRestore();
   });
   afterAll(async () => {
-    await promisify(rimraf)(tmpPath);
+    // await promisify(rimraf)(tmpPath);
   });
 
   it('ensure bundleDetails', async () => {
@@ -200,7 +200,7 @@ describe('KyveApi', () => {
         return { data: mockStream };
       });
 
-    const pollSpy = jest.spyOn(kyveApi, 'pollUntilReadable');
+    const pollSpy = jest.spyOn(kyveApi as any, 'pollUntilReadable');
 
     await expect(
       Promise.all([
@@ -213,16 +213,16 @@ describe('KyveApi', () => {
 
     expect(pollSpy).toHaveBeenCalled();
 
-    const MAX_COMPRESSION_BYTE_SIZE = 2 * 10 ** 9;
-
     const r = await kyveApi.readFromFile(
       path.join(tmpPath, `bundle_${(kyveApi as any).cachedBundleDetails.id}`),
     );
-    const unzipped = gunzipSync(zipped, {
-      maxOutputLength: MAX_COMPRESSION_BYTE_SIZE,
-    });
 
-    // TODO for some reason it does not equal
+    const stats = await fs.promises.stat(
+      path.join(tmpPath, `bundle_${(kyveApi as any).cachedBundleDetails.id}`),
+    );
+    const permissions = (stats.mode & 0o777).toString(8);
+
+    expect(permissions).toBe(444);
     expect(r).toEqual(JSON.stringify(block_3856726));
   });
   describe('able to wrap kyveBlock', () => {

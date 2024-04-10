@@ -7,7 +7,7 @@ import { IConfig, NodeConfig } from '@subql/node-core';
 export interface ICosmosConfig extends IConfig {
   kyveChainId: SupportedChains;
   kyveEndpoint: string;
-  storageUrl: string;
+  kyveStorageUrl: string;
 }
 
 export class CosmosNodeConfig extends NodeConfig<ICosmosConfig> {
@@ -35,7 +35,7 @@ export class CosmosNodeConfig extends NodeConfig<ICosmosConfig> {
     return this._config.kyveChainId;
   }
 
-  get storageUrl(): string {
-    return this._config.storageUrl;
+  get kyveStorageUrl(): string {
+    return this._config.kyveStorageUrl;
   }
 }

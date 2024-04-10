@@ -20,7 +20,7 @@ import {
   QueryPoolsResponse,
 } from '@kyvejs/types/lcd/kyve/query/v1beta1/pools';
 import { delay, getLogger } from '@subql/node-core';
-import axios, { AxiosRequestConfig, AxiosResponse } from 'axios';
+import axios, { AxiosResponse } from 'axios';
 import { BlockContent } from '../../indexer/types';
 import { LazyBlockContent } from '../cosmos';
 import { BundleDetails } from './kyveTypes';
@@ -42,24 +42,15 @@ interface UnZippedKyveBlockReponse {
 }
 
 export class KyveApi {
-  private readonly lcdClient: KyveLCDClientType;
-  private respAdaptor = adaptor37.responses;
-  private poolId: string;
   private currentBundleId = -1;
   private cachedBundleDetails: BundleDetails;
 
   private constructor(
-    private chainId: string,
-    private endpoint: string,
     private readonly storageUrl: string,
-    private readonly kyveChainId: SupportedChains,
     private readonly tmpCacheDir: string,
-  ) {
-    this.lcdClient = new KyveSDK(this.kyveChainId, {
-      rpc: this.endpoint,
-    }).createLCDClient();
-    this.storageUrl = storageUrl;
-  }
+    private readonly poolId: string,
+    private readonly lcdClient: KyveLCDClientType,
+  ) {}
 
   static async create(
     chainId: string, // chainId for indexing chain
@@ -68,54 +59,42 @@ export class KyveApi {
     kyveChainId: SupportedChains,
     tmpCacheDir: string,
   ): Promise<KyveApi> {
-    const kyve = new KyveApi(
-      chainId,
-      endpoint,
-      storageUrl,
-      kyveChainId,
-      tmpCacheDir,
-    );
-    await kyve.setPoolId();
+    const lcdClient = new KyveSDK(kyveChainId, {
+      rpc: endpoint,
+    }).createLCDClient();
+
+    const poolId = await KyveApi.fetchPoolId(chainId, lcdClient);
+
+    const kyve = new KyveApi(storageUrl, tmpCacheDir, poolId, lcdClient);
 
     return kyve;
   }
 
-  get getLcdClient(): KyveLCDClientType {
-    return this.lcdClient;
-  }
+  static async fetchPoolId(
+    chainId: string,
+    lcdClient: KyveLCDClientType,
+  ): Promise<string> {
+    const poolsResponse =
+      (await lcdClient.kyve.query.v1beta1.pools()) as unknown as QueryPoolsResponse;
 
-  private async getAllPools(): Promise<QueryPoolsResponse> {
-    return (await this.lcdClient.kyve.query.v1beta1.pools()) as unknown as QueryPoolsResponse;
-  }
-
-  private async setPoolId(): Promise<void> {
-    const pools = await this.getAllPools();
-
-    let pool: PoolResponse;
-    for (const p of pools.pools) {
+    for (const p of poolsResponse.pools) {
       try {
         const config = JSON.parse(p.data.config);
-
-        if (config.network === this.chainId) {
-          pool = p as unknown as PoolResponse;
-          break;
+        if (config.network === chainId) {
+          return p.id; // Return the matching pool ID
         }
       } catch (error) {
         throw new Error(
-          `Error parsing JSON for pool with id ${p.id}:, ${error}`,
+          `Error parsing JSON for pool with id ${p.id}: ${error}`,
         );
       }
     }
 
-    if (!pool) {
-      throw new Error(`${this.chainId} is not available on Kyve network`);
-    }
-
-    this.poolId = pool.id;
+    throw new Error(`${chainId} is not available on Kyve network`);
   }
 
   private decodeBlock(block: JsonRpcSuccessResponse): BlockResponse {
-    return this.respAdaptor.decodeBlock({
+    return adaptor37.responses.decodeBlock({
       id: 1,
       jsonrpc: '2.0',
       result: block,
@@ -125,11 +104,15 @@ export class KyveApi {
   private decodeBlockResult(
     blockResult: JsonRpcSuccessResponse,
   ): BlockResultsResponse {
-    return this.respAdaptor.decodeBlockResults({
+    return adaptor37.responses.decodeBlockResults({
       id: 1,
       jsonrpc: '2.0',
       result: blockResult,
     });
+  }
+
+  private getBundelFileName(id: string): string {
+    return path.join(this.tmpCacheDir, `bundle_${id}`);
   }
 
   private async getBundleById(bundleId: number): Promise<BundleDetails> {
@@ -217,14 +200,14 @@ export class KyveApi {
         );
         await this.clearFileCache();
       } catch (e) {
-        /* empty */
+        /* if file does not exist, no need to clear fileCache */
       }
 
-      return this.jsonParseWrapper(await this.getFileCacheData());
+      return JSON.parse(await this.getFileCacheData());
     }
   }
 
-  async pollUntilReadable(bundleFilePath: string): Promise<string> {
+  private async pollUntilReadable(bundleFilePath: string): Promise<string> {
     // eslint-disable-next-line no-constant-condition
     while (true) {
       try {
@@ -249,27 +232,23 @@ export class KyveApi {
     const gunzip = zlib.createUnzip({
       maxOutputLength: MAX_COMPRESSION_BYTE_SIZE /* avoid zip bombs */,
     });
-    zippedBundleData.data
-      .pipe(gunzip)
-      .pipe(writeStream)
-      .on('error', (err) => {
-        // TODO i am unsure if this is working with async
-        if (err.code === 'EEXIST') {
-          return this.pollUntilReadable(bundleFilePath);
-        } else {
-          throw err;
-        }
-      })
-      .on('finish', () => {
-        return fs.promises.chmod(bundleFilePath, 0o444);
-      });
+
+    await new Promise((resolve, reject) => {
+      zippedBundleData.data
+        .pipe(gunzip)
+        .on('error', reject)
+        .pipe(writeStream)
+        .on('error', (err) => {
+          reject(err);
+        })
+        .on('finish', resolve);
+    });
+
+    await fs.promises.chmod(bundleFilePath, 0o444);
   }
 
   async getFileCacheData(): Promise<string> {
-    const bundleFilePath = path.join(
-      this.tmpCacheDir,
-      `bundle_${this.cachedBundleDetails.id}`,
-    );
+    const bundleFilePath = this.getBundelFileName(this.cachedBundleDetails.id);
 
     try {
       await this.downloadAndProcessBundle(bundleFilePath);
@@ -283,25 +262,25 @@ export class KyveApi {
     }
   }
 
-  private jsonParseWrapper(data: string) {
-    try {
-      return JSON.parse(data);
-    } catch (e) {
-      throw new Error(`Failed to parse storageData. ${e}`);
-    }
-  }
-
   async readFromFile(bundleFilePath: string): Promise<string> {
     return fs.promises.readFile(bundleFilePath, 'utf-8');
   }
 
   async clearFileCache(): Promise<void> {
-    await fs.promises.unlink(
-      path.join(
-        this.tmpCacheDir,
-        `bundle_${parseDecimal(this.cachedBundleDetails.id) - 2}`,
-      ),
-    );
+    const currentBundleId = parseDecimal(this.cachedBundleDetails.id);
+    const files = await fs.promises.readdir(this.tmpCacheDir);
+
+    const minAllowedBundleId = currentBundleId - 2;
+
+    const filesToRemove = files.filter((file) => {
+      const match = file.match(/bundle_(\d+)/); // Extract bundle ID from filename
+      return match && parseDecimal(match[1]) <= minAllowedBundleId;
+    });
+
+    for (const file of filesToRemove) {
+      const filePath = path.join(this.tmpCacheDir, file);
+      await fs.promises.unlink(filePath);
+    }
   }
 
   async getBlockByHeight(
@@ -373,7 +352,7 @@ export class KyveApi {
   }
 
   private async retrieveBundleData(): Promise<AxiosResponse> {
-    const axiosConfig: AxiosRequestConfig = {
+    return axios({
       method: 'get',
       url: this.cachedBundleDetails.storage_id,
       baseURL: this.storageUrl,
@@ -384,8 +363,7 @@ export class KyveApi {
         Connection: 'keep-alive',
         'Content-Encoding': 'gzip',
       },
-    };
-    return axios(axiosConfig);
+    });
   }
 
   async fetchBlocksBatches(

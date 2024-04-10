@@ -87,6 +87,7 @@ export class KyveConnection
   }
 
   safeApi(height: number): any {
+    // provide the same logic for as unsafe api
     throw new Error('SafeApi should not be used for kyve-connection');
   }
 

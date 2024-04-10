@@ -108,18 +108,28 @@ export class ApiService
         this.registry,
       );
 
+      // TODO
+      // instead waiting to try to get cosmos client through another connection instead of creating
       await this.createConnections(
         network,
-        (endpoint) =>
-          KyveConnection.create(
-            this.nodeConfig.kyveEndpoint,
-            network.chainId,
+        (endpoint) => {
+          if (endpoint === this.nodeConfig.kyveEndpoint) {
+            return KyveConnection.create(
+              this.nodeConfig.kyveEndpoint,
+              network.chainId,
+              this.registry,
+              this.nodeConfig.kyveStorageUrl,
+              this.nodeConfig.kyveChainId,
+              cosmosClient,
+              this.project.root,
+            );
+          }
+          return CosmosClientConnection.create(
+            endpoint,
+            this.fetchBlocksBatches,
             this.registry,
-            this.nodeConfig.storageUrl,
-            this.nodeConfig.kyveChainId,
-            cosmosClient,
-            this.project.root,
-          ),
+          );
+        },
         (connection: KyveConnection) => Promise.resolve(network.chainId),
       );
     } else {
