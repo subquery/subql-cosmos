@@ -5,7 +5,7 @@ import fs from 'fs';
 import path from 'path';
 import { Readable } from 'stream';
 import { promisify } from 'util';
-import { gunzipSync, gzipSync } from 'zlib';
+import { gzipSync } from 'zlib';
 import { GeneratedType, Registry } from '@cosmjs/proto-signing';
 import { defaultRegistryTypes } from '@cosmjs/stargate';
 import { Tendermint37Client } from '@cosmjs/tendermint-rpc';
@@ -13,6 +13,7 @@ import {
   BlockResponse,
   BlockResultsResponse,
 } from '@cosmjs/tendermint-rpc/build/tendermint37/responses';
+import KyveSDK from '@kyvejs/sdk';
 import { makeTempDir } from '@subql/common';
 import {
   MsgClearAdmin,
@@ -22,7 +23,7 @@ import {
   MsgStoreCode,
   MsgUpdateAdmin,
 } from 'cosmjs-types/cosmwasm/wasm/v1/tx';
-import { isEqual, toLower } from 'lodash';
+import { isEqual } from 'lodash';
 import rimraf from 'rimraf';
 import { HttpClient } from '../../indexer/rpc-clients';
 import { LazyBlockContent } from '../cosmos';
@@ -43,6 +44,10 @@ const kyveBundlePath = path.join(
 );
 const block_3856726 = require(kyveBundlePath);
 
+const KYVE_ENDPOINT = 'https://rpc-eu-1.kyve.network';
+const KYVE_STORAGE_URL = 'https://arweave.net';
+const KYVE_CHAINID = 'kyve-1';
+
 jest.setTimeout(100000);
 describe('KyveApi', () => {
   let kyveApi: KyveApi;
@@ -50,7 +55,7 @@ describe('KyveApi', () => {
   let registry: Registry;
 
   let tmpPath: string;
-  let retrieveBundleDataSpy = jest.spyOn(kyveApi as any, 'retrieveBundleData');
+  let retrieveBundleDataSpy: jest.SpyInstance;
 
   const zipped = gzipSync(Buffer.from(JSON.stringify(block_3856726)));
   const mockStream = new Readable({
@@ -66,13 +71,14 @@ describe('KyveApi', () => {
     registry = new Registry([...defaultRegistryTypes, ...wasmTypes]);
     kyveApi = await KyveApi.create(
       'archway-1',
-      'https://rpc-eu-1.kyve.network',
-      'https://arweave.net',
-      'kyve-1',
+      KYVE_ENDPOINT,
+      KYVE_STORAGE_URL,
+      KYVE_CHAINID,
       tmpPath,
     );
     const client = new HttpClient('https://rpc.mainnet.archway.io:443');
     tendermint = await Tendermint37Client.create(client);
+    retrieveBundleDataSpy = jest.spyOn(kyveApi as any, 'retrieveBundleData');
   });
 
   afterEach(() => {
@@ -85,7 +91,7 @@ describe('KyveApi', () => {
     retrieveBundleDataSpy.mockRestore();
   });
   afterAll(async () => {
-    // await promisify(rimraf)(tmpPath);
+    await promisify(rimraf)(tmpPath);
   });
 
   it('ensure bundleDetails', async () => {
@@ -155,9 +161,14 @@ describe('KyveApi', () => {
     const [kyveBlockInfo] = await kyveApi.getBlockByHeight(height);
     expect(isEqual(tendermintBlockInfo, kyveBlockInfo)).toBe(true);
   });
-  it('determine correct pool', () => {
-    expect((kyveApi as any).poolId).toBe('2');
-    expect((kyveApi as any).chainId).toBe('archway-1');
+  it('determine correct pool', async () => {
+    const lcdClient = new KyveSDK(KYVE_CHAINID, {
+      rpc: KYVE_ENDPOINT,
+    }).createLCDClient();
+
+    const poolId = await KyveApi.fetchPoolId('archway-1', lcdClient);
+
+    expect(poolId).toBe('2');
   });
   it('able to update and clear file cache', async () => {
     const checkFileExist = async (filePath: string) => {
@@ -218,12 +229,17 @@ describe('KyveApi', () => {
     expect(pollSpy).toHaveBeenCalled();
 
     const r = await kyveApi.readFromFile(
-      path.join(tmpPath, `bundle_${(kyveApi as any).cachedBundleDetails.id}`),
+      (kyveApi as any).getBundleFilePath(
+        (kyveApi as any).cachedBundleDetails.id,
+      ),
     );
 
     const stats = await fs.promises.stat(
-      path.join(tmpPath, `bundle_${(kyveApi as any).cachedBundleDetails.id}`),
+      (kyveApi as any).getBundleFilePath(
+        (kyveApi as any).cachedBundleDetails.id,
+      ),
     );
+
     const permissions = (stats.mode & 0o777).toString(8);
 
     expect(permissions).toBe('444');

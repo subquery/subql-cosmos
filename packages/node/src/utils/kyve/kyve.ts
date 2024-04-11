@@ -15,10 +15,7 @@ import {
 } from '@cosmjs/tendermint-rpc/build/tendermint37/responses';
 import KyveSDK, { KyveLCDClientType } from '@kyvejs/sdk';
 import { SupportedChains } from '@kyvejs/sdk/src/constants'; // Currently these types are not exported
-import {
-  PoolResponse,
-  QueryPoolsResponse,
-} from '@kyvejs/types/lcd/kyve/query/v1beta1/pools';
+import { QueryPoolsResponse } from '@kyvejs/types/lcd/kyve/query/v1beta1/pools';
 import { delay, getLogger } from '@subql/node-core';
 import axios, { AxiosResponse } from 'axios';
 import { BlockContent } from '../../indexer/types';
