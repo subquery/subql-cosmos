@@ -111,8 +111,8 @@ export class KyveApi {
     });
   }
 
-  private getBundelFileName(id: string): string {
-    return path.join(this.tmpCacheDir, `bundle_${id}`);
+  private getBundleFilePath(id: string): string {
+    return path.join(this.tmpCacheDir, `bundle_${id}.json`);
   }
 
   private async getBundleById(bundleId: number): Promise<BundleDetails> {
@@ -204,6 +204,12 @@ export class KyveApi {
       }
 
       return JSON.parse(await this.getFileCacheData());
+    } else {
+      return JSON.parse(
+        await this.readFromFile(
+          this.getBundleFilePath(this.cachedBundleDetails.id),
+        ),
+      );
     }
   }
 
@@ -235,12 +241,11 @@ export class KyveApi {
 
     await new Promise((resolve, reject) => {
       zippedBundleData.data
+        .on('error', (err) => reject(err))
         .pipe(gunzip)
-        .on('error', reject)
+        .on('error', (err) => reject(err))
         .pipe(writeStream)
-        .on('error', (err) => {
-          reject(err);
-        })
+        .on('error', (err) => reject(err))
         .on('finish', resolve);
     });
 
@@ -248,7 +253,7 @@ export class KyveApi {
   }
 
   async getFileCacheData(): Promise<string> {
-    const bundleFilePath = this.getBundelFileName(this.cachedBundleDetails.id);
+    const bundleFilePath = this.getBundleFilePath(this.cachedBundleDetails.id);
 
     try {
       await this.downloadAndProcessBundle(bundleFilePath);

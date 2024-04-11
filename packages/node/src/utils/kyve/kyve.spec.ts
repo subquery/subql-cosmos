@@ -50,7 +50,7 @@ describe('KyveApi', () => {
   let registry: Registry;
 
   let tmpPath: string;
-  let retrieveBundleDataSpy: jest.SpyInstance;
+  let retrieveBundleDataSpy = jest.spyOn(kyveApi as any, 'retrieveBundleData');
 
   const zipped = gzipSync(Buffer.from(JSON.stringify(block_3856726)));
   const mockStream = new Readable({
@@ -124,15 +124,19 @@ describe('KyveApi', () => {
     expect(laterBundle).toBe(113773);
   });
   it('retrieve and unzip storage data', async () => {
-    const data = await (kyveApi as any).retrieveBundleData(
-      'YLpTxtj_0ICoWq9HUEOx6VcIzKk8Qui1rnkhH4acbTU',
-      100000,
+    const id = 8;
+    (kyveApi as any).cachedBundleDetails = await (kyveApi as any).getBundleById(
+      id,
     );
-    const unzipped = await (kyveApi as any).unzipStorageData(
-      '1',
-      data.storageData,
-    );
-    expect(unzipped).toBeDefined();
+
+    const bundleFileName = (kyveApi as any).getBundleFilePath(id);
+    await kyveApi.downloadAndProcessBundle(bundleFileName);
+
+    const v = await kyveApi.readFromFile(bundleFileName);
+
+    const b = (kyveApi as any).findBlockByHeight(1338, JSON.parse(v));
+
+    expect(b).toBeDefined();
   });
   it('Should increment bundleId when height exceeds cache', async () => {
     (kyveApi as any).currentBundleId = 0;
@@ -222,7 +226,7 @@ describe('KyveApi', () => {
     );
     const permissions = (stats.mode & 0o777).toString(8);
 
-    expect(permissions).toBe(444);
+    expect(permissions).toBe('444');
     expect(r).toEqual(JSON.stringify(block_3856726));
   });
   describe('able to wrap kyveBlock', () => {

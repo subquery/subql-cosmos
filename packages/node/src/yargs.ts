@@ -35,7 +35,7 @@ export const yargsOptions = yargsBuilder({
         'If indexing a network that Kyve supports adding a Kyve LCD endpoint will fetch blocks from Kyve',
       type: 'string',
     },
-    'storage-url': {
+    'kyve-storage-url': {
       demandOption: false,
       describe:
         'When indexing from kyve, you can alternatively provide a different storageUrl to index data from, it is defaulted to arweave.',

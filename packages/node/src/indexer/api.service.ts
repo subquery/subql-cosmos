@@ -17,7 +17,6 @@ import {
 } from '@cosmjs/tendermint-rpc/build/tendermint37/responses';
 import { Inject, Injectable, OnApplicationShutdown } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { makeTempDir } from '@subql/common';
 import { CosmosProjectNetConfig } from '@subql/common-cosmos';
 import {
   getLogger,
@@ -38,11 +37,13 @@ import {
 import { CosmosNodeConfig } from '../configure/NodeConfig';
 import { SubqueryProject } from '../configure/SubqueryProject';
 import * as CosmosUtil from '../utils/cosmos';
-import { KyveConnection } from '../utils/kyve/kyveConnection';
+import { KyveApi } from '../utils/kyve/kyve';
 import { CosmosClientConnection } from './cosmosClient.connection';
 import { BlockContent } from './types';
 
 const logger = getLogger('api');
+
+const MAX_RECONNECT_ATTEMPTS = 5;
 
 @Injectable()
 export class ApiService
@@ -51,6 +52,7 @@ export class ApiService
 {
   private fetchBlocksBatches = CosmosUtil.fetchBlocksBatches;
   private nodeConfig: CosmosNodeConfig;
+  private kyveApi: KyveApi;
   registry: Registry;
 
   constructor(
@@ -108,26 +110,40 @@ export class ApiService
     );
 
     if (this.nodeConfig.kyveEndpoint) {
-      // this.connectionPoolService.updateConnection()
-
-      await this.createConnections(
-        network,
-        (endpoint) => {
-          return KyveConnection.create(
-            this.nodeConfig.kyveEndpoint,
-            network.chainId,
-            this.registry,
-            this.nodeConfig.kyveStorageUrl,
-            this.nodeConfig.kyveChainId,
-            this.project.root,
-            this.unsafeApi,
-            this.safeApi.bind(this),
-          );
-        },
-        (connection: KyveConnection) => Promise.resolve(network.chainId),
+      this.kyveApi = await KyveApi.create(
+        network.chainId,
+        this.nodeConfig.kyveEndpoint,
+        this.nodeConfig.kyveStorageUrl,
+        this.nodeConfig.kyveChainId,
+        this.project.root, // TODO this wont work for local
       );
     }
+
     return this;
+  }
+
+  // Overrides the super function because of the kyve integration
+  async fetchBlocks(
+    heights: number[],
+    numAttempts = MAX_RECONNECT_ATTEMPTS,
+  ): Promise<BlockContent[]> {
+    try {
+      if (this.kyveApi) {
+        return this.kyveApi.fetchBlocksBatches(this.registry, heights);
+      } else {
+        throw new Error('No kyve connection');
+      }
+    } catch (e) {
+      if (e.message === 'No kyve connection') {
+        return this.retryFetch(async () => {
+          // Get the latest fetch function from the provider
+          const apiInstance = this.connectionPoolService.api;
+          return apiInstance.fetchBlocks(heights);
+        }, numAttempts);
+      }
+
+      throw e;
+    }
   }
 
   get api(): CosmosClient {
