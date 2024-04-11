@@ -50,7 +50,12 @@ import { WorkerUnfinalizedBlocksService } from './worker.unfinalizedBlocks.servi
         await apiService.init();
         return apiService;
       },
-      inject: ['ISubqueryProject', ConnectionPoolService, EventEmitter2],
+      inject: [
+        'ISubqueryProject',
+        ConnectionPoolService,
+        EventEmitter2,
+        NodeConfig,
+      ],
     },
     SandboxService,
     DsProcessorService,
