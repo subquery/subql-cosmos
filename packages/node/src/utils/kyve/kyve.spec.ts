@@ -57,13 +57,8 @@ describe('KyveApi', () => {
   let tmpPath: string;
   let retrieveBundleDataSpy: jest.SpyInstance;
 
-  const zipped = gzipSync(Buffer.from(JSON.stringify(block_3856726)));
-  const mockStream = new Readable({
-    read() {
-      this.push(zipped);
-      this.push(null);
-    },
-  });
+  let zippedMockResp: Buffer;
+  let mockStream: Readable;
 
   beforeAll(async () => {
     tmpPath = await makeTempDir();
@@ -79,6 +74,15 @@ describe('KyveApi', () => {
     const client = new HttpClient('https://rpc.mainnet.archway.io:443');
     tendermint = await Tendermint37Client.create(client);
     retrieveBundleDataSpy = jest.spyOn(kyveApi as any, 'retrieveBundleData');
+  });
+  beforeEach(() => {
+    zippedMockResp = gzipSync(Buffer.from(JSON.stringify(block_3856726)));
+    mockStream = new Readable({
+      read() {
+        this.push(zippedMockResp);
+        this.push(null);
+      },
+    });
   });
 
   afterEach(() => {
@@ -204,7 +208,7 @@ describe('KyveApi', () => {
     ).resolves.toBe(false);
     expect(clearFileSpy).toHaveBeenCalledTimes(1);
   });
-  it('able to download and write to file', async () => {
+  it('able to download and write to file, with simulated workers', async () => {
     (kyveApi as any).cachedBundleDetails = await (kyveApi as any).getBundleById(
       1,
     );
