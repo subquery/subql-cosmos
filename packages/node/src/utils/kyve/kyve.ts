@@ -7,8 +7,8 @@ import path from 'path';
 import * as zlib from 'zlib';
 import { JsonRpcSuccessResponse } from '@cosmjs/json-rpc';
 import { Registry } from '@cosmjs/proto-signing';
-import { Log } from '@cosmjs/stargate/build/logs';
-import { adaptor37 } from '@cosmjs/tendermint-rpc/build/tendermint37/adaptor';
+import { logs } from '@cosmjs/stargate';
+import { Responses } from '@cosmjs/tendermint-rpc/build/tendermint37/adaptor'; // adaptor is not exported
 import {
   BlockResponse,
   BlockResultsResponse,
@@ -16,10 +16,10 @@ import {
 import KyveSDK, { KyveLCDClientType } from '@kyvejs/sdk';
 import { SupportedChains } from '@kyvejs/sdk/src/constants'; // Currently these types are not exported
 import { QueryPoolsResponse } from '@kyvejs/types/lcd/kyve/query/v1beta1/pools';
-import { delay, getLogger } from '@subql/node-core';
+import { delay, getLogger, IBlock } from '@subql/node-core';
 import axios, { AxiosResponse } from 'axios';
 import { BlockContent } from '../../indexer/types';
-import { LazyBlockContent } from '../cosmos';
+import { formatBlockUtil, LazyBlockContent } from '../cosmos';
 import { BundleDetails } from './kyveTypes';
 
 const BUNDLE_TIMEOUT = 10000; //ms
@@ -91,7 +91,7 @@ export class KyveApi {
   }
 
   private decodeBlock(block: JsonRpcSuccessResponse): BlockResponse {
-    return adaptor37.responses.decodeBlock({
+    return Responses.decodeBlock({
       id: 1,
       jsonrpc: '2.0',
       result: block,
@@ -101,7 +101,7 @@ export class KyveApi {
   private decodeBlockResult(
     blockResult: JsonRpcSuccessResponse,
   ): BlockResultsResponse {
-    return adaptor37.responses.decodeBlockResults({
+    return Responses.decodeBlockResults({
       id: 1,
       jsonrpc: '2.0',
       result: blockResult,
@@ -310,8 +310,10 @@ export class KyveApi {
     return kyveBlockResult;
   }
 
-  private reconstructLogs(blockResultResponse: BlockResultsResponse): Log[] {
-    const logs: Log[] = [];
+  private reconstructLogs(
+    blockResultResponse: BlockResultsResponse,
+  ): logs.Log[] {
+    const logs: logs.Log[] = [];
 
     for (const tx of blockResultResponse.results) {
       let currentLog: any = {
@@ -371,7 +373,7 @@ export class KyveApi {
   async fetchBlocksBatches(
     registry: Registry,
     blockArray: number[],
-  ): Promise<BlockContent[]> {
+  ): Promise<IBlock<BlockContent>[]> {
     const blocks = await this.fetchBlocksArray(blockArray);
     return blocks.map(([blockInfo, blockResults]) => {
       try {
@@ -380,7 +382,9 @@ export class KyveApi {
           `txInfos doesn't match up with block (${blockInfo.block.header.height}) transactions expected ${blockInfo.block.txs.length}, received: ${blockResults.results.length}`,
         );
 
-        return new LazyBlockContent(blockInfo, blockResults, registry);
+        return formatBlockUtil(
+          new LazyBlockContent(blockInfo, blockResults, registry),
+        );
       } catch (e) {
         logger.error(
           e,

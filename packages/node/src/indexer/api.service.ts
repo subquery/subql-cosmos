@@ -4,7 +4,7 @@
 import { CosmWasmClient, IndexedTx } from '@cosmjs/cosmwasm-stargate';
 import { toHex } from '@cosmjs/encoding';
 import { Uint53 } from '@cosmjs/math';
-import { DecodeObject, GeneratedType, Registry } from '@cosmjs/proto-signing';
+import { GeneratedType, Registry } from '@cosmjs/proto-signing';
 import { Block, defaultRegistryTypes, SearchTxQuery } from '@cosmjs/stargate';
 import {
   Tendermint37Client,
@@ -126,7 +126,7 @@ export class ApiService
   async fetchBlocks(
     heights: number[],
     numAttempts = MAX_RECONNECT_ATTEMPTS,
-  ): Promise<BlockContent[]> {
+  ): Promise<IBlock<BlockContent>[]> {
     try {
       if (this.kyveApi) {
         return this.kyveApi.fetchBlocksBatches(this.registry, heights);

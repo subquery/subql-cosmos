@@ -17,7 +17,6 @@ import {
   CosmosEvent,
   CosmosTransaction,
 } from '@subql/types-cosmos';
-import { wrapEvent } from '../utils/cosmos';
 import { CosmosClient, CosmosSafeClient } from './api.service';
 import { HttpClient, WebsocketClient } from './rpc-clients';
 import { BlockContent } from './types';
@@ -30,14 +29,8 @@ const RETRY_DELAY = 2_500;
 const logger = getLogger('cosmos-client-connection');
 
 type FetchFunc = (
-  batch: number[],
   api: CosmosClient,
-  wrapEventsFunc: (
-    block: CosmosBlock,
-    txs: CosmosTransaction[],
-    registry: Registry,
-    eventIdx: number,
-  ) => CosmosEvent[],
+  batch: number[],
 ) => Promise<IBlock<BlockContent>[]>;
 
 export class CosmosClientConnection
