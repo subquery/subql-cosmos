@@ -12,11 +12,6 @@ import {
   NetworkMetadataPayload,
 } from '@subql/node-core';
 import { getLogger } from '@subql/node-core/dist';
-import {
-  CosmosBlock,
-  CosmosEvent,
-  CosmosTransaction,
-} from '@subql/types-cosmos';
 import { CosmosClient, CosmosSafeClient } from './api.service';
 import { HttpClient, WebsocketClient } from './rpc-clients';
 import { BlockContent } from './types';

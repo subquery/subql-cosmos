@@ -355,8 +355,8 @@ export function formatBlockUtil<B extends BlockContent>(block: B): IBlock<B> {
 }
 
 export async function fetchBlocksBatches(
-  blockArray: number[],
   api: CosmosClient,
+  blockArray: number[],
 ): Promise<IBlock<BlockContent>[]> {
   const blocks = await fetchCosmosBlocksArray(
     (height: number) => getBlockByHeightByRpc(api, height),
@@ -371,7 +371,7 @@ export async function fetchBlocksBatches(
       );
 
       return formatBlockUtil(
-          new LazyBlockContent(blockInfo, blockResults,  api.registry)
+        new LazyBlockContent(blockInfo, blockResults, api.registry),
       );
     } catch (e) {
       logger.error(
