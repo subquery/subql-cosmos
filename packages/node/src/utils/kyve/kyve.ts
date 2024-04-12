@@ -227,7 +227,17 @@ export class KyveApi {
 
   async downloadAndProcessBundle(bundleFilePath: string): Promise<void> {
     const writeStream = fs.createWriteStream(bundleFilePath, {
-      flags: 'wx+',
+      flags: 'wx',
+      mode: 0o200, // write only access for owner
+    });
+
+    await new Promise((resolve, reject) => {
+      writeStream.on('open', resolve);
+      writeStream.on('error', (err) => {
+        reject(err);
+      });
+    }).catch((e) => {
+      throw e;
     });
 
     const zippedBundleData = await this.retrieveBundleData();
@@ -242,8 +252,9 @@ export class KyveApi {
         .pipe(gunzip)
         .on('error', (err) => reject(err))
         .pipe(writeStream)
-        .on('error', (err) => reject(err))
         .on('finish', resolve);
+    }).catch((e) => {
+      throw e;
     });
 
     await fs.promises.chmod(bundleFilePath, 0o444);
@@ -259,6 +270,7 @@ export class KyveApi {
       if (['EEXIST', 'EACCES', 'ENOENT'].includes(e.code)) {
         return this.pollUntilReadable(bundleFilePath);
       } else {
+        await fs.promises.unlink(bundleFilePath);
         throw e;
       }
     }

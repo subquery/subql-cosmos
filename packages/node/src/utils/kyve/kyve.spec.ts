@@ -208,6 +208,29 @@ describe('KyveApi', () => {
     ).resolves.toBe(false);
     expect(clearFileSpy).toHaveBeenCalledTimes(1);
   });
+  it('remove bundle.json if bundle fetch fails', async () => {
+    (kyveApi as any).cachedBundleDetails = await (kyveApi as any).getBundleById(
+      1,
+    );
+
+    retrieveBundleDataSpy = jest
+      .spyOn(kyveApi as any, 'retrieveBundleData')
+      .mockImplementation(() => {
+        return new Promise((resolve, reject) => {
+          reject('failed to fetch');
+        });
+      });
+
+    await expect(kyveApi.getFileCacheData()).rejects.toBeDefined();
+
+    await expect(
+      fs.promises.stat(
+        (kyveApi as any).getBundleFilePath(
+          (kyveApi as any).cachedBundleDetails.id,
+        ),
+      ),
+    ).rejects.toThrow('no such file or directory');
+  });
   it('able to download and write to file, with simulated workers', async () => {
     (kyveApi as any).cachedBundleDetails = await (kyveApi as any).getBundleById(
       1,
@@ -230,7 +253,7 @@ describe('KyveApi', () => {
       ]),
     ).resolves.not.toThrow();
 
-    expect(pollSpy).toHaveBeenCalled();
+    expect(pollSpy).toHaveBeenCalledTimes(3);
 
     const r = await kyveApi.readFromFile(
       (kyveApi as any).getBundleFilePath(
