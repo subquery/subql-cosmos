@@ -33,14 +33,13 @@ const logger = getLogger('kyve');
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const { version: packageVersion } = require('../../../package.json');
 
-interface UnZippedKyveBlockReponse {
+interface KyveBundleData {
   value: { block: any; block_results: any };
   key: string;
 }
 
 export class KyveApi {
-  private currentBundleId = -1;
-  private cachedBundleDetails: BundleDetails;
+  private cachedBundleDetails: BundleDetails[] = [];
 
   private constructor(
     private readonly storageUrl: string,
@@ -67,7 +66,7 @@ export class KyveApi {
     return kyve;
   }
 
-  static async fetchPoolId(
+  private static async fetchPoolId(
     chainId: string,
     lcdClient: KyveLCDClientType,
   ): Promise<string> {
@@ -140,7 +139,10 @@ export class KyveApi {
   private async getBundleId(height: number): Promise<number> {
     const latestBundleId = await this.getLatestBundleId();
 
-    let low = this.currentBundleId;
+    let low =
+      this.cachedBundleDetails.length > 0
+        ? Math.min(...this.cachedBundleDetails.map((b) => parseDecimal(b.id)))
+        : -1;
     let high = latestBundleId;
     let startBundleId = -1; // Initialize to an invalid ID initially
 
@@ -153,7 +155,6 @@ export class KyveApi {
 
       if (height >= fromKey && height <= toKey) {
         startBundleId = mid;
-        this.currentBundleId = startBundleId;
         return startBundleId;
       }
 
@@ -168,45 +169,44 @@ export class KyveApi {
 
   private findBlockByHeight(
     height: number,
-    fileCacheData: UnZippedKyveBlockReponse[],
-  ): UnZippedKyveBlockReponse {
+    fileCacheData: KyveBundleData[],
+  ): KyveBundleData | undefined {
     return fileCacheData.find(
-      (bk: UnZippedKyveBlockReponse) => bk.key === height.toString(),
+      (bk: KyveBundleData) => bk.key === height.toString(),
     );
   }
 
-  async updateCurrentBundleAndDetails(
-    height: number,
-  ): Promise<UnZippedKyveBlockReponse[]> {
-    // this is on init, and then when height is greater than current cache
-    if (
-      this.currentBundleId === -1 ||
-      parseDecimal(this.cachedBundleDetails.to_key) < height
-    ) {
-      this.currentBundleId =
-        this.currentBundleId === -1
-          ? await this.getBundleId(height)
-          : this.currentBundleId + 1;
-      this.cachedBundleDetails = await this.getBundleById(this.currentBundleId);
-      try {
-        await fs.promises.access(
-          path.join(
-            this.tmpCacheDir,
-            `bundle_${parseDecimal(this.cachedBundleDetails.id) - 2}`,
-          ),
-        );
-        await this.clearFileCache();
-      } catch (e) {
-        /* if file does not exist, no need to clear fileCache */
-      }
+  private addToCachedBundle(bundle: BundleDetails): void {
+    if (!this.cachedBundleDetails.find((b) => b.id === bundle.id)) {
+      this.cachedBundleDetails.push(bundle);
+    }
+  }
 
-      return JSON.parse(await this.getFileCacheData());
+  private getBundleFromCache(height: number): BundleDetails | undefined {
+    return this.cachedBundleDetails.find(
+      (b) =>
+        parseDecimal(b.from_key) <= height && height <= parseDecimal(b.to_key),
+    );
+  }
+
+  private async updateCurrentBundleAndDetails(
+    height: number,
+  ): Promise<KyveBundleData[]> {
+    if (this.cachedBundleDetails.length === 0) {
+      const bundleId = await this.getBundleId(height);
+      const bundleDetail = await this.getBundleById(bundleId);
+      this.addToCachedBundle(bundleDetail);
+    }
+
+    const bundle = this.getBundleFromCache(height);
+    if (bundle) {
+      return JSON.parse(await this.getFileCacheData(bundle));
     } else {
-      return JSON.parse(
-        await this.readFromFile(
-          this.getBundleFilePath(this.cachedBundleDetails.id),
-        ),
-      );
+      const bundleId = await this.getBundleId(height);
+      const newBundleDetails = await this.getBundleById(bundleId);
+
+      this.addToCachedBundle(newBundleDetails);
+      return JSON.parse(await this.getFileCacheData(newBundleDetails));
     }
   }
 
@@ -225,12 +225,15 @@ export class KyveApi {
     }
   }
 
-  async downloadAndProcessBundle(bundleFilePath: string): Promise<void> {
+  async downloadAndProcessBundle(bundle: BundleDetails): Promise<void> {
+    const bundleFilePath = this.getBundleFilePath(bundle.id);
+
     const writeStream = fs.createWriteStream(bundleFilePath, {
       flags: 'wx',
       mode: 0o200, // write only access for owner
     });
 
+    // to ensure the stream to throw an on-stack error
     await new Promise((resolve, reject) => {
       writeStream.on('open', resolve);
       writeStream.on('error', (err) => {
@@ -240,7 +243,7 @@ export class KyveApi {
       throw e;
     });
 
-    const zippedBundleData = await this.retrieveBundleData();
+    const zippedBundleData = await this.retrieveBundleData(bundle.storage_id);
 
     const gunzip = zlib.createUnzip({
       maxOutputLength: MAX_COMPRESSION_BYTE_SIZE /* avoid zip bombs */,
@@ -248,9 +251,8 @@ export class KyveApi {
 
     await new Promise((resolve, reject) => {
       zippedBundleData.data
-        .on('error', (err) => reject(err))
         .pipe(gunzip)
-        .on('error', (err) => reject(err))
+        .on('error', reject)
         .pipe(writeStream)
         .on('finish', resolve);
     }).catch((e) => {
@@ -260,11 +262,11 @@ export class KyveApi {
     await fs.promises.chmod(bundleFilePath, 0o444);
   }
 
-  async getFileCacheData(): Promise<string> {
-    const bundleFilePath = this.getBundleFilePath(this.cachedBundleDetails.id);
+  private async getFileCacheData(bundle: BundleDetails): Promise<string> {
+    const bundleFilePath = this.getBundleFilePath(bundle.id);
 
     try {
-      await this.downloadAndProcessBundle(bundleFilePath);
+      await this.downloadAndProcessBundle(bundle);
       return await this.readFromFile(bundleFilePath);
     } catch (e: any) {
       if (['EEXIST', 'EACCES', 'ENOENT'].includes(e.code)) {
@@ -280,20 +282,15 @@ export class KyveApi {
     return fs.promises.readFile(bundleFilePath, 'utf-8');
   }
 
-  async clearFileCache(): Promise<void> {
-    const currentBundleId = parseDecimal(this.cachedBundleDetails.id);
-    const files = await fs.promises.readdir(this.tmpCacheDir);
+  // todo unsure when to clear the file cache
+  private async clearFileCache(height: number): Promise<void> {
+    const bundleToRemove = this.cachedBundleDetails.filter(
+      (b) => parseDecimal(b.from_key) > height,
+    );
 
-    const minAllowedBundleId = currentBundleId - 2;
-
-    const filesToRemove = files.filter((file) => {
-      const match = file.match(/bundle_(\d+)/); // Extract bundle ID from filename
-      return match && parseDecimal(match[1]) <= minAllowedBundleId;
-    });
-
-    for (const file of filesToRemove) {
-      const filePath = path.join(this.tmpCacheDir, file);
-      await fs.promises.unlink(filePath);
+    for (const bundle of bundleToRemove) {
+      const bundlePath = this.getBundleFilePath(bundle.id);
+      await fs.promises.unlink(bundlePath);
     }
   }
 
@@ -310,7 +307,9 @@ export class KyveApi {
     ];
   }
 
-  private injectLogs(kyveBlockResult: BlockResultsResponse) {
+  private injectLogs(
+    kyveBlockResult: BlockResultsResponse,
+  ): BlockResultsResponse {
     try {
       kyveBlockResult.results.forEach((b) => {
         // log is readonly hence needing to cast it
@@ -362,15 +361,16 @@ export class KyveApi {
   private async fetchBlocksArray(
     blockArray: number[],
   ): Promise<[BlockResponse, BlockResultsResponse][]> {
+    // use for loop instead ?
     return Promise.all(
       blockArray.map(async (height) => this.getBlockByHeight(height)),
     );
   }
 
-  private async retrieveBundleData(): Promise<AxiosResponse> {
+  private async retrieveBundleData(storageId: string): Promise<AxiosResponse> {
     return axios({
       method: 'get',
-      url: this.cachedBundleDetails.storage_id,
+      url: storageId,
       baseURL: this.storageUrl,
       responseType: 'stream',
       timeout: BUNDLE_TIMEOUT,

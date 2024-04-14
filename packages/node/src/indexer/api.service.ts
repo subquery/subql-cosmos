@@ -141,7 +141,6 @@ export class ApiService
           return apiInstance.fetchBlocks(heights);
         }, numAttempts);
       }
-
       throw e;
     }
   }
