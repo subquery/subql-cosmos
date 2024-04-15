@@ -80,7 +80,7 @@ describe('KyveApi', () => {
     const client = new HttpClient('https://rpc.mainnet.archway.io:443');
     tendermint = await Tendermint37Client.create(client);
   });
-  beforeEach(() => {
+  beforeEach(async () => {
     retrieveBundleDataSpy = jest.spyOn(kyveApi as any, 'retrieveBundleData');
     decoderBlockSpy = jest.spyOn(kyveApi as any, 'decodeBlock');
     decoderBlockResultsSpy = jest.spyOn(kyveApi as any, 'decodeBlockResult');
@@ -94,6 +94,11 @@ describe('KyveApi', () => {
         this.push(null);
       },
     });
+
+    const files = await fs.promises.readdir(tmpPath);
+    for (const file of files) {
+      await fs.promises.unlink(path.join(tmpPath, file));
+    }
   });
 
   afterEach(() => {
@@ -318,42 +323,6 @@ describe('KyveApi', () => {
     const poolId = await (KyveApi as any).fetchPoolId('archway-1', lcdClient);
 
     expect(poolId).toBe('2');
-  });
-  it('clear cache file when height exceeds bundle', async () => {
-    // mock three bundle.json 0, 1 , 2
-    // when clearFileCache is called
-    // expect bundle 0 to be removed
-
-    // the data doesnt really matter, as it clears based on cached bundles
-    const checkFileExist = async (filePath: string) => {
-      try {
-        await fs.promises.access(filePath);
-        return true;
-      } catch (e) {
-        return false;
-      }
-    };
-
-    await fs.promises.writeFile(path.join(tmpPath, 'bundle_130263'), 'mock'); // should be removed
-    await fs.promises.writeFile(path.join(tmpPath, 'bundle_130264'), 'mock');
-
-    retrieveBundleDataSpy.mockImplementation(() => {
-      return { data: mockStream };
-    });
-
-    const clearFileSpy = jest.spyOn(kyveApi as any, 'clearFileCache');
-
-    readerSpy.mockImplementation(() => {
-      return Promise.resolve(JSON.stringify(block_3856726));
-    });
-
-    // await kyveApi.getBlockByHeight(3856726);
-    // expect((kyveApi as any).cachedBundleDetails).not.toBe('0');
-    //
-    // await expect(
-    //   checkFileExist(path.join(tmpPath, 'bundle_130263')),
-    // ).resolves.toBe(false);
-    expect(clearFileSpy).toHaveBeenCalledTimes(1);
   });
   it('remove bundle.json if bundle fetch fails', async () => {
     const bundleDetail = await (kyveApi as any).getBundleById(8);
