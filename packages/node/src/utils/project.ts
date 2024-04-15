@@ -1,6 +1,7 @@
 // Copyright 2020-2024 SubQuery Pte Ltd authors & contributors
 // SPDX-License-Identifier: GPL-3.0
 
+import os from 'os';
 import {
   CosmosRuntimeHandler,
   CosmosCustomHandler,
@@ -67,4 +68,11 @@ export async function loadNetworkChainType(
   const { package: packageName, root } = protobuf.parse(proto);
 
   return [packageName, root];
+}
+
+export function isTmpDir(path: string): boolean {
+  const normalizedPath = path.replace(/\\/g, '/').toLowerCase();
+  return normalizedPath.startsWith(
+    os.tmpdir().replace(/\\/g, '/').toLowerCase(),
+  );
 }

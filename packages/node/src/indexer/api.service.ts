@@ -115,7 +115,7 @@ export class ApiService
         this.nodeConfig.kyveEndpoint,
         this.nodeConfig.kyveStorageUrl,
         this.nodeConfig.kyveChainId,
-        this.project.root, // TODO this wont work for local
+        this.project.fileCacheDir,
       );
     }
 

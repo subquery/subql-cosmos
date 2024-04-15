@@ -255,8 +255,6 @@ export class KyveApi {
         .on('error', reject)
         .pipe(writeStream)
         .on('finish', resolve);
-    }).catch((e) => {
-      throw e;
     });
 
     await fs.promises.chmod(bundleFilePath, 0o444);
@@ -362,6 +360,12 @@ export class KyveApi {
     blockArray: number[],
   ): Promise<[BlockResponse, BlockResultsResponse][]> {
     // use for loop instead ?
+    // mem a promise
+
+    // for loop resolve and get bundle for block, save a promise for bundle id
+
+    // await promise in cache
+    // once bundle has been resolved
     return Promise.all(
       blockArray.map(async (height) => this.getBlockByHeight(height)),
     );

@@ -3,7 +3,7 @@
 
 import assert from 'assert';
 import { Injectable } from '@nestjs/common';
-import { validateSemver } from '@subql/common';
+import { LocalReader, makeTempDir, validateSemver } from '@subql/common';
 import {
   CosmosProjectNetworkConfig,
   parseCosmosProjectManifest,
@@ -28,7 +28,7 @@ import {
 import { buildSchemaFromString } from '@subql/utils';
 import Cron from 'cron-converter';
 import { GraphQLSchema } from 'graphql';
-import { processNetworkConfig } from '../utils/project';
+import { isTmpDir, processNetworkConfig } from '../utils/project';
 
 const { version: packageVersion } = require('../../package.json');
 
@@ -58,6 +58,7 @@ export class SubqueryProject implements ISubqueryProject {
     readonly templates: CosmosProjectDsTemplate[],
     readonly runner?: RunnerSpecs,
     readonly parent?: ParentProject,
+    readonly fileCacheDir?: string,
   ) {
     this.#dataSources = dataSources;
   }
@@ -100,14 +101,27 @@ export class SubqueryProject implements ISubqueryProject {
       NOT_SUPPORT('<1.0.0');
     }
 
+    const fileCacheDir = await getFileCacheDir(reader, root);
+
     return loadProjectFromManifestBase(
       manifest.asV1_0_0,
       reader,
       path,
       root,
       networkOverrides,
+      fileCacheDir,
     );
   }
+}
+
+async function getFileCacheDir(
+  reader: Reader,
+  projectRoot: string,
+): Promise<string> {
+  if (isTmpDir(projectRoot)) return projectRoot;
+  if (reader instanceof LocalReader) return makeTempDir();
+
+  return projectRoot;
 }
 
 type SUPPORT_MANIFEST = ProjectManifestV1_0_0Impl;
@@ -118,6 +132,7 @@ async function loadProjectFromManifestBase(
   path: string,
   root: string,
   networkOverrides?: Partial<CosmosProjectNetworkConfig>,
+  fileCacheDir?: string,
 ): Promise<SubqueryProject> {
   if (typeof projectManifest.network.endpoint === 'string') {
     projectManifest.network.endpoint = [projectManifest.network.endpoint];
@@ -177,5 +192,6 @@ async function loadProjectFromManifestBase(
     templates,
     runner,
     projectManifest.parent,
+    fileCacheDir,
   );
 }
