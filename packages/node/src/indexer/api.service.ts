@@ -117,6 +117,10 @@ export class ApiService
         this.nodeConfig.kyveChainId,
         this.project.fileCacheDir,
       );
+
+      this.eventEmitter.on('block_processing_height', (block) => {
+        console.log('block_processing_height', block);
+      });
     }
 
     return this;
@@ -129,7 +133,10 @@ export class ApiService
   ): Promise<IBlock<BlockContent>[]> {
     try {
       if (this.kyveApi) {
-        return this.kyveApi.fetchBlocksBatches(this.registry, heights);
+        const v = await this.kyveApi.fetchBlocksBatches(this.registry, heights);
+        // listen for processingblock, if it is
+
+        return v;
       } else {
         throw new Error('No kyve connection');
       }

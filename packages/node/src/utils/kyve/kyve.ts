@@ -255,6 +255,8 @@ export class KyveApi {
         .on('error', reject)
         .pipe(writeStream)
         .on('finish', resolve);
+    }).catch((e) => {
+      throw e; // to ensure an on stack error is thrown
     });
 
     await fs.promises.chmod(bundleFilePath, 0o444);
@@ -281,7 +283,8 @@ export class KyveApi {
   }
 
   // todo unsure when to clear the file cache
-  private async clearFileCache(height: number): Promise<void> {
+  async clearFileCache(height: number, clearBuffer: number): Promise<void> {
+    // add listener
     const bundleToRemove = this.cachedBundleDetails.filter(
       (b) => parseDecimal(b.from_key) > height,
     );
