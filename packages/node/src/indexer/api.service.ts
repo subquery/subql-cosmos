@@ -118,12 +118,22 @@ export class ApiService
         this.project.fileCacheDir,
       );
 
-      this.eventEmitter.on('block_processing_height', (block) => {
-        console.log('block_processing_height', block);
-      });
+      this.clearKyveCacheListener((block: { height: number }) =>
+        this.kyveApi.clearFileCache(block.height),
+      );
     }
 
     return this;
+  }
+
+  clearKyveCacheListener(
+    callback: (block: { height: number }) => void | Promise<void>,
+  ): void {
+    this.eventEmitter.on(
+      'block_processing_height',
+      callback as (block: { height: number }) => void,
+      { async: true },
+    );
   }
 
   // Overrides the super function because of the kyve integration

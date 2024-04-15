@@ -1,6 +1,7 @@
 // Copyright 2020-2024 SubQuery Pte Ltd authors & contributors
 // SPDX-License-Identifier: GPL-3.0
 
+import fs from 'fs';
 import path from 'path';
 import { toHex } from '@cosmjs/encoding';
 import { Uint53 } from '@cosmjs/math';
@@ -8,23 +9,32 @@ import { toRfc3339WithNanoseconds } from '@cosmjs/tendermint-rpc';
 import { INestApplication } from '@nestjs/common';
 import { EventEmitter2, EventEmitterModule } from '@nestjs/event-emitter';
 import { Test } from '@nestjs/testing';
-import { loadFromJsonOrYaml } from '@subql/common';
-import { ConnectionPoolService, delay, NodeConfig } from '@subql/node-core';
+import { loadFromJsonOrYaml, makeTempDir } from '@subql/common';
+import {
+  ConnectionPoolService,
+  ConnectionPoolStateManager,
+  delay,
+  NodeConfig,
+} from '@subql/node-core';
 import { GraphQLSchema } from 'graphql';
+import { CosmosNodeConfig } from '../configure/NodeConfig';
 import { SubqueryProject } from '../configure/SubqueryProject';
 import { ApiService } from './api.service';
 
-const ENDPOINT = 'https://rpc-juno.itastakers.com/';
-const CHAINID = 'juno-1';
-
+// const ENDPOINT = 'https://rpc-juno.itastakers.com/';
+// const CHAINID = 'juno-1';
+//
 const TEST_BLOCKNUMBER = 3266772;
+
+const ENDPOINT = 'https://rpc.mainnet.archway.io:443';
+const CHAINID = 'archway-1';
 
 const projectsDir = path.join(__dirname, '../../test');
 
-function testCosmosProject(): SubqueryProject {
+function testCosmosProject(fileCacheDir?: string): SubqueryProject {
   return {
     network: {
-      endpoint: ENDPOINT,
+      endpoint: [ENDPOINT],
       chainId: CHAINID,
     },
     dataSources: [],
@@ -32,21 +42,26 @@ function testCosmosProject(): SubqueryProject {
     root: './',
     schema: new GraphQLSchema({}),
     templates: [],
+    fileCacheDir,
   } as SubqueryProject;
 }
 
 jest.setTimeout(200000);
 
-describe.skip('ApiService', () => {
+describe('ApiService', () => {
   let app: INestApplication;
   let apiService: ApiService;
-  const prepareApiService = async () => {
+
+  let tmpPath: string;
+
+  const prepareApiService = async (fileCacheDir: string) => {
     const module = await Test.createTestingModule({
       providers: [
+        ConnectionPoolStateManager,
         ConnectionPoolService,
         {
           provide: 'ISubqueryProject',
-          useFactory: () => testCosmosProject(),
+          useFactory: () => testCosmosProject(fileCacheDir),
         },
         {
           provide: NodeConfig,
@@ -61,13 +76,38 @@ describe.skip('ApiService', () => {
     app = module.createNestApplication();
     await app.init();
     apiService = app.get(ApiService);
+    (apiService as any).nodeConfig._config.kyveEndpoint =
+      'https://api-us-1.kyve.network';
+    (apiService as any).nodeConfig._config.kyveStorageUrl =
+      'https://arweave.net';
     await apiService.init();
   };
 
   beforeAll(async () => {
-    await prepareApiService();
+    tmpPath = await makeTempDir();
+    await prepareApiService(tmpPath);
   });
+  it('kyve api clear cache', async () => {
+    //    const bundles = [
+    //       {id: '0', from_key: '1', to_key: '150'},
+    //       {id: '1', from_key: '151', to_key: '300'},
+    //       {id: '2', from_key: '301', to_key: '500'},
+    //       {id: '3', from_key: '501', to_key: '800'},
+    //     ]
+    // mock bundle values
+    const heights = [150, 300, 1, 301, 450, 550];
+    const blockArr = await Promise.all([
+      apiService.fetchBlocks(heights),
+      apiService.fetchBlocks(heights),
+    ]);
 
+    console.log(((apiService as any).kyveApi as any).cachedBundleDetails);
+    const files = await fs.promises.readdir(tmpPath);
+    // expect files to be [bundle_1.json, bundle_2, bundle_3.json]
+    // clear cache should be called n times
+
+    // created bundles
+  });
   it('query block info', async () => {
     const api = apiService.api;
     const blockInfo = await api.blockInfo(TEST_BLOCKNUMBER);

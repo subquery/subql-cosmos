@@ -18,6 +18,7 @@ import { SupportedChains } from '@kyvejs/sdk/src/constants'; // Currently these 
 import { QueryPoolsResponse } from '@kyvejs/types/lcd/kyve/query/v1beta1/pools';
 import { delay, getLogger, IBlock } from '@subql/node-core';
 import axios, { AxiosResponse } from 'axios';
+import { remove } from 'lodash';
 import { BlockContent } from '../../indexer/types';
 import { formatBlockUtil, LazyBlockContent } from '../cosmos';
 import { BundleDetails } from './kyveTypes';
@@ -272,7 +273,10 @@ export class KyveApi {
       if (['EEXIST', 'EACCES', 'ENOENT'].includes(e.code)) {
         return this.pollUntilReadable(bundleFilePath);
       } else {
-        await fs.promises.unlink(bundleFilePath);
+        if (axios.isAxiosError(e)) {
+          await fs.promises.unlink(bundleFilePath);
+        }
+
         throw e;
       }
     }
@@ -283,16 +287,39 @@ export class KyveApi {
   }
 
   // todo unsure when to clear the file cache
-  async clearFileCache(height: number, clearBuffer: number): Promise<void> {
-    // add listener
-    const bundleToRemove = this.cachedBundleDetails.filter(
-      (b) => parseDecimal(b.from_key) > height,
+  async clearFileCache(height: number): Promise<void> {
+    console.log(this);
+    const bundles = this.cachedBundleDetails.filter(
+      (b) => parseDecimal(b.to_key) < height,
+    );
+    const r = this.cachedBundleDetails.find(
+      (c) =>
+        height >= parseDecimal(c.from_key) && height <= parseDecimal(c.to_key),
     );
 
-    for (const bundle of bundleToRemove) {
-      const bundlePath = this.getBundleFilePath(bundle.id);
-      await fs.promises.unlink(bundlePath);
+    const toRemoveBundle = bundles.find(
+      (bun) => parseDecimal(bun.id) <= parseDecimal(r.id) - 2,
+    );
+
+    if (!toRemoveBundle) {
+      console.log('bundle not found', height);
+      console.log('bundle not found cache', this.cachedBundleDetails.length);
+      return;
     }
+
+    const bundlePath = this.getBundleFilePath(toRemoveBundle.id);
+    try {
+      await fs.promises.unlink(bundlePath);
+      remove(this.cachedBundleDetails, (b) => b.id === toRemoveBundle.id);
+      console.log('cache after removal', this.cachedBundleDetails.length);
+    } catch (e) {
+      if (e.code === 'ENOENT') {
+        console.error(e);
+      } else {
+        throw e;
+      }
+    }
+    console.log('removed bundle id:', toRemoveBundle, 'at', height);
   }
 
   async getBlockByHeight(
