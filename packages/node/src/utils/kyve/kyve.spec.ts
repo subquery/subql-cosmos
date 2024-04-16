@@ -16,6 +16,7 @@ import {
 } from '@cosmjs/tendermint-rpc/build/tendermint37/responses';
 import KyveSDK from '@kyvejs/sdk';
 import { makeTempDir } from '@subql/common';
+import { delay } from '@subql/node-core';
 import axios from 'axios';
 import {
   MsgClearAdmin,
@@ -237,12 +238,6 @@ describe('KyveApi', () => {
       (kyveBlockResult: BlockResultsResponse) => kyveBlockResult,
     );
 
-    // TODO, should this be called with promise.all or for loop ?
-    // for (const height of [1, 151, 151, 300, 301]) {
-    //   await kyveApi.getBlockByHeight(height)
-    // }
-    // expect download to be called multiple times
-
     const blocks = await Promise.all([
       kyveApi.getBlockByHeight(1),
       kyveApi.getBlockByHeight(151),
@@ -253,6 +248,7 @@ describe('KyveApi', () => {
 
     const cachedBundles = await fs.promises.readdir(tmpPath);
     expect(cachedBundles.length).toBe(3);
+    expect(blocks.length).toBe(5);
 
     for (const bundle of (kyveApi as any).cachedBundleDetails) {
       const stats = await fs.promises.stat(
@@ -359,19 +355,43 @@ describe('KyveApi', () => {
     const bundleDetail = await (kyveApi as any).getBundleById(130265);
     (kyveApi as any).cachedBundleDetails = [bundleDetail];
 
-    retrieveBundleDataSpy.mockImplementation(() => {
+    const workerKyveApi = await KyveApi.create(
+      'archway-1',
+      KYVE_ENDPOINT,
+      KYVE_STORAGE_URL,
+      KYVE_CHAINID,
+      tmpPath,
+    );
+
+    (workerKyveApi as any).cachedBundleDetails = [bundleDetail];
+
+    jest
+      .spyOn(workerKyveApi, 'downloadAndProcessBundle')
+      .mockImplementation(async (bundle: BundleDetails) => {
+        await delay(2);
+        return kyveApi.downloadAndProcessBundle(bundle);
+      });
+
+    jest
+      .spyOn(workerKyveApi as any, 'retrieveBundleData')
+      .mockImplementation(async () => {
+        await delay(4);
+        return { data: mockStream };
+      });
+
+    retrieveBundleDataSpy.mockImplementation(async () => {
+      await delay(3);
       return { data: mockStream };
     });
 
-    const pollSpy = jest.spyOn(kyveApi as any, 'pollUntilReadable');
+    const pollSpy = jest.spyOn(workerKyveApi as any, 'pollUntilReadable');
     await Promise.all([
       kyveApi.fetchBlocksBatches(registry, [3856726], 1),
-      kyveApi.fetchBlocksBatches(registry, [3856726], 1),
-      kyveApi.fetchBlocksBatches(registry, [3856726], 1),
-      kyveApi.fetchBlocksBatches(registry, [3856726], 1),
+      workerKyveApi.fetchBlocksBatches(registry, [3856726], 1),
     ]);
 
-    expect(pollSpy).toHaveBeenCalledTimes(3);
+    console.log(tmpPath);
+    expect(pollSpy).toHaveBeenCalledTimes(1);
 
     const r = await kyveApi.readFromFile(
       (kyveApi as any).getBundleFilePath(bundleDetail.id),

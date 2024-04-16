@@ -117,15 +117,13 @@ describe('ApiService', () => {
       const blockArr = await Promise.all([
         apiService.fetchBlocks(heights_1),
         apiService.fetchBlocks(heights_2),
-        // apiService.fetchBlocks(heights),
       ]);
 
-      console.log(blockArr.length);
+      blockArr.forEach((b) => {
+        console.log(b[0].block.block.blockId);
+      });
       const files = await fs.promises.readdir(tmpPath);
-      // expect files to be [bundle_1.json, bundle_2, bundle_3.json]
-      // clear cache should be called n times
-
-      // created bundles
+      console.log(files);
     });
   });
   describe.skip('RPC api service', () => {

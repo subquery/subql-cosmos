@@ -335,9 +335,7 @@ export class KyveApi {
     height: number,
   ): Promise<[BlockResponse, BlockResultsResponse]> {
     const blocks = await this.fetchBundleCached(height);
-    console.log('blocks', blocks.length);
     const blockData = this.findBlockByHeight(height, blocks);
-    console.log('block data', !!blockData);
 
     return [
       this.decodeBlock(blockData.value.block),
@@ -401,7 +399,6 @@ export class KyveApi {
 
     if (!bundle) {
       const bundleId = await this.getBundleId(height);
-
       bundle = await this.getBundleById(bundleId);
       this.addToCachedBundle(bundle);
     }
