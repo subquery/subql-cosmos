@@ -328,6 +328,7 @@ describe('KyveApi', () => {
 
     const files = await fs.promises.readdir(tmpPath);
     expect(files).not.toContain('bundle_0.json');
+    expect((kyveApi as any).cachedBundleDetails.length).toBe(4);
   });
   it('ensure to remove logic', () => {
     const cachedBundleDetails = [

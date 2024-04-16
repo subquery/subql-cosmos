@@ -97,7 +97,7 @@ describe('ApiService', () => {
       await prepareApiService(ENDPOINT, CHAINID, true, tmpPath);
     });
 
-    it('kyve api clear cache', async () => {
+    it('Able to fetch with cached promises', async () => {
       //    const bundles = [
       //       {id: '0', from_key: '1', to_key: '150'},
       //       {id: '1', from_key: '151', to_key: '300'},
@@ -105,13 +105,22 @@ describe('ApiService', () => {
       //       {id: '3', from_key: '501', to_key: '800'},
       //     ]
       // mock bundle values
-      const heights = [150, 300, 1, 301, 450, 550];
+      // add the cache
+      // cacheBundle should be working on init
+
+      // able to pull blocks
+      // standard incrementing blocks and bundle id
+      const heights_1 = [150, 300, 1, 301, 450, 550];
+
+      // fetch from a bundle id prior to latest
+      const heights_2 = [498, 600, 801, 1100];
       const blockArr = await Promise.all([
-        apiService.fetchBlocks(heights),
+        apiService.fetchBlocks(heights_1),
+        apiService.fetchBlocks(heights_2),
         // apiService.fetchBlocks(heights),
       ]);
 
-      console.log(((apiService as any).kyveApi as any).cachedBundleDetails);
+      console.log(blockArr.length);
       const files = await fs.promises.readdir(tmpPath);
       // expect files to be [bundle_1.json, bundle_2, bundle_3.json]
       // clear cache should be called n times

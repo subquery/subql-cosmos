@@ -41,6 +41,7 @@ interface KyveBundleData {
 
 export class KyveApi {
   private cachedBundleDetails: BundleDetails[] = [];
+  private fetchingBundles: Record<string, Promise<KyveBundleData[]>> = {};
 
   private constructor(
     private readonly storageUrl: string,
@@ -193,12 +194,6 @@ export class KyveApi {
   private async updateCurrentBundleAndDetails(
     height: number,
   ): Promise<KyveBundleData[]> {
-    if (this.cachedBundleDetails.length === 0) {
-      const bundleId = await this.getBundleId(height);
-      const bundleDetail = await this.getBundleById(bundleId);
-      this.addToCachedBundle(bundleDetail);
-    }
-
     const bundle = this.getBundleFromCache(height);
     if (bundle) {
       return JSON.parse(await this.getFileCacheData(bundle));
@@ -339,9 +334,10 @@ export class KyveApi {
   async getBlockByHeight(
     height: number,
   ): Promise<[BlockResponse, BlockResultsResponse]> {
-    const blocks = await this.updateCurrentBundleAndDetails(height);
-
+    const blocks = await this.fetchBundleCached(height);
+    console.log('blocks', blocks.length);
     const blockData = this.findBlockByHeight(height, blocks);
+    console.log('block data', !!blockData);
 
     return [
       this.decodeBlock(blockData.value.block),
@@ -400,16 +396,27 @@ export class KyveApi {
     return logs;
   }
 
+  async fetchBundleCached(height: number): Promise<KyveBundleData[]> {
+    let bundle = this.getBundleFromCache(height);
+
+    if (!bundle) {
+      const bundleId = await this.getBundleId(height);
+
+      bundle = await this.getBundleById(bundleId);
+      this.addToCachedBundle(bundle);
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-misused-promises
+    if (!this.fetchingBundles[bundle.id]) {
+      this.fetchingBundles[bundle.id] =
+        this.updateCurrentBundleAndDetails(height);
+    }
+    return this.fetchingBundles[bundle.id];
+  }
+
   private async fetchBlocksArray(
     blockArray: number[],
   ): Promise<[BlockResponse, BlockResultsResponse][]> {
-    // use for loop instead ?
-    // mem a promise
-
-    // for loop resolve and get bundle for block, save a promise for bundle id
-
-    // await promise in cache
-    // once bundle has been resolved
     return Promise.all(
       blockArray.map(async (height) => this.getBlockByHeight(height)),
     );
