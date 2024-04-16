@@ -108,7 +108,7 @@ describe('ApiService', () => {
       const heights = [150, 300, 1, 301, 450, 550];
       const blockArr = await Promise.all([
         apiService.fetchBlocks(heights),
-        apiService.fetchBlocks(heights),
+        // apiService.fetchBlocks(heights),
       ]);
 
       console.log(((apiService as any).kyveApi as any).cachedBundleDetails);

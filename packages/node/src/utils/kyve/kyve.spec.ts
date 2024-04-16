@@ -30,6 +30,7 @@ import rimraf from 'rimraf';
 import { HttpClient } from '../../indexer/rpc-clients';
 import { LazyBlockContent } from '../cosmos';
 import { KyveApi } from './kyve';
+import { BundleDetails } from './kyveTypes';
 
 const wasmTypes: ReadonlyArray<[string, GeneratedType]> = [
   ['/cosmwasm.wasm.v1.MsgClearAdmin', MsgClearAdmin],
@@ -103,7 +104,6 @@ describe('KyveApi', () => {
 
   afterEach(() => {
     retrieveBundleDataSpy.mockRestore();
-
     decoderBlockSpy.mockRestore();
     decoderBlockResultsSpy.mockRestore();
     injectLogSpy.mockRestore();
@@ -286,29 +286,6 @@ describe('KyveApi', () => {
       (kyveApi as any).cachedBundleDetails.find((b) => b.id === '1'),
     ).toBeDefined();
   });
-  it('find lowest out of range bundleId', () => {
-    const bundles = [
-      { id: '0', from_key: '1', to_key: '150' },
-      { id: '1', from_key: '151', to_key: '300' },
-      { id: '2', from_key: '301', to_key: '500' },
-      { id: '3', from_key: '501', to_key: '800' },
-    ];
-
-    const height = 450;
-
-    const v = bundles.filter((bundle) => {
-      const toKey = parseInt(bundle.to_key, 10);
-      return toKey < height;
-    });
-    const r = bundles.find(
-      (c) => height >= parseInt(c.from_key) && height <= parseInt(c.to_key),
-    );
-    const toRemoveBundle = bundles.find(
-      (bun) => parseInt(bun.id) <= parseInt(r.id) - 2,
-    );
-
-    console.log(toRemoveBundle);
-  });
   it('compare block info', async () => {
     const height = 3901476;
     const tendermintBlockInfo = await tendermint.block(height);
@@ -345,6 +322,42 @@ describe('KyveApi', () => {
     const files = await fs.promises.readdir(tmpPath);
     expect(files.length).toBe(0);
   });
+  it('remove cached bundle files when past height', async () => {
+    await kyveApi.fetchBlocksBatches(registry, [1, 151, 301, 501], 300);
+    const files = await fs.promises.readdir(tmpPath);
+
+    await kyveApi.fetchBlocksBatches(registry, [502, 504, 600, 800], 300);
+
+    console.log(files);
+    expect(files).not.toContain('bundle_0.json');
+    expect(files).not.toContain('bundle_1.json');
+    expect(files).not.toContain('bundle_2.json');
+  });
+  it('ensure to remove logic', () => {
+    const cachedBundleDetails = [
+      { id: '0', from_key: '1', to_key: '150' },
+      { id: '1', from_key: '151', to_key: '300' },
+      { id: '2', from_key: '301', to_key: '500' },
+      { id: '3', from_key: '501', to_key: '800' },
+    ] as BundleDetails[];
+    (kyveApi as any).cachedBundleDetails = cachedBundleDetails;
+
+    const height = 650;
+    const bufferSize = 300;
+
+    const toRemoveBundles = (kyveApi as any).getToRemoveBundles(
+      cachedBundleDetails,
+      height,
+      bufferSize,
+    );
+
+    expect(toRemoveBundles.sort()).toEqual(
+      [
+        { id: '0', from_key: '1', to_key: '150' },
+        { id: '1', from_key: '151', to_key: '300' },
+      ].sort(),
+    );
+  });
   it('Able to poll with simulated workers', async () => {
     const bundleDetail = await (kyveApi as any).getBundleById(130265);
     (kyveApi as any).cachedBundleDetails = [bundleDetail];
@@ -355,10 +368,10 @@ describe('KyveApi', () => {
 
     const pollSpy = jest.spyOn(kyveApi as any, 'pollUntilReadable');
     await Promise.all([
-      kyveApi.fetchBlocksBatches(registry, [3856726]),
-      kyveApi.fetchBlocksBatches(registry, [3856726]),
-      kyveApi.fetchBlocksBatches(registry, [3856726]),
-      kyveApi.fetchBlocksBatches(registry, [3856726]),
+      kyveApi.fetchBlocksBatches(registry, [3856726], 1),
+      kyveApi.fetchBlocksBatches(registry, [3856726], 1),
+      kyveApi.fetchBlocksBatches(registry, [3856726], 1),
+      kyveApi.fetchBlocksBatches(registry, [3856726], 1),
     ]);
 
     expect(pollSpy).toHaveBeenCalledTimes(3);

@@ -117,23 +117,9 @@ export class ApiService
         this.nodeConfig.kyveChainId,
         this.project.fileCacheDir,
       );
-
-      this.clearKyveCacheListener((block: { height: number }) =>
-        this.kyveApi.clearFileCache(block.height),
-      );
     }
 
     return this;
-  }
-
-  clearKyveCacheListener(
-    callback: (block: { height: number }) => void | Promise<void>,
-  ): void {
-    this.eventEmitter.on(
-      'block_processing_height',
-      callback as (block: { height: number }) => void,
-      { async: true },
-    );
   }
 
   // Overrides the super function because of the kyve integration
@@ -143,10 +129,16 @@ export class ApiService
   ): Promise<IBlock<BlockContent>[]> {
     try {
       if (this.kyveApi) {
-        const v = await this.kyveApi.fetchBlocksBatches(this.registry, heights);
-        // listen for processingblock, if it is
+        // batchSize
+        // this.nodeConfig.batchSize
+        const bufferSize = 100;
+        return this.kyveApi.fetchBlocksBatches(
+          this.registry,
+          heights,
+          bufferSize,
+        );
 
-        return v;
+        // delete only happens when nothing else is reading from
       } else {
         throw new Error('No kyve connection');
       }

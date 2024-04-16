@@ -286,40 +286,57 @@ export class KyveApi {
     return fs.promises.readFile(bundleFilePath, 'utf-8');
   }
 
-  // todo unsure when to clear the file cache
-  async clearFileCache(height: number): Promise<void> {
-    console.log(this);
-    const bundles = this.cachedBundleDetails.filter(
-      (b) => parseDecimal(b.to_key) < height,
-    );
-    const r = this.cachedBundleDetails.find(
-      (c) =>
-        height >= parseDecimal(c.from_key) && height <= parseDecimal(c.to_key),
+  private getToRemoveBundles(
+    cachedBundles: BundleDetails[],
+    height: number,
+    bufferSize: number,
+  ): BundleDetails[] {
+    const currentBundle = this.getBundleFromCache(height);
+
+    return cachedBundles.filter((b) => {
+      const isNotCurrentBundleAndLower =
+        currentBundle.id !== b.id &&
+        parseDecimal(currentBundle.id) > parseDecimal(b.id);
+      const isOutsiderBuffer =
+        height < parseDecimal(b.from_key) - bufferSize ||
+        height > parseDecimal(b.to_key) + bufferSize;
+
+      return isNotCurrentBundleAndLower && isOutsiderBuffer;
+    });
+  }
+
+  async clearFileCache(
+    cachedBundles: BundleDetails[],
+    height: number,
+    bufferSize: number,
+  ): Promise<void> {
+    const toRemoveBundles = this.getToRemoveBundles(
+      cachedBundles,
+      height,
+      bufferSize,
     );
 
-    const toRemoveBundle = bundles.find(
-      (bun) => parseDecimal(bun.id) <= parseDecimal(r.id) - 2,
-    );
-
-    if (!toRemoveBundle) {
+    if (toRemoveBundles.length) {
       console.log('bundle not found', height);
       console.log('bundle not found cache', this.cachedBundleDetails.length);
       return;
     }
 
-    const bundlePath = this.getBundleFilePath(toRemoveBundle.id);
-    try {
-      await fs.promises.unlink(bundlePath);
-      remove(this.cachedBundleDetails, (b) => b.id === toRemoveBundle.id);
-      console.log('cache after removal', this.cachedBundleDetails.length);
-    } catch (e) {
-      if (e.code === 'ENOENT') {
-        console.error(e);
-      } else {
-        throw e;
+    for (const bundle of toRemoveBundles) {
+      const bundlePath = this.getBundleFilePath(bundle.id);
+      try {
+        await fs.promises.unlink(bundlePath);
+        remove(this.cachedBundleDetails, (b) => b.id === bundle.id);
+        console.log('cache after removal', this.cachedBundleDetails.length);
+      } catch (e) {
+        if (e.code === 'ENOENT') {
+          console.error(e);
+        } else {
+          throw e;
+        }
       }
+      console.log('removed bundle id:', bundle.id, 'at', height);
     }
-    console.log('removed bundle id:', toRemoveBundle, 'at', height);
   }
 
   async getBlockByHeight(
@@ -419,8 +436,13 @@ export class KyveApi {
   async fetchBlocksBatches(
     registry: Registry,
     blockArray: number[],
+    bufferSize: number,
   ): Promise<IBlock<BlockContent>[]> {
     const blocks = await this.fetchBlocksArray(blockArray);
+    const minHeight = Math.min(...blockArray);
+
+    await this.clearFileCache(this.cachedBundleDetails, minHeight, bufferSize);
+
     return blocks.map(([blockInfo, blockResults]) => {
       try {
         assert(
