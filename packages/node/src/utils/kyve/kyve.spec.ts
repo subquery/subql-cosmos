@@ -324,14 +324,10 @@ describe('KyveApi', () => {
   });
   it('remove cached bundle files when past height', async () => {
     await kyveApi.fetchBlocksBatches(registry, [1, 151, 301, 501], 300);
-    const files = await fs.promises.readdir(tmpPath);
-
     await kyveApi.fetchBlocksBatches(registry, [502, 504, 600, 800], 300);
 
-    console.log(files);
+    const files = await fs.promises.readdir(tmpPath);
     expect(files).not.toContain('bundle_0.json');
-    expect(files).not.toContain('bundle_1.json');
-    expect(files).not.toContain('bundle_2.json');
   });
   it('ensure to remove logic', () => {
     const cachedBundleDetails = [

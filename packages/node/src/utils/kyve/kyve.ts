@@ -316,9 +316,7 @@ export class KyveApi {
       bufferSize,
     );
 
-    if (toRemoveBundles.length) {
-      console.log('bundle not found', height);
-      console.log('bundle not found cache', this.cachedBundleDetails.length);
+    if (!toRemoveBundles.length) {
       return;
     }
 
@@ -327,7 +325,6 @@ export class KyveApi {
       try {
         await fs.promises.unlink(bundlePath);
         remove(this.cachedBundleDetails, (b) => b.id === bundle.id);
-        console.log('cache after removal', this.cachedBundleDetails.length);
       } catch (e) {
         if (e.code === 'ENOENT') {
           console.error(e);
@@ -361,7 +358,7 @@ export class KyveApi {
         (b.log as any) = JSON.stringify(this.reconstructLogs(kyveBlockResult));
       });
     } catch (e) {
-      throw new Error(`Failed to inject kyveBlock`);
+      throw new Error(`Failed to inject kyveBlock, ${e}`);
     }
     return kyveBlockResult;
   }
