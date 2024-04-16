@@ -318,14 +318,6 @@ describe('KyveApi', () => {
     const files = await fs.promises.readdir(tmpPath);
     expect(files.length).toBe(0);
   });
-  it('remove cached bundle files when past height', async () => {
-    await kyveApi.fetchBlocksBatches(registry, [1, 151, 301, 501], 300);
-    await kyveApi.fetchBlocksBatches(registry, [502, 504, 600, 800], 300);
-
-    const files = await fs.promises.readdir(tmpPath);
-    expect(files).not.toContain('bundle_0.json');
-    expect((kyveApi as any).cachedBundleDetails.length).toBe(4);
-  });
   it('ensure to remove logic', () => {
     const cachedBundleDetails = [
       { id: '0', from_key: '1', to_key: '150' },
@@ -390,7 +382,6 @@ describe('KyveApi', () => {
       workerKyveApi.fetchBlocksBatches(registry, [3856726], 1),
     ]);
 
-    console.log(tmpPath);
     expect(pollSpy).toHaveBeenCalledTimes(1);
 
     const r = await kyveApi.readFromFile(

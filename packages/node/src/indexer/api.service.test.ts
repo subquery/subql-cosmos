@@ -19,6 +19,7 @@ import {
 import { GraphQLSchema } from 'graphql';
 import { CosmosNodeConfig } from '../configure/NodeConfig';
 import { SubqueryProject } from '../configure/SubqueryProject';
+import { LazyBlockContent } from '../utils/cosmos';
 import { ApiService } from './api.service';
 
 const TEST_BLOCKNUMBER = 3266772;
@@ -97,33 +98,24 @@ describe('ApiService', () => {
       await prepareApiService(ENDPOINT, CHAINID, true, tmpPath);
     });
 
-    it('Able to fetch with cached promises', async () => {
-      //    const bundles = [
-      //       {id: '0', from_key: '1', to_key: '150'},
-      //       {id: '1', from_key: '151', to_key: '300'},
-      //       {id: '2', from_key: '301', to_key: '500'},
-      //       {id: '3', from_key: '501', to_key: '800'},
-      //     ]
-      // mock bundle values
-      // add the cache
-      // cacheBundle should be working on init
-
-      // able to pull blocks
-      // standard incrementing blocks and bundle id
+    it('Able to fetch with cached promises and remove cached bundle files', async () => {
       const heights_1 = [150, 300, 1, 301, 450, 550];
 
-      // fetch from a bundle id prior to latest
       const heights_2 = [498, 600, 801, 1100];
       const blockArr = await Promise.all([
         apiService.fetchBlocks(heights_1),
         apiService.fetchBlocks(heights_2),
       ]);
 
-      blockArr.forEach((b) => {
-        console.log(b[0].block.block.blockId);
+      blockArr.forEach((blockContent) => {
+        blockContent.forEach((b) => {
+          expect(b.block instanceof LazyBlockContent).toBe(true);
+        });
       });
+
       const files = await fs.promises.readdir(tmpPath);
-      console.log(files);
+      expect(files).not.toContain('bundle_0.json');
+      expect(files).not.toContain('bundle_1.json');
     });
   });
   describe.skip('RPC api service', () => {

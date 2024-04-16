@@ -286,6 +286,7 @@ export class KyveApi {
     height: number,
     bufferSize: number,
   ): BundleDetails[] {
+    if (!cachedBundles.length) return [];
     const currentBundle = this.getBundleFromCache(height);
 
     return cachedBundles.filter((b) => {
@@ -321,13 +322,11 @@ export class KyveApi {
         await fs.promises.unlink(bundlePath);
         remove(this.cachedBundleDetails, (b) => b.id === bundle.id);
       } catch (e) {
-        if (e.code === 'ENOENT') {
-          console.error(e);
-        } else {
+        if (e.code !== 'ENOENT') {
+          // if it does not exist, should be removed
           throw e;
         }
       }
-      console.log('removed bundle id:', bundle.id, 'at', height);
     }
   }
 
