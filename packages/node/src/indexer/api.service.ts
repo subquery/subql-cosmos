@@ -12,16 +12,16 @@ import {
 } from '@cosmjs/tendermint-rpc';
 import {
   BlockResponse,
-  Validator,
   BlockResultsResponse,
+  Validator,
 } from '@cosmjs/tendermint-rpc/build/tendermint37/responses';
 import { Inject, Injectable, OnApplicationShutdown } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { CosmosProjectNetConfig } from '@subql/common-cosmos';
 import {
-  getLogger,
-  ConnectionPoolService,
   ApiService as BaseApiService,
+  ConnectionPoolService,
+  getLogger,
   IBlock,
   NodeConfig,
 } from '@subql/node-core';
@@ -44,6 +44,7 @@ import { BlockContent } from './types';
 const logger = getLogger('api');
 
 const MAX_RECONNECT_ATTEMPTS = 5;
+const KYVE_BUFFER_RANGE = 10;
 
 @Injectable()
 export class ApiService
@@ -110,13 +111,19 @@ export class ApiService
     );
 
     if (this.nodeConfig.kyveEndpoint) {
-      this.kyveApi = await KyveApi.create(
-        network.chainId,
-        this.nodeConfig.kyveEndpoint,
-        this.nodeConfig.kyveStorageUrl,
-        this.nodeConfig.kyveChainId,
-        this.project.fileCacheDir,
-      );
+      try {
+        this.kyveApi = await KyveApi.create(
+          network.chainId,
+          this.nodeConfig.kyveEndpoint,
+          this.nodeConfig.kyveStorageUrl,
+          this.nodeConfig.kyveChainId,
+          this.project.fileCacheDir,
+        );
+      } catch (e) {
+        logger.warn(
+          `Failed to use kyve for network: ${network.chainId}, resolving to rpc`,
+        );
+      }
     }
 
     return this;
@@ -127,31 +134,28 @@ export class ApiService
     heights: number[],
     numAttempts = MAX_RECONNECT_ATTEMPTS,
   ): Promise<IBlock<BlockContent>[]> {
-    try {
-      if (this.kyveApi) {
-        // batchSize
-        // this.nodeConfig.batchSize
-        const bufferSize = 100;
-        return this.kyveApi.fetchBlocksBatches(
+    if (this.kyveApi) {
+      const bufferSize = KYVE_BUFFER_RANGE * this.nodeConfig.batchSize;
+      try {
+        return await this.kyveApi.fetchBlocksBatches(
           this.registry,
           heights,
           bufferSize,
         );
-
-        // delete only happens when nothing else is reading from
-      } else {
-        throw new Error('No kyve connection');
+      } catch (e) {
+        logger.warn(
+          `Failed to fetch blocks: ${JSON.stringify(
+            heights,
+          )} via Kyve, switching to rpc`,
+        );
       }
-    } catch (e) {
-      if (e.message === 'No kyve connection') {
-        return this.retryFetch(async () => {
-          // Get the latest fetch function from the provider
-          const apiInstance = this.connectionPoolService.api;
-          return apiInstance.fetchBlocks(heights);
-        }, numAttempts);
-      }
-      throw e;
     }
+
+    return this.retryFetch(async () => {
+      // Get the latest fetch function from the provider
+      const apiInstance = this.connectionPoolService.api;
+      return apiInstance.fetchBlocks(heights);
+    }, numAttempts);
   }
 
   get api(): CosmosClient {

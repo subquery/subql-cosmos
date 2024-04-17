@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0
 
 // Note: this is due to incorrect typings provided by kyvejs
+// https://github.com/KYVENetwork/kyvejs/issues/131
 export interface BundleDetails {
   pool_id: string;
   id: string;

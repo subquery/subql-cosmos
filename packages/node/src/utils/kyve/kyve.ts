@@ -21,6 +21,7 @@ import axios, { AxiosResponse } from 'axios';
 import { remove } from 'lodash';
 import { BlockContent } from '../../indexer/types';
 import { formatBlockUtil, LazyBlockContent } from '../cosmos';
+import { isTmpDir } from '../project';
 import { BundleDetails } from './kyveTypes';
 
 const BUNDLE_TIMEOUT = 10000; //ms
@@ -41,7 +42,6 @@ interface KyveBundleData {
 
 export class KyveApi {
   private cachedBundleDetails: BundleDetails[] = [];
-  private fetchingBundles: Record<string, Promise<KyveBundleData[]>> = {};
 
   private constructor(
     private readonly storageUrl: string,
@@ -57,6 +57,9 @@ export class KyveApi {
     kyveChainId: SupportedChains,
     tmpCacheDir: string,
   ): Promise<KyveApi> {
+    if (!isTmpDir(tmpCacheDir))
+      throw new Error('File cache directory must be a tmp directory');
+
     const lcdClient = new KyveSDK(kyveChainId, {
       rpc: endpoint,
     }).createLCDClient();
@@ -194,15 +197,21 @@ export class KyveApi {
   private async updateCurrentBundleAndDetails(
     height: number,
   ): Promise<KyveBundleData[]> {
+    if (this.cachedBundleDetails.length === 0) {
+      const bundleId = await this.getBundleId(height);
+      const bundleDetail = await this.getBundleById(bundleId);
+      this.addToCachedBundle(bundleDetail);
+    }
+
     const bundle = this.getBundleFromCache(height);
     if (bundle) {
-      return JSON.parse(await this.getFileCacheData(bundle));
+      return JSON.parse(await this.getBundleData(bundle));
     } else {
       const bundleId = await this.getBundleId(height);
       const newBundleDetails = await this.getBundleById(bundleId);
 
       this.addToCachedBundle(newBundleDetails);
-      return JSON.parse(await this.getFileCacheData(newBundleDetails));
+      return JSON.parse(await this.getBundleData(newBundleDetails));
     }
   }
 
@@ -229,36 +238,39 @@ export class KyveApi {
       mode: 0o200, // write only access for owner
     });
 
-    // to ensure the stream to throw an on-stack error
-    await new Promise((resolve, reject) => {
-      writeStream.on('open', resolve);
-      writeStream.on('error', (err) => {
-        reject(err);
+    try {
+      await new Promise((resolve, reject) => {
+        writeStream.on('open', resolve);
+        writeStream.on('error', (err) => {
+          reject(err);
+        });
       });
-    }).catch((e) => {
+
+      const zippedBundleData = await this.retrieveBundleData(bundle.storage_id);
+
+      const gunzip = zlib.createUnzip({
+        maxOutputLength: MAX_COMPRESSION_BYTE_SIZE /* avoid zip bombs */,
+      });
+
+      await new Promise((resolve, reject) => {
+        zippedBundleData.data
+          .pipe(gunzip)
+          .pipe(writeStream)
+          .on('error', reject)
+          .on('finish', resolve);
+      });
+    } catch (e) {
+      if (axios.isAxiosError(e)) {
+        await fs.promises.unlink(bundleFilePath);
+      }
+
       throw e;
-    });
-
-    const zippedBundleData = await this.retrieveBundleData(bundle.storage_id);
-
-    const gunzip = zlib.createUnzip({
-      maxOutputLength: MAX_COMPRESSION_BYTE_SIZE /* avoid zip bombs */,
-    });
-
-    await new Promise((resolve, reject) => {
-      zippedBundleData.data
-        .pipe(gunzip)
-        .on('error', reject)
-        .pipe(writeStream)
-        .on('finish', resolve);
-    }).catch((e) => {
-      throw e; // to ensure an on stack error is thrown
-    });
+    }
 
     await fs.promises.chmod(bundleFilePath, 0o444);
   }
 
-  private async getFileCacheData(bundle: BundleDetails): Promise<string> {
+  private async getBundleData(bundle: BundleDetails): Promise<string> {
     const bundleFilePath = this.getBundleFilePath(bundle.id);
 
     try {
@@ -268,10 +280,6 @@ export class KyveApi {
       if (['EEXIST', 'EACCES', 'ENOENT'].includes(e.code)) {
         return this.pollUntilReadable(bundleFilePath);
       } else {
-        if (axios.isAxiosError(e)) {
-          await fs.promises.unlink(bundleFilePath);
-        }
-
         throw e;
       }
     }
@@ -281,12 +289,35 @@ export class KyveApi {
     return fs.promises.readFile(bundleFilePath, 'utf-8');
   }
 
-  private getToRemoveBundles(
+  private isBundleFile(filename: string): boolean {
+    return /^bundle_\d+\.json$/.test(filename);
+  }
+
+  private async getExisitngBundlesFromCacheDirectory(
+    tmpDir: string,
+  ): Promise<BundleDetails[]> {
+    const bundles: BundleDetails[] = [];
+    const files = await fs.promises.readdir(tmpDir);
+
+    for (const file of files) {
+      if (this.isBundleFile(file)) {
+        const id = parseDecimal(file.match(/^bundle_(\d+)\.json$/)[1]);
+        bundles.push(await this.getBundleById(id));
+      }
+    }
+
+    return bundles;
+  }
+
+  private async getToRemoveBundles(
     cachedBundles: BundleDetails[],
     height: number,
     bufferSize: number,
-  ): BundleDetails[] {
-    if (!cachedBundles.length) return [];
+  ): Promise<BundleDetails[]> {
+    if (!cachedBundles.length) {
+      return this.getExisitngBundlesFromCacheDirectory(this.tmpCacheDir);
+    }
+
     const currentBundle = this.getBundleFromCache(height);
 
     return cachedBundles.filter((b) => {
@@ -306,15 +337,11 @@ export class KyveApi {
     height: number,
     bufferSize: number,
   ): Promise<void> {
-    const toRemoveBundles = this.getToRemoveBundles(
+    const toRemoveBundles = await this.getToRemoveBundles(
       cachedBundles,
       height,
       bufferSize,
     );
-
-    if (!toRemoveBundles.length) {
-      return;
-    }
 
     for (const bundle of toRemoveBundles) {
       const bundlePath = this.getBundleFilePath(bundle.id);
@@ -333,9 +360,8 @@ export class KyveApi {
   async getBlockByHeight(
     height: number,
   ): Promise<[BlockResponse, BlockResultsResponse]> {
-    const blocks = await this.fetchBundleCached(height);
+    const blocks = await this.updateCurrentBundleAndDetails(height);
     const blockData = this.findBlockByHeight(height, blocks);
-
     return [
       this.decodeBlock(blockData.value.block),
       this.injectLogs(this.decodeBlockResult(blockData.value.block_results)),
@@ -391,23 +417,6 @@ export class KyveApi {
       }
     }
     return logs;
-  }
-
-  async fetchBundleCached(height: number): Promise<KyveBundleData[]> {
-    let bundle = this.getBundleFromCache(height);
-
-    if (!bundle) {
-      const bundleId = await this.getBundleId(height);
-      bundle = await this.getBundleById(bundleId);
-      this.addToCachedBundle(bundle);
-    }
-
-    // eslint-disable-next-line @typescript-eslint/no-misused-promises
-    if (!this.fetchingBundles[bundle.id]) {
-      this.fetchingBundles[bundle.id] =
-        this.updateCurrentBundleAndDetails(height);
-    }
-    return this.fetchingBundles[bundle.id];
   }
 
   private async fetchBlocksArray(

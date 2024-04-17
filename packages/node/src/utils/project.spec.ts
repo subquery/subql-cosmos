@@ -9,4 +9,10 @@ describe('Project tests', () => {
     const tmpDir = await makeTempDir();
     expect(isTmpDir(tmpDir)).toBe(true);
   });
+  it('Not isTmpDir', () => {
+    const unixDir = '/Users/test/';
+    const winDir = 'C:\\Users\\test\\';
+    expect(isTmpDir(unixDir)).toBe(false);
+    expect(isTmpDir(winDir)).toBe(false);
+  });
 });

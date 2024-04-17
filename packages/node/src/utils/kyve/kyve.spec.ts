@@ -260,22 +260,14 @@ describe('KyveApi', () => {
   });
   it('retrieve and unzip storage data', async () => {
     const bundle = await (kyveApi as any).getBundleById(8);
-
     (kyveApi as any).cachedBundleDetails.push(bundle);
-
-    const bundleFileName = (kyveApi as any).getBundleFilePath(bundle.id);
-    await kyveApi.downloadAndProcessBundle(bundle);
-
-    const v = await kyveApi.readFromFile(bundleFileName);
-
-    const b = (kyveApi as any).findBlockByHeight(1338, JSON.parse(v));
-
-    expect(b).toBeDefined();
+    const block = await kyveApi.getBlockByHeight(1338);
+    expect(block.length).toBe(2);
   });
   it('Should increment bundleId when height exceeds cache', async () => {
     const bundle = await (kyveApi as any).getBundleById(0);
     (kyveApi as any).cachedBundleDetails.push(bundle);
-    jest.spyOn(kyveApi as any, 'getFileCacheData').mockResolvedValueOnce('{}');
+    jest.spyOn(kyveApi as any, 'getBundleData').mockResolvedValueOnce('{}');
     await (kyveApi as any).updateCurrentBundleAndDetails(160);
 
     expect(
@@ -305,15 +297,13 @@ describe('KyveApi', () => {
 
     retrieveBundleDataSpy.mockImplementation(() => {
       return new Promise((resolve, reject) => {
-        reject({
-          response: 'err',
-        });
+        reject('Failed to fetch');
       });
     });
 
-    await expect(
-      (kyveApi as any).getFileCacheData(bundleDetail),
-    ).rejects.toBeDefined();
+    await expect((kyveApi as any).getBundleData(bundleDetail)).rejects.toBe(
+      'Failed to fetch',
+    );
 
     const files = await fs.promises.readdir(tmpPath);
     expect(files.length).toBe(0);
@@ -366,13 +356,11 @@ describe('KyveApi', () => {
 
     jest
       .spyOn(workerKyveApi as any, 'retrieveBundleData')
-      .mockImplementation(async () => {
-        await delay(4);
+      .mockImplementation(() => {
         return { data: mockStream };
       });
 
-    retrieveBundleDataSpy.mockImplementation(async () => {
-      await delay(3);
+    retrieveBundleDataSpy.mockImplementation(() => {
       return { data: mockStream };
     });
 
@@ -389,6 +377,21 @@ describe('KyveApi', () => {
     );
 
     expect(r).toEqual(JSON.stringify(block_3856726));
+  });
+  it('isBundle', () => {
+    const bundle = 'bundle_0.json';
+    const notBundle = 'data.json';
+
+    expect((kyveApi as any).isBundleFile(bundle)).toBe(true);
+    expect((kyveApi as any).isBundleFile(notBundle)).toBe(false);
+  });
+  it('clear existing bundle files in directory when outside buffer', async () => {
+    await fs.promises.writeFile((kyveApi as any).getBundleFilePath(0), 'mock');
+    await fs.promises.writeFile((kyveApi as any).getBundleFilePath(1), 'mock');
+
+    const removeFiles = await (kyveApi as any).getToRemoveBundles([], 800, 1);
+
+    expect(removeFiles.map((r) => r.id).sort()).toEqual(['0', '1'].sort());
   });
   describe('able to wrap kyveBlock', () => {
     let rpcLazyBlockContent: LazyBlockContent;

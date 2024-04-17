@@ -99,8 +99,11 @@ describe('ApiService', () => {
     });
 
     it('Able to fetch with cached promises and remove cached bundle files', async () => {
-      const heights_1 = [150, 300, 1, 301, 450, 550];
+      jest
+        .spyOn(apiService as any, 'retryFetch')
+        .mockRejectedValue('Disabled rpc for kyve testing');
 
+      const heights_1 = [150, 300, 1, 301, 450, 550];
       const heights_2 = [498, 600, 801, 1100];
       const blockArr = await Promise.all([
         apiService.fetchBlocks(heights_1),
