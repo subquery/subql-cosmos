@@ -2,8 +2,11 @@
 // SPDX-License-Identifier: GPL-3.0
 
 import assert from 'assert';
+import fs from 'fs';
+import os from 'os';
+import path from 'path';
 import { Injectable } from '@nestjs/common';
-import { LocalReader, makeTempDir, validateSemver } from '@subql/common';
+import { LocalReader, validateSemver } from '@subql/common';
 import {
   CosmosProjectNetworkConfig,
   parseCosmosProjectManifest,
@@ -101,15 +104,12 @@ export class SubqueryProject implements ISubqueryProject {
       NOT_SUPPORT('<1.0.0');
     }
 
-    const fileCacheDir = await getFileCacheDir(reader, root);
-
     return loadProjectFromManifestBase(
       manifest.asV1_0_0,
       reader,
       path,
       root,
       networkOverrides,
-      fileCacheDir,
     );
   }
 }
@@ -117,10 +117,20 @@ export class SubqueryProject implements ISubqueryProject {
 async function getFileCacheDir(
   reader: Reader,
   projectRoot: string,
+  chainId: string,
 ): Promise<string> {
   if (isTmpDir(projectRoot)) return projectRoot;
-  if (reader instanceof LocalReader) return makeTempDir();
-
+  if (reader instanceof LocalReader) {
+    const tmpDir = path.join(os.tmpdir(), `kyveTmpFileCache_${chainId}`);
+    try {
+      await fs.promises.mkdir(tmpDir);
+    } catch (e) {
+      if (e.code === 'EEXIST') {
+        return tmpDir;
+      }
+    }
+    return tmpDir;
+  }
   return projectRoot;
 }
 
@@ -132,7 +142,6 @@ async function loadProjectFromManifestBase(
   path: string,
   root: string,
   networkOverrides?: Partial<CosmosProjectNetworkConfig>,
-  fileCacheDir?: string,
 ): Promise<SubqueryProject> {
   if (typeof projectManifest.network.endpoint === 'string') {
     projectManifest.network.endpoint = [projectManifest.network.endpoint];
@@ -182,6 +191,8 @@ async function loadProjectFromManifestBase(
       `Runner require node version ${runner.node.version}, current node ${packageVersion}`,
     ),
   );
+
+  const fileCacheDir = await getFileCacheDir(reader, root, network.chainId);
 
   return new SubqueryProject(
     reader.root ? reader.root : path, //TODO, need to method to get project_id

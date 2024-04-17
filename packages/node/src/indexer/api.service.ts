@@ -53,7 +53,7 @@ export class ApiService
 {
   private fetchBlocksBatches = CosmosUtil.fetchBlocksBatches;
   private nodeConfig: CosmosNodeConfig;
-  private kyveApi: KyveApi;
+  private kyveApi?: KyveApi;
   registry: Registry;
 
   constructor(
@@ -111,6 +111,7 @@ export class ApiService
     );
 
     if (this.nodeConfig.kyveEndpoint) {
+      console.log(this.project.fileCacheDir);
       try {
         this.kyveApi = await KyveApi.create(
           network.chainId,
@@ -120,9 +121,7 @@ export class ApiService
           this.project.fileCacheDir,
         );
       } catch (e) {
-        logger.warn(
-          `Failed to use kyve for network: ${network.chainId}, resolving to rpc`,
-        );
+        logger.warn(`${e}`);
       }
     }
 

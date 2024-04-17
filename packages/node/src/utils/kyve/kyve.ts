@@ -198,22 +198,13 @@ export class KyveApi {
   private async updateCurrentBundleAndDetails(
     height: number,
   ): Promise<KyveBundleData[]> {
-    if (this.cachedBundleDetails.length === 0) {
+    let bundle = this.getBundleFromCache(height);
+    if (!bundle) {
       const bundleId = await this.getBundleId(height);
-      const bundleDetail = await this.getBundleById(bundleId);
-      this.addToCachedBundle(bundleDetail);
+      bundle = await this.getBundleById(bundleId);
+      this.addToCachedBundle(bundle);
     }
-
-    const bundle = this.getBundleFromCache(height);
-    if (bundle) {
-      return JSON.parse(await this.getBundleData(bundle));
-    } else {
-      const bundleId = await this.getBundleId(height);
-      const newBundleDetails = await this.getBundleById(bundleId);
-
-      this.addToCachedBundle(newBundleDetails);
-      return JSON.parse(await this.getBundleData(newBundleDetails));
-    }
+    return JSON.parse(await this.getBundleData(bundle));
   }
 
   private async pollUntilReadable(bundleFilePath: string): Promise<string> {
@@ -241,9 +232,7 @@ export class KyveApi {
     try {
       await new Promise((resolve, reject) => {
         writeStream.on('open', resolve);
-        writeStream.on('error', (err) => {
-          reject(err);
-        });
+        writeStream.on('error', reject);
       });
 
       const zippedBundleData = await this.retrieveBundleData(bundle.storage_id);
@@ -260,10 +249,9 @@ export class KyveApi {
           .on('finish', resolve);
       });
     } catch (e) {
-      if (axios.isAxiosError(e)) {
+      if (!['EEXIST', 'EACCES', 'ENOENT'].includes(e.code)) {
         await fs.promises.unlink(bundleFilePath);
       }
-
       throw e;
     }
 
