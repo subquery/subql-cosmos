@@ -57,8 +57,9 @@ export class KyveApi {
     kyveChainId: SupportedChains,
     tmpCacheDir: string,
   ): Promise<KyveApi> {
-    if (!isTmpDir(tmpCacheDir))
+    if (!isTmpDir(tmpCacheDir)) {
       throw new Error('File cache directory must be a tmp directory');
+    }
 
     const lcdClient = new KyveSDK(kyveChainId, {
       rpc: endpoint,
@@ -235,7 +236,6 @@ export class KyveApi {
 
     const writeStream = fs.createWriteStream(bundleFilePath, {
       flags: 'wx',
-      mode: 0o200, // write only access for owner
     });
 
     try {
