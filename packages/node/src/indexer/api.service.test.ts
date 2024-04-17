@@ -56,7 +56,6 @@ describe('ApiService', () => {
   const prepareApiService = async (
     endpoint: string,
     chainId: string,
-    kyve: boolean,
     fileCacheDir?: string,
   ) => {
     const module = await Test.createTestingModule({
@@ -80,55 +79,41 @@ describe('ApiService', () => {
     app = module.createNestApplication();
     await app.init();
     apiService = app.get(ApiService);
-    if (kyve) {
-      (apiService as any).nodeConfig._config.kyveEndpoint =
-        'https://api-us-1.kyve.network';
-      (apiService as any).nodeConfig._config.kyveStorageUrl =
-        'https://arweave.net';
-    }
+    (apiService as any).nodeConfig._config.kyveEndpoint =
+      'https://api-us-1.kyve.network';
+    (apiService as any).nodeConfig._config.kyveStorageUrl =
+      'https://arweave.net';
     await apiService.init();
   };
 
-  describe('KYVE Api service', () => {
+  const ENDPOINT = 'https://rpc-juno.itastakers.com/';
+  const CHAINID = 'juno-1';
+
+  describe('RPC api service', () => {
     beforeAll(async () => {
-      const ENDPOINT = 'https://rpc.mainnet.archway.io:443';
-      const CHAINID = 'archway-1';
-
       tmpPath = await makeTempDir();
-      await prepareApiService(ENDPOINT, CHAINID, true, tmpPath);
     });
+    it('Falls back on rpc if kyve fails', async () => {
+      const endpoint = 'https://rpc.mainnet.archway.io:443';
+      const chainId = 'archway-1';
 
-    it('Able to fetch with cached promises and remove cached bundle files', async () => {
+      await prepareApiService(endpoint, chainId, tmpPath);
+
+      jest
+        .spyOn((apiService as any).kyveApi, 'retrieveBundleData')
+        .mockRejectedValueOnce(
+          'Error: Client network socket disconnected before secure TLS connection was established',
+        );
+
       const rpcFetchSpy = jest.spyOn(apiService as any, 'retryFetch');
 
-      const heights_1 = [150, 300, 1, 301, 450, 550];
-      const heights_2 = [498, 600, 801, 1100];
-      const blockArr = await Promise.all([
-        apiService.fetchBlocks(heights_1),
-        apiService.fetchBlocks(heights_2),
-      ]);
+      await apiService.fetchBlocks([1]);
 
-      blockArr.forEach((blockContent) => {
-        blockContent.forEach((b) => {
-          expect(b.block instanceof LazyBlockContent).toBe(true);
-        });
-      });
-
-      const files = await fs.promises.readdir(tmpPath);
-
-      expect(rpcFetchSpy).toHaveBeenCalledTimes(0);
-      expect(files).not.toContain('bundle_0.json');
-      expect(files).not.toContain('bundle_1.json');
+      expect(rpcFetchSpy).toHaveBeenCalledTimes(1);
     });
-  });
-  describe.skip('RPC api service', () => {
-    beforeAll(async () => {
-      const ENDPOINT = 'https://rpc-juno.itastakers.com/';
-      const CHAINID = 'juno-1';
+    it.skip('query block info', async () => {
+      await prepareApiService(ENDPOINT, CHAINID, tmpPath);
 
-      await prepareApiService(ENDPOINT, CHAINID, false);
-    });
-    it('query block info', async () => {
       const api = apiService.api;
       const blockInfo = await api.blockInfo(TEST_BLOCKNUMBER);
       const doc: any = loadFromJsonOrYaml(
@@ -150,7 +135,9 @@ describe('ApiService', () => {
       expect(blockInfo).toMatchObject(realBlockInfo);
     });
 
-    it('query tx info by height', async () => {
+    it.skip('query tx info by height', async () => {
+      await prepareApiService(ENDPOINT, CHAINID, tmpPath);
+
       const api = apiService.api;
       const txInfos = await api.txInfoByHeight(TEST_BLOCKNUMBER);
       expect(txInfos.length).toEqual(4);

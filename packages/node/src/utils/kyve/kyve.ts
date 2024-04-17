@@ -67,9 +67,7 @@ export class KyveApi {
 
     const poolId = await KyveApi.fetchPoolId(chainId, lcdClient);
 
-    const kyve = new KyveApi(storageUrl, tmpCacheDir, poolId, lcdClient);
-
-    return kyve;
+    return new KyveApi(storageUrl, tmpCacheDir, poolId, lcdClient);
   }
 
   private static async fetchPoolId(

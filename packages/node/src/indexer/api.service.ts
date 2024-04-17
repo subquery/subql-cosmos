@@ -111,7 +111,6 @@ export class ApiService
     );
 
     if (this.nodeConfig.kyveEndpoint) {
-      console.log(this.project.fileCacheDir);
       try {
         this.kyveApi = await KyveApi.create(
           network.chainId,

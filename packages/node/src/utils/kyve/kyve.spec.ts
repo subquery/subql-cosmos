@@ -258,11 +258,24 @@ describe('KyveApi', () => {
       expect(permissions).toBe('444');
     }
   });
-  it('retrieve and unzip storage data', async () => {
-    const bundle = await (kyveApi as any).getBundleById(8);
-    (kyveApi as any).cachedBundleDetails.push(bundle);
-    const block = await kyveApi.getBlockByHeight(1338);
-    expect(block.length).toBe(2);
+  it('able to fetch/write/read blocks using Kyve api', async () => {
+    const heights_1 = [150, 300, 1, 301, 450, 550];
+    const heights_2 = [498, 600, 801, 1100];
+    const blockArr = await Promise.all([
+      kyveApi.fetchBlocksBatches(registry, heights_1, 300),
+      kyveApi.fetchBlocksBatches(registry, heights_2, 300),
+    ]);
+
+    blockArr.forEach((blockContent) => {
+      blockContent.forEach((b) => {
+        expect(b.block instanceof LazyBlockContent).toBe(true);
+      });
+    });
+
+    const files = await fs.promises.readdir(tmpPath);
+
+    expect(files).not.toContain('bundle_0.json');
+    expect(files).not.toContain('bundle_1.json');
   });
   it('Should increment bundleId when height exceeds cache', async () => {
     const bundle = await (kyveApi as any).getBundleById(0);
