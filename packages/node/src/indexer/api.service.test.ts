@@ -17,7 +17,7 @@ import {
   NodeConfig,
 } from '@subql/node-core';
 import { GraphQLSchema } from 'graphql';
-import { CosmosNodeConfig } from '../configure/NodeConfig';
+import Pino from 'pino';
 import { SubqueryProject } from '../configure/SubqueryProject';
 import { LazyBlockContent } from '../utils/cosmos';
 import { ApiService } from './api.service';
@@ -99,9 +99,7 @@ describe('ApiService', () => {
     });
 
     it('Able to fetch with cached promises and remove cached bundle files', async () => {
-      jest
-        .spyOn(apiService as any, 'retryFetch')
-        .mockRejectedValue('Disabled rpc for kyve testing');
+      const rpcFetchSpy = jest.spyOn(apiService as any, 'retryFetch');
 
       const heights_1 = [150, 300, 1, 301, 450, 550];
       const heights_2 = [498, 600, 801, 1100];
@@ -117,6 +115,8 @@ describe('ApiService', () => {
       });
 
       const files = await fs.promises.readdir(tmpPath);
+
+      expect(rpcFetchSpy).toHaveBeenCalledTimes(0);
       expect(files).not.toContain('bundle_0.json');
       expect(files).not.toContain('bundle_1.json');
     });

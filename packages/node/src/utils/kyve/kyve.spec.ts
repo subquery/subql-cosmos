@@ -308,7 +308,7 @@ describe('KyveApi', () => {
     const files = await fs.promises.readdir(tmpPath);
     expect(files.length).toBe(0);
   });
-  it('ensure to remove logic', () => {
+  it('ensure to remove logic', async () => {
     const cachedBundleDetails = [
       { id: '0', from_key: '1', to_key: '150' },
       { id: '1', from_key: '151', to_key: '300' },
@@ -320,7 +320,7 @@ describe('KyveApi', () => {
     const height = 650;
     const bufferSize = 300;
 
-    const toRemoveBundles = (kyveApi as any).getToRemoveBundles(
+    const toRemoveBundles = await (kyveApi as any).getToRemoveBundles(
       cachedBundleDetails,
       height,
       bufferSize,
