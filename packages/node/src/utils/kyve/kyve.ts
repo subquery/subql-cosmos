@@ -225,6 +225,7 @@ export class KyveApi {
 
     const writeStream = fs.createWriteStream(bundleFilePath, {
       flags: 'wx',
+      mode: 0o200, // write only access for owner
     });
 
     try {
@@ -258,7 +259,6 @@ export class KyveApi {
 
   private async getBundleData(bundle: BundleDetails): Promise<string> {
     const bundleFilePath = this.getBundleFilePath(bundle.id);
-
     try {
       await this.downloadAndProcessBundle(bundle);
       return await this.readFromFile(bundleFilePath);
