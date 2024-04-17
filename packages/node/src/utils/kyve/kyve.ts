@@ -306,16 +306,18 @@ export class KyveApi {
 
     const currentBundle = this.getBundleFromCache(height);
 
-    return cachedBundles.filter((b) => {
-      const isNotCurrentBundleAndLower =
-        currentBundle.id !== b.id &&
-        parseDecimal(currentBundle.id) > parseDecimal(b.id);
-      const isOutsiderBuffer =
-        height < parseDecimal(b.from_key) - bufferSize ||
-        height > parseDecimal(b.to_key) + bufferSize;
+    return currentBundle
+      ? cachedBundles.filter((b) => {
+          const isNotCurrentBundleAndLower =
+            currentBundle.id !== b.id &&
+            parseDecimal(currentBundle.id) > parseDecimal(b.id);
+          const isOutsiderBuffer =
+            height < parseDecimal(b.from_key) - bufferSize ||
+            height > parseDecimal(b.to_key) + bufferSize;
 
-      return isNotCurrentBundleAndLower && isOutsiderBuffer;
-    });
+          return isNotCurrentBundleAndLower && isOutsiderBuffer;
+        })
+      : [];
   }
 
   async clearFileCache(
