@@ -2,11 +2,8 @@
 // SPDX-License-Identifier: GPL-3.0
 
 import assert from 'assert';
-import fs from 'fs';
-import os from 'os';
-import path from 'path';
 import { Injectable } from '@nestjs/common';
-import { LocalReader, validateSemver } from '@subql/common';
+import { validateSemver } from '@subql/common';
 import {
   CosmosProjectNetworkConfig,
   parseCosmosProjectManifest,
@@ -31,7 +28,8 @@ import {
 import { buildSchemaFromString } from '@subql/utils';
 import Cron from 'cron-converter';
 import { GraphQLSchema } from 'graphql';
-import { isTmpDir, processNetworkConfig } from '../utils/project';
+import { KyveApi } from '../utils/kyve/kyve';
+import { processNetworkConfig } from '../utils/project';
 
 const { version: packageVersion } = require('../../package.json');
 
@@ -114,26 +112,6 @@ export class SubqueryProject implements ISubqueryProject {
   }
 }
 
-async function getFileCacheDir(
-  reader: Reader,
-  projectRoot: string,
-  chainId: string,
-): Promise<string> {
-  if (isTmpDir(projectRoot)) return projectRoot;
-  if (reader instanceof LocalReader) {
-    const tmpDir = path.join(os.tmpdir(), `kyveTmpFileCache_${chainId}`);
-    try {
-      await fs.promises.mkdir(tmpDir);
-    } catch (e) {
-      if (e.code === 'EEXIST') {
-        return tmpDir;
-      }
-    }
-    return tmpDir;
-  }
-  return projectRoot;
-}
-
 type SUPPORT_MANIFEST = ProjectManifestV1_0_0Impl;
 
 async function loadProjectFromManifestBase(
@@ -192,7 +170,11 @@ async function loadProjectFromManifestBase(
     ),
   );
 
-  const fileCacheDir = await getFileCacheDir(reader, root, network.chainId);
+  const fileCacheDir = await KyveApi.getFileCacheDir(
+    reader,
+    root,
+    network.chainId,
+  );
 
   return new SubqueryProject(
     reader.root ? reader.root : path, //TODO, need to method to get project_id

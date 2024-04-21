@@ -405,6 +405,22 @@ describe('KyveApi', () => {
 
     expect(removeFiles.map((r) => r.id).sort()).toEqual(['0', '1'].sort());
   });
+  it('ensure file bundle id regex is correct', () => {
+    const files = [
+      'bundle_2_0.json',
+      'bundle_2_1.json',
+      'bundle_2_2.json',
+      'bundle_2_3.json',
+      'bundle_5_0.json',
+      'bundle_4_0.json',
+      'bundle_3_0.json',
+      'bundle_1_0.json',
+    ];
+
+    expect(files.filter((f) => (kyveApi as any).isBundleFile(f)).length).toBe(
+      4,
+    );
+  });
   describe('able to wrap kyveBlock', () => {
     let rpcLazyBlockContent: LazyBlockContent;
     let kyveLazyBlockContent: LazyBlockContent;

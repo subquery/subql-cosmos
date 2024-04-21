@@ -3,6 +3,7 @@
 
 import assert from 'assert';
 import fs from 'fs';
+import os from 'os';
 import path from 'path';
 import * as zlib from 'zlib';
 import { JsonRpcSuccessResponse } from '@cosmjs/json-rpc';
@@ -16,7 +17,9 @@ import {
 import KyveSDK, { KyveLCDClientType } from '@kyvejs/sdk';
 import { SupportedChains } from '@kyvejs/sdk/src/constants'; // Currently these types are not exported
 import { QueryPoolsResponse } from '@kyvejs/types/lcd/kyve/query/v1beta1/pools';
+import { LocalReader } from '@subql/common';
 import { delay, getLogger, IBlock } from '@subql/node-core';
+import { Reader } from '@subql/types-core';
 import axios, { AxiosResponse } from 'axios';
 import { remove } from 'lodash';
 import { BlockContent } from '../../indexer/types';
@@ -27,6 +30,8 @@ import { BundleDetails } from './kyveTypes';
 const BUNDLE_TIMEOUT = 10000; //ms
 const POLL_TIMER = 3; // sec
 const MAX_COMPRESSION_BYTE_SIZE = 2 * 10 ** 9;
+const BUNDLE_FILE_ID_REG = (poolId: string) =>
+  new RegExp(`^bundle_${poolId}_\\d+\\.json$`);
 
 const parseDecimal = (value: string) => parseInt(value, 10);
 
@@ -112,7 +117,7 @@ export class KyveApi {
   }
 
   private getBundleFilePath(id: string): string {
-    return path.join(this.tmpCacheDir, `bundle_${id}.json`);
+    return path.join(this.tmpCacheDir, `bundle_${this.poolId}_${id}.json`);
   }
 
   private async getBundleById(bundleId: number): Promise<BundleDetails> {
@@ -276,10 +281,10 @@ export class KyveApi {
   }
 
   private isBundleFile(filename: string): boolean {
-    return /^bundle_\d+\.json$/.test(filename);
+    return BUNDLE_FILE_ID_REG(this.poolId).test(filename);
   }
 
-  private async getExisitngBundlesFromCacheDirectory(
+  private async getExistingBundlesFromCacheDirectory(
     tmpDir: string,
   ): Promise<BundleDetails[]> {
     const bundles: BundleDetails[] = [];
@@ -287,7 +292,7 @@ export class KyveApi {
 
     for (const file of files) {
       if (this.isBundleFile(file)) {
-        const id = parseDecimal(file.match(/^bundle_(\d+)\.json$/)[1]);
+        const id = parseDecimal(file.match(BUNDLE_FILE_ID_REG(this.poolId))[1]);
         bundles.push(await this.getBundleById(id));
       }
     }
@@ -301,7 +306,7 @@ export class KyveApi {
     bufferSize: number,
   ): Promise<BundleDetails[]> {
     if (!cachedBundles.length) {
-      return this.getExisitngBundlesFromCacheDirectory(this.tmpCacheDir);
+      return this.getExistingBundlesFromCacheDirectory(this.tmpCacheDir);
     }
 
     const currentBundle = this.getBundleFromCache(height);
@@ -362,7 +367,9 @@ export class KyveApi {
     try {
       kyveBlockResult.results.forEach((b) => {
         // log is readonly hence needing to cast it
-        (b.log as any) = JSON.stringify(this.reconstructLogs(kyveBlockResult));
+        (b.log as string) = JSON.stringify(
+          this.reconstructLogs(kyveBlockResult),
+        );
       });
     } catch (e) {
       throw new Error(`Failed to inject kyveBlock, ${e}`);
@@ -458,5 +465,26 @@ export class KyveApi {
         throw e;
       }
     });
+  }
+
+  static async getFileCacheDir(
+    reader: Reader,
+    projectRoot: string,
+    chainId: string,
+  ): Promise<string> {
+    if (isTmpDir(projectRoot)) return projectRoot;
+    if (reader instanceof LocalReader) {
+      const tmpDir = path.join(os.tmpdir(), `kyveTmpFileCache_${chainId}`);
+      try {
+        await fs.promises.mkdir(tmpDir);
+      } catch (e) {
+        if (e.code === 'EEXIST') {
+          return tmpDir;
+        }
+        throw e;
+      }
+      return tmpDir;
+    }
+    return projectRoot;
   }
 }
