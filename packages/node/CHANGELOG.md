@@ -8,8 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Support for KYVE integration with supporting flags (#235)
   - `--kyve-endpoint`
-  - `--kyve-chain-id`
-  - `--kyve-storage-url`
+  - `--kyve-chain-id` (default value is `kyve-1`)
+  - `--kyve-storage-url` (default value is `https://arweave.net`) 
 
 ## [3.10.0] - 2024-04-10
 ### Changed

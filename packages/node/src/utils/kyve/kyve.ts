@@ -31,7 +31,7 @@ const BUNDLE_TIMEOUT = 10000; //ms
 const POLL_TIMER = 3; // sec
 const MAX_COMPRESSION_BYTE_SIZE = 2 * 10 ** 9;
 const BUNDLE_FILE_ID_REG = (poolId: string) =>
-  new RegExp(`^bundle_${poolId}_\\d+\\.json$`);
+  new RegExp(`^bundle_${poolId}_(\\d+)\\.json$`);
 
 const parseDecimal = (value: string) => parseInt(value, 10);
 
