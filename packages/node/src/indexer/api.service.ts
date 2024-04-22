@@ -142,6 +142,7 @@ export class ApiService
         );
       } catch (e) {
         logger.warn(
+          e,
           `Failed to fetch blocks: ${JSON.stringify(
             heights,
           )} via Kyve, switching to rpc`,

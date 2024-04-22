@@ -82,6 +82,7 @@ describe('KyveApi', () => {
     const client = new HttpClient('https://rpc.mainnet.archway.io:443');
     tendermint = await Tendermint37Client.create(client);
   });
+
   beforeEach(async () => {
     retrieveBundleDataSpy = jest.spyOn(kyveApi as any, 'retrieveBundleData');
     decoderBlockSpy = jest.spyOn(kyveApi as any, 'decodeBlock');
@@ -116,6 +117,7 @@ describe('KyveApi', () => {
       Promise<BundleDetails>
     >) = {};
   });
+
   afterAll(async () => {
     await promisify(rimraf)(tmpPath);
   });
@@ -155,6 +157,7 @@ describe('KyveApi', () => {
     expect(firstBundle).toBe(0);
     expect(laterBundle).toBe(113773);
   });
+
   it('Able to write and read with parallel calls', async () => {
     const bundle_0Data = [
       {
@@ -257,6 +260,7 @@ describe('KyveApi', () => {
       Object.values((kyveApi as any).cachedBundleDetails),
     )) as BundleDetails[];
 
+    // Because somethings in the cache bundle doesn't mean its downloaded or on disc
     for (const bundle of bundles) {
       const stats = await fs.promises.stat(
         (kyveApi as any).getBundleFilePath(bundle.id),
@@ -284,7 +288,7 @@ describe('KyveApi', () => {
     expect(files).not.toContain('bundle_2_0.json');
   });
   it('Should increment bundleId when height exceeds cache', async () => {
-    (kyveApi as any).addToCachedBundle(0, (kyveApi as any).getBundleById(0));
+    (kyveApi as any).cachedBundleDetails[0] = (kyveApi as any).getBundleById(0);
     jest.spyOn(kyveApi as any, 'getBundleData').mockResolvedValueOnce('{}');
     await (kyveApi as any).updateCurrentBundleAndDetails(160);
 

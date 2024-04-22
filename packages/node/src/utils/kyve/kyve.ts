@@ -21,7 +21,6 @@ import { LocalReader } from '@subql/common';
 import { delay, getLogger, IBlock } from '@subql/node-core';
 import { Reader } from '@subql/types-core';
 import axios, { AxiosResponse } from 'axios';
-import { remove } from 'lodash';
 import { BlockContent } from '../../indexer/types';
 import { formatBlockUtil, LazyBlockContent } from '../cosmos';
 import { isTmpDir } from '../project';
@@ -46,7 +45,7 @@ interface KyveBundleData {
 }
 
 export class KyveApi {
-  private cachedBundleDetails: Record<string, Promise<BundleDetails>> = {};
+  private cachedBundleDetails: Record<number, Promise<BundleDetails>> = {};
 
   private constructor(
     private readonly storageUrl: string,
@@ -122,12 +121,17 @@ export class KyveApi {
   }
 
   private async getBundleById(bundleId: number): Promise<BundleDetails> {
-    const bundleDetail =
-      await this.lcdClient.kyve.query.v1beta1.finalizedBundle({
+    return (this.cachedBundleDetails[bundleId] ??= (() => {
+      logger.debug(`getBundleId ${bundleId}`);
+      return this.lcdClient.kyve.query.v1beta1.finalizedBundle({
         pool_id: this.poolId,
         id: bundleId.toString(),
-      });
-    return bundleDetail as BundleDetails;
+      }) as Promise<BundleDetails>;
+    })());
+  }
+
+  private async getResolvedBundleDetails(): Promise<BundleDetails[]> {
+    return Promise.all(Object.values(this.cachedBundleDetails));
   }
 
   private async getLatestBundleId(): Promise<number> {
@@ -147,16 +151,13 @@ export class KyveApi {
   }
 
   private async getBundleId(height: number): Promise<number> {
-    const latestBundleId = await this.getLatestBundleId();
-
     const lowestCacheHeight = Object.keys(this.cachedBundleDetails);
 
     let low =
       lowestCacheHeight.length > 0
-        ? Math.min(...lowestCacheHeight.map((id) => parseDecimal(id)))
+        ? Math.min(...lowestCacheHeight.map(parseDecimal))
         : -1;
-    let high = latestBundleId;
-    let startBundleId = -1; // Initialize to an invalid ID initially
+    let high = await this.getLatestBundleId();
 
     while (low <= high) {
       const mid = Math.floor((low + high) / 2);
@@ -166,8 +167,7 @@ export class KyveApi {
       const toKey = parseDecimal(midBundle.to_key);
 
       if (height >= fromKey && height <= toKey) {
-        startBundleId = mid;
-        return startBundleId;
+        return mid;
       }
 
       if (height > toKey) {
@@ -176,7 +176,7 @@ export class KyveApi {
         high = mid - 1;
       }
     }
-    throw new Error(`No suitable bundle found for height ${height}}`);
+    throw new Error(`No suitable bundle found for height ${height}`);
   }
 
   private findBlockByHeight(
@@ -188,22 +188,10 @@ export class KyveApi {
     );
   }
 
-  private addToCachedBundle(
-    bundleId: string,
-    bundlePromise: Promise<BundleDetails>,
-  ): void {
-    // eslint-disable-next-line @typescript-eslint/no-misused-promises
-    if (!this.cachedBundleDetails[bundleId]) {
-      this.cachedBundleDetails[bundleId] = bundlePromise;
-    }
-  }
-
   private async getBundleFromCache(
     height: number,
   ): Promise<BundleDetails> | undefined {
-    const bundles: BundleDetails[] = await Promise.all(
-      Object.values(this.cachedBundleDetails),
-    );
+    const bundles = await this.getResolvedBundleDetails();
     return bundles.find(
       (b) =>
         parseDecimal(b.from_key) <= height && height <= parseDecimal(b.to_key),
@@ -218,28 +206,30 @@ export class KyveApi {
       const bundleIds = Object.keys(this.cachedBundleDetails);
       const bundleId =
         bundleIds.length !== 0
-          ? Math.max(...bundleIds.map((key) => parseDecimal(key))) + 1
+          ? Math.max(...bundleIds.map(parseDecimal)) + 1
           : await this.getBundleId(height);
-      this.addToCachedBundle(bundleId.toString(), this.getBundleById(bundleId));
-
-      bundle = await this.cachedBundleDetails[bundleId];
+      bundle = await this.getBundleById(bundleId);
     }
+
     return JSON.parse(await this.getBundleData(bundle));
   }
 
   private async pollUntilReadable(bundleFilePath: string): Promise<string> {
-    // eslint-disable-next-line no-constant-condition
-    while (true) {
+    // XXXX:SCOTT This limit can be removed if the timeout problem is resolved in downloadAndProcessBundle
+    let limit = 10;
+    while (limit > 0) {
       try {
         return await this.readFromFile(bundleFilePath);
       } catch (e) {
         if (e.code === 'EACCES') {
           await delay(POLL_TIMER);
+          limit--;
         } else {
           throw e;
         }
       }
     }
+    throw new Error('Timeout waiting for bundle');
   }
 
   async downloadAndProcessBundle(bundle: BundleDetails): Promise<void> {
@@ -251,11 +241,12 @@ export class KyveApi {
     });
 
     try {
+      // XXXX:SCOTT This can get stuck and not resolve, it seems a file can get stuck with permissions not reset (indexer restart)
+      // Its probably worth adding a timeout on this function
       await new Promise((resolve, reject) => {
         writeStream.on('open', resolve);
         writeStream.on('error', reject);
       });
-
       const zippedBundleData = await this.retrieveBundleData(bundle.storage_id);
 
       const gunzip = zlib.createUnzip({
@@ -358,6 +349,7 @@ export class KyveApi {
     );
 
     for (const bundle of toRemoveBundles) {
+      logger.debug(`Removing bundle ${bundle.id}`);
       const bundlePath = this.getBundleFilePath(bundle.id);
       try {
         await fs.promises.unlink(bundlePath);
@@ -376,6 +368,8 @@ export class KyveApi {
   ): Promise<[BlockResponse, BlockResultsResponse]> {
     const blocks = await this.updateCurrentBundleAndDetails(height);
     const blockData = this.findBlockByHeight(height, blocks);
+    // XXXX:SCOTT blockData is regularly undefined, this should not happen and is not handled.
+    // TypeError: Cannot read properties of undefined (reading 'value')
     return [
       this.decodeBlock(blockData.value.block),
       this.injectLogs(this.decodeBlockResult(blockData.value.block_results)),
