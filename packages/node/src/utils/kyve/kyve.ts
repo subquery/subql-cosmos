@@ -72,6 +72,7 @@ export class KyveApi {
 
     const poolId = await KyveApi.fetchPoolId(chainId, lcdClient);
 
+    logger.info(`Kyve API connected`);
     return new KyveApi(storageUrl, tmpCacheDir, poolId, lcdClient);
   }
 
@@ -230,7 +231,7 @@ export class KyveApi {
 
     const writeStream = fs.createWriteStream(bundleFilePath, {
       flags: 'wx',
-      mode: 0o200, // write only access for owner
+      mode: 0o200, // Ensure that only writer has access to file
     });
 
     try {
@@ -245,6 +246,8 @@ export class KyveApi {
         maxOutputLength: MAX_COMPRESSION_BYTE_SIZE /* avoid zip bombs */,
       });
 
+      logger.info(`Retrieving bundle ${bundle.id}`);
+
       await new Promise((resolve, reject) => {
         zippedBundleData.data
           .pipe(gunzip)
@@ -252,14 +255,14 @@ export class KyveApi {
           .on('error', reject)
           .on('finish', resolve);
       });
+
+      await fs.promises.chmod(bundleFilePath, 0o444);
     } catch (e) {
       if (!['EEXIST', 'EACCES', 'ENOENT'].includes(e.code)) {
         await fs.promises.unlink(bundleFilePath);
       }
       throw e;
     }
-
-    await fs.promises.chmod(bundleFilePath, 0o444);
   }
 
   private async getBundleData(bundle: BundleDetails): Promise<string> {
@@ -477,13 +480,13 @@ export class KyveApi {
       const tmpDir = path.join(os.tmpdir(), `kyveTmpFileCache_${chainId}`);
       try {
         await fs.promises.mkdir(tmpDir);
+        return tmpDir;
       } catch (e) {
         if (e.code === 'EEXIST') {
           return tmpDir;
         }
         throw e;
       }
-      return tmpDir;
     }
     return projectRoot;
   }
