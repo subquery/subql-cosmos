@@ -204,7 +204,12 @@ export class KyveApi {
   ): Promise<KyveBundleData[]> {
     let bundle = this.getBundleFromCache(height);
     if (!bundle) {
-      const bundleId = await this.getBundleId(height);
+      const bundleId =
+        this.cachedBundleDetails.length !== 0
+          ? Math.max(
+              ...this.cachedBundleDetails.map((b) => parseDecimal(b.id)),
+            ) + 1
+          : await this.getBundleId(height);
       bundle = await this.getBundleById(bundleId);
       this.addToCachedBundle(bundle);
     }
@@ -272,7 +277,8 @@ export class KyveApi {
       return await this.readFromFile(bundleFilePath);
     } catch (e: any) {
       if (['EEXIST', 'EACCES', 'ENOENT'].includes(e.code)) {
-        return this.pollUntilReadable(bundleFilePath);
+        const res = await this.pollUntilReadable(bundleFilePath);
+        return res;
       } else {
         throw e;
       }
