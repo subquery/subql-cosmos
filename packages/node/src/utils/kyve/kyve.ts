@@ -20,8 +20,8 @@ import { QueryPoolsResponse } from '@kyvejs/types/lcd/kyve/query/v1beta1/pools';
 import { LocalReader } from '@subql/common';
 import { delay, getLogger, IBlock } from '@subql/node-core';
 import { Reader } from '@subql/types-core';
+import { Mutex } from 'async-mutex';
 import axios, { AxiosResponse } from 'axios';
-import { remove } from 'lodash';
 import { BlockContent } from '../../indexer/types';
 import { formatBlockUtil, LazyBlockContent } from '../cosmos';
 import { isTmpDir } from '../project';
@@ -41,12 +41,14 @@ const logger = getLogger('kyve');
 const { version: packageVersion } = require('../../../package.json');
 
 interface KyveBundleData {
+  x;
   value: { block: any; block_results: any };
   key: string;
 }
 
 export class KyveApi {
   private cachedBundleDetails: Record<string, Promise<BundleDetails>> = {};
+  private mutex = new Mutex();
 
   private constructor(
     private readonly storageUrl: string,
@@ -167,6 +169,7 @@ export class KyveApi {
 
       if (height >= fromKey && height <= toKey) {
         startBundleId = mid;
+        logger.error(`Binary search called on block: ${height}`);
         return startBundleId;
       }
 
@@ -204,26 +207,61 @@ export class KyveApi {
     const bundles: BundleDetails[] = await Promise.all(
       Object.values(this.cachedBundleDetails),
     );
+
+    console.log(bundles.map((b) => [b.from_key, b.to_key]));
+
     return bundles.find(
       (b) =>
         parseDecimal(b.from_key) <= height && height <= parseDecimal(b.to_key),
     );
   }
 
+  private async initializeBundleCache(height: number): Promise<void> {
+    const release = await this.mutex.acquire();
+    logger.info('locking init');
+    try {
+      const bundleId = await this.getBundleId(height);
+      this.addToCachedBundle(bundleId.toString(), this.getBundleById(bundleId));
+      logger.info(`added to cache ${height}`);
+    } catch (e) {
+      console.error(e);
+      throw e;
+    } finally {
+      logger.info('released');
+      release();
+    }
+  }
+
   private async updateCurrentBundleAndDetails(
     height: number,
   ): Promise<KyveBundleData[]> {
     let bundle = await this.getBundleFromCache(height);
+    if (bundle) {
+      logger.info(`bundle: ${bundle.id} for height: ${height}`);
+    }
+
     if (!bundle) {
       const bundleIds = Object.keys(this.cachedBundleDetails);
-      const bundleId =
-        bundleIds.length !== 0
-          ? Math.max(...bundleIds.map((key) => parseDecimal(key))) + 1
-          : await this.getBundleId(height);
-      this.addToCachedBundle(bundleId.toString(), this.getBundleById(bundleId));
+      logger.warn(
+        `Cannot find height ${height} in bundle, current cache: ${JSON.stringify(
+          Object.entries(this.cachedBundleDetails),
+        )}`,
+      );
+      let bundleId: number;
 
-      bundle = await this.cachedBundleDetails[bundleId];
+      if (bundleIds.length !== 0) {
+        bundleId = Math.max(...bundleIds.map((key) => parseDecimal(key))) + 1;
+        logger.info(`bundleId from cache ${bundleId}`);
+      } else {
+        bundleId = await this.getBundleId(height);
+      }
+
+      logger.info(`Final bundleID: ${bundleId}`);
+      this.addToCachedBundle(bundleId.toString(), this.getBundleById(bundleId));
+      bundle = await this.cachedBundleDetails[bundleId.toString()];
+      console.log('bundle is avaialble', !!bundle);
     }
+
     return JSON.parse(await this.getBundleData(bundle));
   }
 
@@ -362,6 +400,7 @@ export class KyveApi {
       try {
         await fs.promises.unlink(bundlePath);
         delete this.cachedBundleDetails[bundle.id];
+        logger.warn(`removed, ${bundle.id} at height: ${height}`);
       } catch (e) {
         if (e.code !== 'ENOENT') {
           // if it does not exist, should be removed
@@ -374,7 +413,19 @@ export class KyveApi {
   async getBlockByHeight(
     height: number,
   ): Promise<[BlockResponse, BlockResultsResponse]> {
+    console.log('mutex islocked: ', this.mutex.isLocked());
+
+    if (
+      !Object.keys(this.cachedBundleDetails).length &&
+      !this.mutex.isLocked()
+    ) {
+      await this.initializeBundleCache(height);
+    }
+
+    console.log(Object.keys(this.cachedBundleDetails));
+
     const blocks = await this.updateCurrentBundleAndDetails(height);
+
     const blockData = this.findBlockByHeight(height, blocks);
     return [
       this.decodeBlock(blockData.value.block),

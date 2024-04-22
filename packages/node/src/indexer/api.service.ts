@@ -111,6 +111,8 @@ export class ApiService
     );
 
     if (this.nodeConfig.kyveEndpoint) {
+      console.log(this.project.fileCacheDir);
+
       try {
         this.kyveApi = await KyveApi.create(
           network.chainId,
@@ -119,6 +121,10 @@ export class ApiService
           this.nodeConfig.kyveChainId,
           this.project.fileCacheDir,
         );
+
+        this.project.dataSources.map((d) => {
+          d.startBlock;
+        });
       } catch (e) {
         logger.warn(`${e}`);
       }
@@ -146,6 +152,8 @@ export class ApiService
             heights,
           )} via Kyve, switching to rpc`,
         );
+
+        throw e;
       }
     }
 
