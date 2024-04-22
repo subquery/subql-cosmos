@@ -274,7 +274,7 @@ describe('KyveApi', () => {
 
     const files = await fs.promises.readdir(tmpPath);
 
-    expect(files).not.toContain('bundle_0.json');
+    expect(files).not.toContain('bundle_2_0.json');
   });
   it('Should increment bundleId when height exceeds cache', async () => {
     const bundle = await (kyveApi as any).getBundleById(0);
