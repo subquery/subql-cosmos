@@ -46,7 +46,7 @@ interface KyveBundleData {
 }
 
 export class KyveApi {
-  private cachedBundleDetails: BundleDetails[] = [];
+  private cachedBundleDetails: Record<string, Promise<BundleDetails>> = {};
 
   private constructor(
     private readonly storageUrl: string,
@@ -149,9 +149,11 @@ export class KyveApi {
   private async getBundleId(height: number): Promise<number> {
     const latestBundleId = await this.getLatestBundleId();
 
+    const lowestCacheHeight = Object.keys(this.cachedBundleDetails);
+
     let low =
-      this.cachedBundleDetails.length > 0
-        ? Math.min(...this.cachedBundleDetails.map((b) => parseDecimal(b.id)))
+      lowestCacheHeight.length > 0
+        ? Math.min(...lowestCacheHeight.map((id) => parseDecimal(id)))
         : -1;
     let high = latestBundleId;
     let startBundleId = -1; // Initialize to an invalid ID initially
@@ -186,14 +188,23 @@ export class KyveApi {
     );
   }
 
-  private addToCachedBundle(bundle: BundleDetails): void {
-    if (!this.cachedBundleDetails.find((b) => b.id === bundle.id)) {
-      this.cachedBundleDetails.push(bundle);
+  private addToCachedBundle(
+    bundleId: string,
+    bundlePromise: Promise<BundleDetails>,
+  ): void {
+    // eslint-disable-next-line @typescript-eslint/no-misused-promises
+    if (!this.cachedBundleDetails[bundleId]) {
+      this.cachedBundleDetails[bundleId] = bundlePromise;
     }
   }
 
-  private getBundleFromCache(height: number): BundleDetails | undefined {
-    return this.cachedBundleDetails.find(
+  private async getBundleFromCache(
+    height: number,
+  ): Promise<BundleDetails> | undefined {
+    const bundles: BundleDetails[] = await Promise.all(
+      Object.values(this.cachedBundleDetails),
+    );
+    return bundles.find(
       (b) =>
         parseDecimal(b.from_key) <= height && height <= parseDecimal(b.to_key),
     );
@@ -202,16 +213,16 @@ export class KyveApi {
   private async updateCurrentBundleAndDetails(
     height: number,
   ): Promise<KyveBundleData[]> {
-    let bundle = this.getBundleFromCache(height);
+    let bundle = await this.getBundleFromCache(height);
     if (!bundle) {
+      const bundleIds = Object.keys(this.cachedBundleDetails);
       const bundleId =
-        this.cachedBundleDetails.length !== 0
-          ? Math.max(
-              ...this.cachedBundleDetails.map((b) => parseDecimal(b.id)),
-            ) + 1
+        bundleIds.length !== 0
+          ? Math.max(...bundleIds.map((key) => parseDecimal(key))) + 1
           : await this.getBundleId(height);
-      bundle = await this.getBundleById(bundleId);
-      this.addToCachedBundle(bundle);
+      this.addToCachedBundle(bundleId.toString(), this.getBundleById(bundleId));
+
+      bundle = await this.cachedBundleDetails[bundleId];
     }
     return JSON.parse(await this.getBundleData(bundle));
   }
@@ -310,32 +321,33 @@ export class KyveApi {
   }
 
   private async getToRemoveBundles(
-    cachedBundles: BundleDetails[],
+    cachedBundles: Record<string, Promise<BundleDetails>>,
     height: number,
     bufferSize: number,
   ): Promise<BundleDetails[]> {
-    if (!cachedBundles.length) {
+    if (!Object.keys(cachedBundles).length) {
       return this.getExistingBundlesFromCacheDirectory(this.tmpCacheDir);
     }
 
-    const currentBundle = this.getBundleFromCache(height);
+    const currentBundle = await this.getBundleFromCache(height);
+    if (!currentBundle) return [];
 
-    return currentBundle
-      ? cachedBundles.filter((b) => {
-          const isNotCurrentBundleAndLower =
-            currentBundle.id !== b.id &&
-            parseDecimal(currentBundle.id) > parseDecimal(b.id);
-          const isOutsiderBuffer =
-            height < parseDecimal(b.from_key) - bufferSize ||
-            height > parseDecimal(b.to_key) + bufferSize;
+    const bundles = await Promise.all(Object.values(cachedBundles));
 
-          return isNotCurrentBundleAndLower && isOutsiderBuffer;
-        })
-      : [];
+    return bundles.filter((b) => {
+      const isNotCurrentBundleAndLower =
+        currentBundle.id !== b.id &&
+        parseDecimal(currentBundle.id) > parseDecimal(b.id);
+      const isOutsiderBuffer =
+        height < parseDecimal(b.from_key) - bufferSize ||
+        height > parseDecimal(b.to_key) + bufferSize;
+
+      return isNotCurrentBundleAndLower && isOutsiderBuffer;
+    });
   }
 
   async clearFileCache(
-    cachedBundles: BundleDetails[],
+    cachedBundles: Record<string, Promise<BundleDetails>>,
     height: number,
     bufferSize: number,
   ): Promise<void> {
@@ -349,7 +361,7 @@ export class KyveApi {
       const bundlePath = this.getBundleFilePath(bundle.id);
       try {
         await fs.promises.unlink(bundlePath);
-        remove(this.cachedBundleDetails, (b) => b.id === bundle.id);
+        delete this.cachedBundleDetails[bundle.id];
       } catch (e) {
         if (e.code !== 'ENOENT') {
           // if it does not exist, should be removed

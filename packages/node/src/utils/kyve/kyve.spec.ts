@@ -111,7 +111,10 @@ describe('KyveApi', () => {
     readerSpy.mockRestore();
 
     // reset cache
-    (kyveApi as any).cachedBundleDetails = [];
+    ((kyveApi as any).cachedBundleDetails as Record<
+      string,
+      Promise<BundleDetails>
+    >) = {};
   });
   afterAll(async () => {
     await promisify(rimraf)(tmpPath);
@@ -250,7 +253,11 @@ describe('KyveApi', () => {
     expect(cachedBundles.length).toBe(3);
     expect(blocks.length).toBe(5);
 
-    for (const bundle of (kyveApi as any).cachedBundleDetails) {
+    const bundles = (await Promise.all(
+      Object.values((kyveApi as any).cachedBundleDetails),
+    )) as BundleDetails[];
+
+    for (const bundle of bundles) {
       const stats = await fs.promises.stat(
         (kyveApi as any).getBundleFilePath(bundle.id),
       );
@@ -277,14 +284,11 @@ describe('KyveApi', () => {
     expect(files).not.toContain('bundle_2_0.json');
   });
   it('Should increment bundleId when height exceeds cache', async () => {
-    const bundle = await (kyveApi as any).getBundleById(0);
-    (kyveApi as any).cachedBundleDetails.push(bundle);
+    (kyveApi as any).addToCachedBundle(0, (kyveApi as any).getBundleById(0));
     jest.spyOn(kyveApi as any, 'getBundleData').mockResolvedValueOnce('{}');
     await (kyveApi as any).updateCurrentBundleAndDetails(160);
 
-    expect(
-      (kyveApi as any).cachedBundleDetails.find((b) => b.id === '1'),
-    ).toBeDefined();
+    expect((kyveApi as any).cachedBundleDetails['1']).toBeDefined();
   });
   it('compare block info', async () => {
     const height = 3901476;
@@ -302,8 +306,9 @@ describe('KyveApi', () => {
     expect(poolId).toBe('2');
   });
   it('remove bundle.json if bundle fetch fails', async () => {
-    const bundleDetail = await (kyveApi as any).getBundleById(8);
-    (kyveApi as any).cachedBundleDetails = [bundleDetail];
+    (kyveApi as any).cachedBundleDetails = {
+      '8': (kyveApi as any).getBundleById(8),
+    };
 
     jest.spyOn(axios, 'isAxiosError').mockImplementationOnce(() => true);
 
@@ -313,7 +318,8 @@ describe('KyveApi', () => {
       });
     });
 
-    await expect((kyveApi as any).getBundleData(bundleDetail)).rejects.toBe(
+    const bundleDetails = await (kyveApi as any).cachedBundleDetails['8'];
+    await expect((kyveApi as any).getBundleData(bundleDetails)).rejects.toBe(
       'Failed to fetch',
     );
 
@@ -321,33 +327,32 @@ describe('KyveApi', () => {
     expect(files.length).toBe(0);
   });
   it('ensure to remove logic', async () => {
-    const cachedBundleDetails = [
-      { id: '0', from_key: '1', to_key: '150' },
-      { id: '1', from_key: '151', to_key: '300' },
-      { id: '2', from_key: '301', to_key: '500' },
-      { id: '3', from_key: '501', to_key: '800' },
-    ] as BundleDetails[];
-    (kyveApi as any).cachedBundleDetails = cachedBundleDetails;
+    const mockCachedBundles: Record<string, Promise<BundleDetails>> = {
+      '0': (kyveApi as any).getBundleById(0),
+      '1': (kyveApi as any).getBundleById(1),
+      '2': (kyveApi as any).getBundleById(2),
+      '3': (kyveApi as any).getBundleById(3),
+      '4': (kyveApi as any).getBundleById(4),
+    };
+
+    (kyveApi as any).cachedBundleDetails = mockCachedBundles;
 
     const height = 650;
     const bufferSize = 300;
 
     const toRemoveBundles = await (kyveApi as any).getToRemoveBundles(
-      cachedBundleDetails,
+      mockCachedBundles,
       height,
       bufferSize,
     );
 
-    expect(toRemoveBundles.sort()).toEqual(
-      [
-        { id: '0', from_key: '1', to_key: '150' },
-        { id: '1', from_key: '151', to_key: '300' },
-      ].sort(),
-    );
+    expect(toRemoveBundles.sort().map((b) => b.id)).toEqual(['0', '1'].sort());
   });
   it('Able to poll with simulated workers', async () => {
-    const bundleDetail = await (kyveApi as any).getBundleById(130265);
-    (kyveApi as any).cachedBundleDetails = [bundleDetail];
+    const mockCacheDetails = {
+      '130265': (kyveApi as any).getBundleById(130265),
+    };
+    (kyveApi as any).cachedBundleDetails = mockCacheDetails;
 
     const workerKyveApi = await KyveApi.create(
       'archway-1',
@@ -357,7 +362,7 @@ describe('KyveApi', () => {
       tmpPath,
     );
 
-    (workerKyveApi as any).cachedBundleDetails = [bundleDetail];
+    (workerKyveApi as any).cachedBundleDetails = mockCacheDetails;
 
     jest
       .spyOn(workerKyveApi, 'downloadAndProcessBundle')
@@ -385,7 +390,7 @@ describe('KyveApi', () => {
     expect(pollSpy).toHaveBeenCalledTimes(1);
 
     const r = await kyveApi.readFromFile(
-      (kyveApi as any).getBundleFilePath(bundleDetail.id),
+      (kyveApi as any).getBundleFilePath('130265'),
     );
 
     expect(r).toEqual(JSON.stringify(block_3856726));
