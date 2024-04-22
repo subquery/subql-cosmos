@@ -391,7 +391,7 @@ describe('KyveApi', () => {
     expect(r).toEqual(JSON.stringify(block_3856726));
   });
   it('isBundle', () => {
-    const bundle = 'bundle_0.json';
+    const bundle = 'bundle_2_0.json';
     const notBundle = 'data.json';
 
     expect((kyveApi as any).isBundleFile(bundle)).toBe(true);
