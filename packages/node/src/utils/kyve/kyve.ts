@@ -232,7 +232,6 @@ export class KyveApi {
   }
 
   private async pollUntilReadable(bundleFilePath: string): Promise<string> {
-    // XXXX:SCOTT This limit can be removed if the timeout problem is resolved in downloadAndProcessBundle
     let limit = 10;
     while (limit > 0) {
       try {
@@ -246,6 +245,8 @@ export class KyveApi {
         }
       }
     }
+
+    await fs.promises.chmod(bundleFilePath, '0o666'); // Reset permissions if polling exceeds
     throw new Error('Timeout waiting for bundle');
   }
 
@@ -266,7 +267,7 @@ export class KyveApi {
           writeStream.on('open', resolve);
           writeStream.on('error', reject);
         }),
-        5,
+        BUNDLE_TIMEOUT,
       );
 
       const zippedBundleData = await this.retrieveBundleData(bundle.storage_id);
@@ -282,11 +283,13 @@ export class KyveApi {
           .pipe(gunzip)
           .pipe(writeStream)
           .on('error', reject)
-          .on('finish', resolve);
+          .on('finish', async () => {
+            await fs.promises.chmod(bundleFilePath, 0o444);
+            resolve('Stream Completed');
+          });
       });
-      await fs.promises.chmod(bundleFilePath, 0o444);
     } catch (e) {
-      if (!['EEXIST', 'EACCES', 'ENOENT'].includes(e.code)) {
+      if (!['EEXIST', 'EACCES'].includes(e.code)) {
         await fs.promises.unlink(bundleFilePath);
       }
       throw e;
@@ -299,7 +302,7 @@ export class KyveApi {
       await this.downloadAndProcessBundle(bundle);
       return await this.readFromFile(bundleFilePath);
     } catch (e: any) {
-      if (['EEXIST', 'EACCES', 'ENOENT'].includes(e.code)) {
+      if (['EEXIST', 'EACCES'].includes(e.code)) {
         const res = await this.pollUntilReadable(bundleFilePath);
         return res;
       } else {
