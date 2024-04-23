@@ -169,12 +169,11 @@ describe('KyveApi', () => {
     const batch2 = await Promise.all([
       kyveApi.getBlockByHeight(1500),
       kyveApi.getBlockByHeight(1501),
-      // note:  what happens if it jumps more than incremental bundle
-      // kyveApi.getBlockByHeight(4000)
+      kyveApi.getBlockByHeight(4000),
     ]);
     expect((kyveApi as any).cachedBundleDetails[10]).toBeDefined();
     expect(binarySearchSpy).toHaveBeenCalledTimes(4);
-    expect(batch2.length).toBe(2);
+    expect(batch2.length).toBe(3);
   });
   it('Able to write and read with parallel calls', async () => {
     const bundle_0Data = [
@@ -274,9 +273,11 @@ describe('KyveApi', () => {
     expect(cachedBundles.length).toBe(3);
     expect(blocks.length).toBe(5);
 
-    const bundles = (await Promise.all(
-      Object.values((kyveApi as any).cachedBundleDetails),
-    )) as BundleDetails[];
+    const bundles = (await Promise.all([
+      (kyveApi as any).getBundleById(0),
+      (kyveApi as any).getBundleById(1),
+      (kyveApi as any).getBundleById(2),
+    ])) as BundleDetails[];
 
     // Because somethings in the cache bundle doesn't mean its downloaded or on disc
     for (const bundle of bundles) {

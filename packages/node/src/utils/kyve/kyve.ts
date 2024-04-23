@@ -18,7 +18,7 @@ import KyveSDK, { KyveLCDClientType } from '@kyvejs/sdk';
 import { SupportedChains } from '@kyvejs/sdk/src/constants'; // Currently these types are not exported
 import { QueryPoolsResponse } from '@kyvejs/types/lcd/kyve/query/v1beta1/pools';
 import { LocalReader } from '@subql/common';
-import { delay, getLogger, IBlock } from '@subql/node-core';
+import { delay, getLogger, IBlock, timeout } from '@subql/node-core';
 import { Reader } from '@subql/types-core';
 import axios, { AxiosResponse } from 'axios';
 import { BlockContent } from '../../indexer/types';
@@ -209,8 +209,8 @@ export class KyveApi {
       let bundleId: number;
       if (bundleIds.length === 0) {
         bundleId = await this.getBundleId(height);
+        bundle = await this.cachedBundleDetails[bundleId];
       } else {
-        //
         const cachedBundles = await this.getResolvedBundleDetails();
         const nearestBundle = cachedBundles.filter(
           (b) => parseDecimal(b.to_key) < height,
@@ -219,10 +219,13 @@ export class KyveApi {
         bundleId =
           Math.max(...nearestBundle.map((b) => parseDecimal(b.id))) + 1;
 
-        this.cachedBundleDetails[bundleId] = this.getBundleById(bundleId);
-      }
+        bundle = await this.getBundleById(bundleId);
 
-      bundle = await this.cachedBundleDetails[bundleId];
+        while (parseDecimal(bundle.to_key) < height) {
+          bundleId++;
+          bundle = await this.getBundleById(bundleId);
+        }
+      }
     }
 
     return JSON.parse(await this.getBundleData(bundle));
@@ -257,15 +260,14 @@ export class KyveApi {
     try {
       // XXXX:SCOTT This can get stuck and not resolve, it seems a file can get stuck with permissions not reset (indexer restart)
       // Its probably worth adding a timeout on this function
-      await Promise.race([
+
+      await timeout(
         new Promise((resolve, reject) => {
           writeStream.on('open', resolve);
           writeStream.on('error', reject);
         }),
-        delay(5).then(() => {
-          throw new Error('Timeout: File stream did not open');
-        }),
-      ]);
+        5,
+      );
 
       const zippedBundleData = await this.retrieveBundleData(bundle.storage_id);
 
@@ -282,13 +284,9 @@ export class KyveApi {
           .on('error', reject)
           .on('finish', resolve);
       });
-
       await fs.promises.chmod(bundleFilePath, 0o444);
     } catch (e) {
-      if (
-        !['EEXIST', 'EACCES', 'ENOENT'].includes(e.code) ||
-        e.msg === 'Timeout: File stream did not open'
-      ) {
+      if (!['EEXIST', 'EACCES', 'ENOENT'].includes(e.code)) {
         await fs.promises.unlink(bundleFilePath);
       }
       throw e;
