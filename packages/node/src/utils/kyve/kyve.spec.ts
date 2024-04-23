@@ -157,7 +157,23 @@ describe('KyveApi', () => {
     expect(firstBundle).toBe(0);
     expect(laterBundle).toBe(113773);
   });
-
+  it('Concurrent fetch with incrementing bundle id', async () => {
+    // should increment from bundle id 8 to 9 only calling binary search once
+    const binarySearchSpy = jest.spyOn(kyveApi as any, 'getBundleById');
+    await Promise.all([
+      kyveApi.getBlockByHeight(1338),
+      kyveApi.getBlockByHeight(1339),
+      kyveApi.getBlockByHeight(1350),
+      kyveApi.getBlockByHeight(1351),
+    ]);
+    const batch2 = await Promise.all([
+      kyveApi.getBlockByHeight(1500),
+      kyveApi.getBlockByHeight(1501),
+    ]);
+    expect((kyveApi as any).cachedBundleDetails[10]).toBeDefined();
+    expect(binarySearchSpy).toHaveBeenCalledTimes(4);
+    expect(batch2.length).toBe(2);
+  });
   it('Able to write and read with parallel calls', async () => {
     const bundle_0Data = [
       {

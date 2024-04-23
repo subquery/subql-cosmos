@@ -151,6 +151,7 @@ export class KyveApi {
   }
 
   private async getBundleId(height: number): Promise<number> {
+    logger.info(`Binary search used on height: ${height}`);
     const lowestCacheHeight = Object.keys(this.cachedBundleDetails);
 
     let low =
@@ -202,13 +203,27 @@ export class KyveApi {
     height: number,
   ): Promise<KyveBundleData[]> {
     let bundle = await this.getBundleFromCache(height);
+
     if (!bundle) {
       const bundleIds = Object.keys(this.cachedBundleDetails);
-      const bundleId =
-        bundleIds.length !== 0
-          ? Math.max(...bundleIds.map(parseDecimal)) + 1
-          : await this.getBundleId(height);
-      bundle = await this.getBundleById(bundleId);
+
+      let bundleId: number;
+      if (bundleIds.length === 0) {
+        bundleId = await this.getBundleId(height);
+      } else {
+        //
+        const cachedBundles = await this.getResolvedBundleDetails();
+        const nearestBundle = cachedBundles.filter(
+          (b) => parseDecimal(b.to_key) < height,
+        );
+
+        bundleId =
+          Math.max(...nearestBundle.map((b) => parseDecimal(b.id))) + 1;
+
+        this.cachedBundleDetails[bundleId] = this.getBundleById(bundleId);
+      }
+
+      bundle = await this.cachedBundleDetails[bundleId];
     }
 
     return JSON.parse(await this.getBundleData(bundle));
@@ -243,10 +258,16 @@ export class KyveApi {
     try {
       // XXXX:SCOTT This can get stuck and not resolve, it seems a file can get stuck with permissions not reset (indexer restart)
       // Its probably worth adding a timeout on this function
-      await new Promise((resolve, reject) => {
-        writeStream.on('open', resolve);
-        writeStream.on('error', reject);
-      });
+      await Promise.race([
+        new Promise((resolve, reject) => {
+          writeStream.on('open', resolve);
+          writeStream.on('error', reject);
+        }),
+        delay(5).then(() => {
+          throw new Error('Timeout: File stream did not open');
+        }),
+      ]);
+
       const zippedBundleData = await this.retrieveBundleData(bundle.storage_id);
 
       const gunzip = zlib.createUnzip({
@@ -265,7 +286,14 @@ export class KyveApi {
 
       await fs.promises.chmod(bundleFilePath, 0o444);
     } catch (e) {
-      if (!['EEXIST', 'EACCES', 'ENOENT'].includes(e.code)) {
+      if (
+        !['EEXIST', 'EACCES', 'ENOENT'].includes(e.code) ||
+        e.msg === 'Timeout: File stream did not open'
+      ) {
+        console.log(
+          'write error is timeout on file',
+          e.msg === 'Timeout: File stream did not open',
+        );
         await fs.promises.unlink(bundleFilePath);
       }
       throw e;
@@ -368,8 +396,8 @@ export class KyveApi {
   ): Promise<[BlockResponse, BlockResultsResponse]> {
     const blocks = await this.updateCurrentBundleAndDetails(height);
     const blockData = this.findBlockByHeight(height, blocks);
+    assert(blockData, `Unable to retrieve block: ${height} from file cache.`);
     // XXXX:SCOTT blockData is regularly undefined, this should not happen and is not handled.
-    // TypeError: Cannot read properties of undefined (reading 'value')
     return [
       this.decodeBlock(blockData.value.block),
       this.injectLogs(this.decodeBlockResult(blockData.value.block_results)),
