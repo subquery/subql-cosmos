@@ -246,7 +246,7 @@ export class KyveApi {
       }
     }
 
-    await fs.promises.chmod(bundleFilePath, '0o666'); // Reset permissions if polling exceeds
+    await fs.promises.chmod(bundleFilePath, 0o666); // Reset permissions if polling exceeds
     throw new Error('Timeout waiting for bundle');
   }
 
