@@ -159,7 +159,7 @@ describe('KyveApi', () => {
   });
   it('Concurrent fetch with incrementing bundle id', async () => {
     // should increment from bundle id 8 to 9 only calling binary search once
-    const binarySearchSpy = jest.spyOn(kyveApi as any, 'getBundleById');
+    const binarySearchSpy = jest.spyOn(kyveApi as any, 'getBundleId');
     await Promise.all([
       kyveApi.getBlockByHeight(1338),
       kyveApi.getBlockByHeight(1339),
@@ -169,6 +169,8 @@ describe('KyveApi', () => {
     const batch2 = await Promise.all([
       kyveApi.getBlockByHeight(1500),
       kyveApi.getBlockByHeight(1501),
+      // note:  what happens if it jumps more than incremental bundle
+      // kyveApi.getBlockByHeight(4000)
     ]);
     expect((kyveApi as any).cachedBundleDetails[10]).toBeDefined();
     expect(binarySearchSpy).toHaveBeenCalledTimes(4);

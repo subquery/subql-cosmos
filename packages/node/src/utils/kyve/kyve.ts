@@ -151,7 +151,6 @@ export class KyveApi {
   }
 
   private async getBundleId(height: number): Promise<number> {
-    logger.info(`Binary search used on height: ${height}`);
     const lowestCacheHeight = Object.keys(this.cachedBundleDetails);
 
     let low =
@@ -290,10 +289,6 @@ export class KyveApi {
         !['EEXIST', 'EACCES', 'ENOENT'].includes(e.code) ||
         e.msg === 'Timeout: File stream did not open'
       ) {
-        console.log(
-          'write error is timeout on file',
-          e.msg === 'Timeout: File stream did not open',
-        );
         await fs.promises.unlink(bundleFilePath);
       }
       throw e;
@@ -381,12 +376,13 @@ export class KyveApi {
       const bundlePath = this.getBundleFilePath(bundle.id);
       try {
         await fs.promises.unlink(bundlePath);
-        delete this.cachedBundleDetails[bundle.id];
       } catch (e) {
         if (e.code !== 'ENOENT') {
           // if it does not exist, should be removed
           throw e;
         }
+      } finally {
+        delete this.cachedBundleDetails[bundle.id];
       }
     }
   }
