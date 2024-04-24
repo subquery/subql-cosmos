@@ -443,8 +443,8 @@ describe('KyveApi', () => {
     const bundle = 'bundle_2_0.json';
     const notBundle = 'data.json';
 
-    expect((kyveApi as any).isBundleFile(bundle)).toBe(true);
-    expect((kyveApi as any).isBundleFile(notBundle)).toBe(false);
+    expect((KyveApi as any).isBundleFile(bundle, '2')).toBe(true);
+    expect((KyveApi as any).isBundleFile(notBundle, '2')).toBe(false);
   });
   it('clear existing bundle files in directory when outside buffer', async () => {
     await fs.promises.writeFile((kyveApi as any).getBundleFilePath(0), 'mock');

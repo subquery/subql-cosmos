@@ -3,6 +3,7 @@
 
 import assert from 'assert';
 import fs from 'fs';
+import { isMainThread } from 'node:worker_threads';
 import os from 'os';
 import path from 'path';
 import * as zlib from 'zlib';
@@ -73,6 +74,8 @@ export class KyveApi {
 
     const poolId = await KyveApi.fetchPoolId(chainId, lcdClient);
 
+    await KyveApi.clearStaleFiles(tmpCacheDir, poolId);
+
     logger.info(`Kyve API connected`);
     return new KyveApi(storageUrl, tmpCacheDir, poolId, lcdClient);
   }
@@ -98,6 +101,38 @@ export class KyveApi {
     }
 
     throw new Error(`${chainId} is not available on Kyve network`);
+  }
+
+  private static async clearStaleFiles(
+    fileCacheDir: string,
+    poolId: string,
+  ): Promise<void> {
+    if (isMainThread) {
+      const files = await fs.promises.readdir(fileCacheDir);
+
+      const isStale = async (file: string) =>
+        ((await fs.promises.stat(file)).mode & 0o777).toString(8) === '200';
+
+      files
+        .filter((f) => KyveApi.isBundleFile(f, poolId))
+        .map(async (bundleFile) => {
+          if (await isStale(bundleFile)) {
+            try {
+              logger.debug(`Removing stale bundle: ${bundleFile}`);
+              await fs.promises.unlink(bundleFile);
+            } catch (e) {
+              if (e.code !== 'ENOENT') {
+                logger.error(`Failed to clear bundle: ${bundleFile}`);
+                throw e;
+              }
+            }
+          }
+        });
+    }
+  }
+
+  private static isBundleFile(filename: string, poolId: string): boolean {
+    return BUNDLE_FILE_ID_REG(poolId).test(filename);
   }
 
   private decodeBlock(block: JsonRpcSuccessResponse): BlockResponse {
@@ -253,19 +288,11 @@ export class KyveApi {
       }
     }
 
-    // on start up main thread
-    // check permission, remove permissions on stale files or remove them
     // if file exists
     // json parse fails
     // should clean up file and re attempt download, this probs should be handled by future block in bundle
-    //
-
-    // In order to prevent stalling on polling
-    // File permission should be set to readable regardless if the bundle retrieval is successful or not.
 
     // this hsould belong somewhere else
-    await fs.promises.chmod(bundleFilePath, 0o666);
-
     throw new Error('Timeout waiting for bundle');
   }
 
@@ -324,6 +351,7 @@ export class KyveApi {
         const res = await this.pollUntilReadable(bundleFilePath);
         return res;
       } else {
+        await fs.promises.unlink(bundleFilePath).catch();
         throw e;
       }
     }
@@ -333,10 +361,6 @@ export class KyveApi {
     return fs.promises.readFile(bundleFilePath, 'utf-8');
   }
 
-  private isBundleFile(filename: string): boolean {
-    return BUNDLE_FILE_ID_REG(this.poolId).test(filename);
-  }
-
   private async getExistingBundlesFromCacheDirectory(
     tmpDir: string,
   ): Promise<BundleDetails[]> {
@@ -344,7 +368,7 @@ export class KyveApi {
 
     return Promise.all(
       files
-        .filter((file) => this.isBundleFile(file))
+        .filter((file) => KyveApi.isBundleFile(file, this.poolId))
         .map((file) => {
           const id = parseDecimal(
             file.match(BUNDLE_FILE_ID_REG(this.poolId))[1],
