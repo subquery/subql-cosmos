@@ -40,7 +40,7 @@ export class CosmosClientConnection
   private registry: Registry;
   readonly networkMeta: NetworkMetadataPayload;
 
-  constructor(
+  private constructor(
     public unsafeApi: CosmosClient,
     private fetchBlocksBatches: FetchFunc,
     chainId: string,

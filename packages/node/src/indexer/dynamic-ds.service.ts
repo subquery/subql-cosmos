@@ -4,48 +4,32 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { isCustomCosmosDs, isRuntimeCosmosDs } from '@subql/common-cosmos';
 import {
-  getLogger,
   DatasourceParams,
   DynamicDsService as BaseDynamicDsService,
 } from '@subql/node-core';
-import { cloneDeep } from 'lodash';
 import { CosmosProjectDs, SubqueryProject } from '../configure/SubqueryProject';
 import { DsProcessorService } from './ds-processor.service';
 
-const logger = getLogger('DynamicDsService');
-
 @Injectable()
-export class DynamicDsService extends BaseDynamicDsService<CosmosProjectDs> {
+export class DynamicDsService extends BaseDynamicDsService<
+  CosmosProjectDs,
+  SubqueryProject
+> {
   constructor(
     private readonly dsProcessorService: DsProcessorService,
-    @Inject('ISubqueryProject') private readonly project: SubqueryProject,
+    @Inject('ISubqueryProject') project: SubqueryProject,
   ) {
-    super();
+    super(project);
   }
 
   protected async getDatasource(
     params: DatasourceParams,
   ): Promise<CosmosProjectDs> {
-    const t = this.project.templates.find(
-      (t) => t.name === params.templateName,
+    const dsObj = this.getTemplate<CosmosProjectDs>(
+      params.templateName,
+      params.startBlock,
     );
 
-    if (!t) {
-      throw new Error(
-        `Unable to find matching template in project for name: "${params.templateName}"`,
-      );
-    }
-
-    const { name, ...template } = cloneDeep(t);
-
-    logger.info(
-      `Initialised dynamic datasource from template: "${params.templateName}"`,
-    );
-
-    const dsObj = {
-      ...template,
-      startBlock: params.startBlock,
-    } as CosmosProjectDs;
     try {
       if (isCustomCosmosDs(dsObj)) {
         dsObj.processor.options = {

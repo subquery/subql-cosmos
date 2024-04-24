@@ -7,7 +7,6 @@ import {
   BaseTemplateDataSource,
   IProjectNetworkConfig,
   CommonSubqueryProject,
-  DictionaryQueryEntry,
   FileReference,
   Processor,
   ProjectManifestV1_0_0,
@@ -16,6 +15,9 @@ import {
   BaseMapping,
   BaseDataSource,
   BaseCustomDataSource,
+  SecondLayerHandlerProcessor_0_0_0,
+  SecondLayerHandlerProcessor_1_0_0,
+  DsProcessor,
 } from '@subql/types-core';
 import {CosmosBlock, CosmosTransaction, CosmosMessage, CosmosEvent} from './interfaces';
 
@@ -362,9 +364,26 @@ export interface HandlerInputTransformer_1_0_0<
   }): Promise<E[]>;
 }
 
+export type SecondLayerHandlerProcessor<
+  K extends CosmosHandlerKind,
+  F extends Record<string, unknown>, // EthereumRuntimeFilterMap?
+  E,
+  DS extends CosmosCustomDatasource = CosmosCustomDatasource
+> =
+  | SecondLayerHandlerProcessor_0_0_0<CosmosRuntimeHandlerInputMap, K, F, E, DS, CosmWasmClient>
+  | (SecondLayerHandlerProcessor_1_0_0<CosmosRuntimeHandlerInputMap, K, F, E, DS, CosmWasmClient> & {
+      // Overwrite the function to include registry
+      filterProcessor: (params: {
+        filter: F | undefined;
+        input: CosmosRuntimeHandlerInputMap[K];
+        ds: DS;
+        registry: Registry;
+      }) => boolean;
+    });
+
 export type SecondLayerHandlerProcessorArray<
   K extends string,
-  F,
+  F extends Record<string, unknown>,
   T,
   DS extends CosmosCustomDatasource<K> = CosmosCustomDatasource<K>
 > =
@@ -373,65 +392,15 @@ export type SecondLayerHandlerProcessorArray<
   | SecondLayerHandlerProcessor<CosmosHandlerKind.Message, F, T, DS>
   | SecondLayerHandlerProcessor<CosmosHandlerKind.Event, F, T, DS>;
 
-export interface CosmosDatasourceProcessor<
+export type CosmosDatasourceProcessor<
   K extends string,
-  F,
+  F extends Record<string, unknown>,
   DS extends CosmosCustomDatasource<K> = CosmosCustomDatasource<K>,
   P extends Record<string, SecondLayerHandlerProcessorArray<K, F, any, DS>> = Record<
     string,
     SecondLayerHandlerProcessorArray<K, F, any, DS>
   >
-> {
-  kind: K;
-  validate(ds: DS, assets: Record<string, string>): void;
-  dsFilterProcessor(ds: DS, api: CosmWasmClient): boolean;
-  handlerProcessors: P;
-}
-
-interface SecondLayerHandlerProcessorBase<
-  K extends CosmosHandlerKind,
-  F,
-  DS extends CosmosCustomDatasource = CosmosCustomDatasource
-> {
-  baseHandlerKind: K;
-  baseFilter: CosmosRuntimeFilterMap[K] | CosmosRuntimeFilterMap[K][];
-  filterValidator: (filter?: F) => void;
-  dictionaryQuery?: (filter: F, ds: DS) => DictionaryQueryEntry | undefined;
-}
-
-export interface SecondLayerHandlerProcessor_0_0_0<
-  K extends CosmosHandlerKind,
-  F,
-  E,
-  DS extends CosmosCustomDatasource = CosmosCustomDatasource
-> extends SecondLayerHandlerProcessorBase<K, F, DS> {
-  specVersion: undefined;
-  transformer: HandlerInputTransformer_0_0_0<K, E, DS>;
-  filterProcessor: (filter: F | undefined, input: CosmosRuntimeHandlerInputMap[K], ds: DS) => boolean;
-}
-
-export interface SecondLayerHandlerProcessor_1_0_0<
-  K extends CosmosHandlerKind,
-  F,
-  E,
-  DS extends CosmosCustomDatasource = CosmosCustomDatasource
-> extends SecondLayerHandlerProcessorBase<K, F, DS> {
-  specVersion: '1.0.0';
-  transformer: HandlerInputTransformer_1_0_0<K, F, E, DS>;
-  filterProcessor: (params: {
-    filter: F | undefined;
-    input: CosmosRuntimeHandlerInputMap[K];
-    ds: DS;
-    registry: Registry;
-  }) => boolean;
-}
-
-export type SecondLayerHandlerProcessor<
-  K extends CosmosHandlerKind,
-  F,
-  E,
-  DS extends CosmosCustomDatasource = CosmosCustomDatasource
-> = SecondLayerHandlerProcessor_0_0_0<K, F, E, DS> | SecondLayerHandlerProcessor_1_0_0<K, F, E, DS>;
+> = DsProcessor<DS, P, CosmWasmClient>;
 
 /**
  * Represents a Cosmos project configuration based on the CommonSubqueryProject template.

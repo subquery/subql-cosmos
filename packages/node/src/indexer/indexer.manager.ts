@@ -13,14 +13,13 @@ import {
   CosmosRuntimeHandlerInputMap,
 } from '@subql/common-cosmos';
 import {
-  ApiService,
   NodeConfig,
   profiler,
   IndexerSandbox,
   ProcessBlockResponse,
   BaseIndexerManager,
-  getLogger,
   IBlock,
+  SandboxService,
 } from '@subql/node-core';
 import {
   CosmosBlock,
@@ -37,21 +36,15 @@ import {
   CosmosClient,
   CosmosSafeClient,
 } from './api.service';
-import {
-  asSecondLayerHandlerProcessor_1_0_0,
-  DsProcessorService,
-} from './ds-processor.service';
+import { DsProcessorService } from './ds-processor.service';
 import { DynamicDsService } from './dynamic-ds.service';
-import { SandboxService } from './sandbox.service';
 import { BlockContent } from './types';
 import { UnfinalizedBlocksService } from './unfinalizedBlocks.service';
 
-const logger = getLogger('indexer');
-
 @Injectable()
 export class IndexerManager extends BaseIndexerManager<
-  CosmosSafeClient,
   CosmosClient,
+  CosmosSafeClient,
   BlockContent,
   CosmosApiService,
   CosmosDatasource,
@@ -62,12 +55,11 @@ export class IndexerManager extends BaseIndexerManager<
 > {
   protected isRuntimeDs = isRuntimeCosmosDs;
   protected isCustomDs = isCustomCosmosDs;
-  protected updateCustomProcessor = asSecondLayerHandlerProcessor_1_0_0;
 
   constructor(
     apiService: CosmosApiService,
     nodeConfig: NodeConfig,
-    sandboxService: SandboxService<CosmosSafeClient>,
+    sandboxService: SandboxService<CosmosSafeClient, CosmosClient>,
     dsProcessorService: DsProcessorService,
     dynamicDsService: DynamicDsService,
     unfinalizedBlocksService: UnfinalizedBlocksService,
@@ -84,6 +76,20 @@ export class IndexerManager extends BaseIndexerManager<
     );
   }
 
+  protected getDsProcessor(
+    ds: CosmosDatasource,
+    safeApi: CosmosSafeClient,
+  ): IndexerSandbox {
+    // SandboxService is private, this is a temp workaround
+    const sandbox = (this as any).sandboxService as SandboxService<
+      CosmosSafeClient,
+      CosmosClient
+    >;
+    return sandbox.getDsProcessor(ds, safeApi, this.apiService.unsafeApi, {
+      registry: this.apiService.registry,
+    });
+  }
+
   @profiler()
   async indexBlock(
     block: IBlock<BlockContent>,
@@ -94,17 +100,9 @@ export class IndexerManager extends BaseIndexerManager<
     );
   }
 
-  getBlockHeight(block: BlockContent): number {
-    return block.block.block.header.height;
-  }
-
-  getBlockHash(block: BlockContent): string {
-    return block.block.block.id;
-  }
-
   // eslint-disable-next-line @typescript-eslint/require-await
   private async getApi(block: BlockContent): Promise<CosmosSafeClient> {
-    return this.apiService.getSafeApi(this.getBlockHeight(block));
+    return this.apiService.getSafeApi(block.block.header.height);
   }
 
   protected async indexBlockData(
