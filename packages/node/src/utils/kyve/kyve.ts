@@ -28,6 +28,7 @@ import { BundleDetails } from './kyveTypes';
 
 const BUNDLE_TIMEOUT = 10000; //ms
 const POLL_TIMER = 3; // sec
+const POLL_LIMIT = 10;
 const MAX_COMPRESSION_BYTE_SIZE = 2 * 10 ** 9;
 const BUNDLE_FILE_ID_REG = (poolId: string) =>
   new RegExp(`^bundle_${poolId}_(\\d+)\\.json$`);
@@ -135,19 +136,38 @@ export class KyveApi {
   }
 
   private async getLatestBundleId(): Promise<number> {
-    return (
-      parseDecimal(
-        (
-          await this.lcdClient.kyve.query.v1beta1.finalizedBundles({
-            pool_id: this.poolId,
-            index: '1',
-            pagination: {
-              limit: '1',
-            },
-          })
-        ).pagination.total,
-      ) - 1
-    ); // bundle id starts from 0
+    return parseDecimal(
+      (
+        await this.lcdClient.kyve.query.v1beta1.finalizedBundles({
+          pool_id: this.poolId,
+          index: '1',
+          pagination: {
+            reverse: true,
+            limit: '1',
+          },
+        })
+      ).finalized_bundles[0].id,
+    );
+  }
+
+  private async bundleIdIterator(height: number): Promise<number> {
+    let bundle: BundleDetails;
+    let bundleId: number;
+
+    const cachedBundles = await this.getResolvedBundleDetails();
+    const nearestBundle = cachedBundles.filter(
+      (b) => parseDecimal(b.to_key) < height,
+    );
+
+    bundleId = Math.max(...nearestBundle.map((b) => parseDecimal(b.id))) + 1;
+
+    bundle = await this.getBundleById(bundleId);
+
+    while (parseDecimal(bundle.to_key) < height) {
+      bundleId++;
+      bundle = await this.getBundleById(bundleId);
+    }
+    return parseDecimal(bundle.id);
   }
 
   private async getBundleId(height: number): Promise<number> {
@@ -206,33 +226,19 @@ export class KyveApi {
     if (!bundle) {
       const bundleIds = Object.keys(this.cachedBundleDetails);
 
-      let bundleId: number;
-      if (bundleIds.length === 0) {
-        bundleId = await this.getBundleId(height);
-        bundle = await this.cachedBundleDetails[bundleId];
-      } else {
-        const cachedBundles = await this.getResolvedBundleDetails();
-        const nearestBundle = cachedBundles.filter(
-          (b) => parseDecimal(b.to_key) < height,
-        );
+      const bundleId =
+        bundleIds.length === 0
+          ? await this.getBundleId(height)
+          : await this.bundleIdIterator(height);
 
-        bundleId =
-          Math.max(...nearestBundle.map((b) => parseDecimal(b.id))) + 1;
-
-        bundle = await this.getBundleById(bundleId);
-
-        while (parseDecimal(bundle.to_key) < height) {
-          bundleId++;
-          bundle = await this.getBundleById(bundleId);
-        }
-      }
+      bundle = await this.cachedBundleDetails[bundleId];
     }
 
     return JSON.parse(await this.getBundleData(bundle));
   }
 
   private async pollUntilReadable(bundleFilePath: string): Promise<string> {
-    let limit = 10;
+    let limit = POLL_LIMIT;
     while (limit > 0) {
       try {
         return await this.readFromFile(bundleFilePath);
@@ -246,7 +252,6 @@ export class KyveApi {
       }
     }
 
-    await fs.promises.chmod(bundleFilePath, 0o666); // Reset permissions if polling exceeds
     throw new Error('Timeout waiting for bundle');
   }
 
@@ -259,9 +264,6 @@ export class KyveApi {
     });
 
     try {
-      // XXXX:SCOTT This can get stuck and not resolve, it seems a file can get stuck with permissions not reset (indexer restart)
-      // Its probably worth adding a timeout on this function
-
       await timeout(
         new Promise((resolve, reject) => {
           writeStream.on('open', resolve);
@@ -283,16 +285,17 @@ export class KyveApi {
           .pipe(gunzip)
           .pipe(writeStream)
           .on('error', reject)
-          .on('finish', async () => {
-            await fs.promises.chmod(bundleFilePath, 0o444);
-            resolve('Stream Completed');
-          });
+          .on('finish', resolve);
       });
     } catch (e) {
       if (!['EEXIST', 'EACCES'].includes(e.code)) {
         await fs.promises.unlink(bundleFilePath);
       }
       throw e;
+    } finally {
+      // In order to prevent stalling on polling
+      // File permission should be set to readable regardless if the bundle retrieval is successful or not.
+      await fs.promises.chmod(bundleFilePath, 0o444);
     }
   }
 
@@ -322,17 +325,18 @@ export class KyveApi {
   private async getExistingBundlesFromCacheDirectory(
     tmpDir: string,
   ): Promise<BundleDetails[]> {
-    const bundles: BundleDetails[] = [];
     const files = await fs.promises.readdir(tmpDir);
 
-    for (const file of files) {
-      if (this.isBundleFile(file)) {
-        const id = parseDecimal(file.match(BUNDLE_FILE_ID_REG(this.poolId))[1]);
-        bundles.push(await this.getBundleById(id));
-      }
-    }
-
-    return bundles;
+    return Promise.all(
+      files
+        .filter((file) => this.isBundleFile(file))
+        .map((file) => {
+          const id = parseDecimal(
+            file.match(BUNDLE_FILE_ID_REG(this.poolId))[1],
+          );
+          return this.getBundleById(id);
+        }),
+    );
   }
 
   private async getToRemoveBundles(
@@ -345,17 +349,13 @@ export class KyveApi {
     }
 
     const currentBundle = await this.getBundleFromCache(height);
-    if (!currentBundle) return [];
-
     const bundles = await Promise.all(Object.values(cachedBundles));
 
     return bundles.filter((b) => {
       const isNotCurrentBundleAndLower =
         currentBundle.id !== b.id &&
         parseDecimal(currentBundle.id) > parseDecimal(b.id);
-      const isOutsiderBuffer =
-        height < parseDecimal(b.from_key) - bufferSize ||
-        height > parseDecimal(b.to_key) + bufferSize;
+      const isOutsiderBuffer = height > parseDecimal(b.to_key) + bufferSize;
 
       return isNotCurrentBundleAndLower && isOutsiderBuffer;
     });
@@ -373,10 +373,10 @@ export class KyveApi {
     );
 
     for (const bundle of toRemoveBundles) {
-      logger.debug(`Removing bundle ${bundle.id}`);
       const bundlePath = this.getBundleFilePath(bundle.id);
       try {
         await fs.promises.unlink(bundlePath);
+        logger.debug(`Removed bundle ${bundle.id}`);
       } catch (e) {
         if (e.code !== 'ENOENT') {
           // if it does not exist, should be removed
@@ -393,8 +393,6 @@ export class KyveApi {
   ): Promise<[BlockResponse, BlockResultsResponse]> {
     const blocks = await this.updateCurrentBundleAndDetails(height);
     const blockData = this.findBlockByHeight(height, blocks);
-    assert(blockData, `Unable to retrieve block: ${height} from file cache.`);
-    // XXXX:SCOTT blockData is regularly undefined, this should not happen and is not handled.
     return [
       this.decodeBlock(blockData.value.block),
       this.injectLogs(this.decodeBlockResult(blockData.value.block_results)),
