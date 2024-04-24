@@ -9,11 +9,12 @@ import * as zlib from 'zlib';
 import { JsonRpcSuccessResponse } from '@cosmjs/json-rpc';
 import { Registry } from '@cosmjs/proto-signing';
 import { logs } from '@cosmjs/stargate';
-import { Responses } from '@cosmjs/tendermint-rpc/build/tendermint37/adaptor'; // adaptor is not exported
 import {
   BlockResponse,
   BlockResultsResponse,
-} from '@cosmjs/tendermint-rpc/build/tendermint37/responses';
+  TxData,
+} from '@cosmjs/tendermint-rpc/build/tendermint37';
+import { Responses } from '@cosmjs/tendermint-rpc/build/tendermint37/adaptor'; // adaptor is not exported
 import KyveSDK, { KyveLCDClientType } from '@kyvejs/sdk';
 import { SupportedChains } from '@kyvejs/sdk/src/constants'; // Currently these types are not exported
 import { QueryPoolsResponse } from '@kyvejs/types/lcd/kyve/query/v1beta1/pools';
@@ -252,6 +253,19 @@ export class KyveApi {
       }
     }
 
+    // on start up main thread
+    // check permission, remove permissions on stale files or remove them
+    // if file exists
+    // json parse fails
+    // should clean up file and re attempt download, this probs should be handled by future block in bundle
+    //
+
+    // In order to prevent stalling on polling
+    // File permission should be set to readable regardless if the bundle retrieval is successful or not.
+
+    // this hsould belong somewhere else
+    await fs.promises.chmod(bundleFilePath, 0o666);
+
     throw new Error('Timeout waiting for bundle');
   }
 
@@ -278,7 +292,8 @@ export class KyveApi {
         maxOutputLength: MAX_COMPRESSION_BYTE_SIZE /* avoid zip bombs */,
       });
 
-      logger.info(`Retrieving bundle ${bundle.id}`);
+      logger.debug(`Retrieving bundle ${bundle.id}`);
+      logger.info(`Fetching blocks ${bundle.from_key} to ${bundle.to_key}`);
 
       await new Promise((resolve, reject) => {
         zippedBundleData.data
@@ -287,15 +302,15 @@ export class KyveApi {
           .on('error', reject)
           .on('finish', resolve);
       });
+
+      await fs.promises.chmod(bundleFilePath, 0o444);
+
+      logger.debug(`Bundle ${bundle.id} ready`);
     } catch (e) {
       if (!['EEXIST', 'EACCES'].includes(e.code)) {
         await fs.promises.unlink(bundleFilePath);
       }
       throw e;
-    } finally {
-      // In order to prevent stalling on polling
-      // File permission should be set to readable regardless if the bundle retrieval is successful or not.
-      await fs.promises.chmod(bundleFilePath, 0o444);
     }
   }
 
@@ -405,9 +420,7 @@ export class KyveApi {
     try {
       kyveBlockResult.results.forEach((b) => {
         // log is readonly hence needing to cast it
-        (b.log as string) = JSON.stringify(
-          this.reconstructLogs(kyveBlockResult),
-        );
+        (b.log as string) = JSON.stringify(this.reconstructLog(b));
       });
     } catch (e) {
       throw new Error(`Failed to inject kyveBlock, ${e}`);
@@ -415,40 +428,37 @@ export class KyveApi {
     return kyveBlockResult;
   }
 
-  private reconstructLogs(
-    blockResultResponse: BlockResultsResponse,
-  ): logs.Log[] {
+  private reconstructLog(txData: TxData): logs.Log[] {
     const logs: logs.Log[] = [];
 
-    for (const tx of blockResultResponse.results) {
-      let currentLog: any = {
-        msg_index: -1,
-        events: [],
-      };
+    let currentLog: any = {
+      msg_index: -1,
+      events: [],
+    };
 
-      let msgIndex = -1;
-      for (const event of tx.events) {
-        const isMessageEvent =
-          event.type === 'message' &&
-          event.attributes.some((e) => e.key === 'action');
+    let msgIndex = -1;
+    for (const event of txData.events) {
+      const isMessageEvent =
+        event.type === 'message' &&
+        event.attributes.some((e) => e.key === 'action');
 
-        if (isMessageEvent) {
-          if (msgIndex >= 0) {
-            logs.push(currentLog);
-          }
-          msgIndex += 1;
-          currentLog = { msg_index: msgIndex, events: [] };
-        }
-
+      if (isMessageEvent) {
         if (msgIndex >= 0) {
-          currentLog.events.push(event);
+          logs.push(currentLog);
         }
+        msgIndex += 1;
+        currentLog = { msg_index: msgIndex, events: [] };
       }
 
-      if (currentLog.events.length > 0) {
-        logs.push(currentLog);
+      if (msgIndex >= 0) {
+        currentLog.events.push(event);
       }
     }
+
+    if (currentLog.events.length > 0) {
+      logs.push(currentLog);
+    }
+
     return logs;
   }
 

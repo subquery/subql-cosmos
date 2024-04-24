@@ -319,6 +319,27 @@ describe('KyveApi', () => {
     const [kyveBlockInfo] = await kyveApi.getBlockByHeight(height);
     expect(isEqual(tendermintBlockInfo, kyveBlockInfo)).toBe(true);
   });
+  it('Compare reconstructed logs and RPC logs', async () => {
+    const height = 4284742;
+
+    const blocks = await (kyveApi as any).updateCurrentBundleAndDetails(height);
+    const blockData = (kyveApi as any).findBlockByHeight(height, blocks);
+
+    const blockRes = (kyveApi as any).decodeBlockResult(
+      blockData.value.block_results,
+    );
+    const rpcBlockResult = await tendermint.blockResults(height);
+    const reconstructedKyveBlock = (kyveApi as any).injectLogs(blockRes);
+
+    expect(JSON.parse(reconstructedKyveBlock.results[0].log).length).toBe(1);
+    expect(JSON.parse(reconstructedKyveBlock.results[1].log).length).toBe(1);
+
+    expect(
+      reconstructedKyveBlock.results[0].log.includes(
+        'wasm-astrovault-ratio_pool_factory-update_direct_ratios',
+      ) && !reconstructedKyveBlock.results[0].log.includes('ibc_transfer'),
+    ).toBe(true);
+  });
   it('determine correct pool', async () => {
     const lcdClient = new KyveSDK(KYVE_CHAINID, {
       rpc: KYVE_ENDPOINT,
