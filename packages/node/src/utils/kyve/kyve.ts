@@ -287,12 +287,6 @@ export class KyveApi {
         }
       }
     }
-
-    // if file exists
-    // json parse fails
-    // should clean up file and re attempt download, this probs should be handled by future block in bundle
-
-    // this hsould belong somewhere else
     throw new Error('Timeout waiting for bundle');
   }
 
@@ -347,13 +341,12 @@ export class KyveApi {
       await this.downloadAndProcessBundle(bundle);
       return await this.readFromFile(bundleFilePath);
     } catch (e: any) {
-      if (['EEXIST', 'EACCES'].includes(e.code)) {
+      if (['EEXIST', 'EACCES', 'ENOENT'].includes(e.code)) {
         const res = await this.pollUntilReadable(bundleFilePath);
         return res;
-      } else {
-        await fs.promises.unlink(bundleFilePath).catch();
-        throw e;
       }
+      await fs.promises.unlink(bundleFilePath).catch();
+      throw e;
     }
   }
 
