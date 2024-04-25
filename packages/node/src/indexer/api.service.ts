@@ -120,7 +120,7 @@ export class ApiService
           this.project.fileCacheDir,
         );
       } catch (e) {
-        logger.warn(`${e}`);
+        logger.warn(`Kyve Api is not connection. ${e}`);
       }
     }
 
