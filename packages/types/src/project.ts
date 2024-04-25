@@ -78,13 +78,6 @@ export type CosmosRuntimeHandlerInputMap = {
   [CosmosHandlerKind.Event]: CosmosEvent;
 };
 
-type CosmosRuntimeFilterMap = {
-  [CosmosHandlerKind.Block]: {};
-  [CosmosHandlerKind.Transaction]: {};
-  [CosmosHandlerKind.Message]: CosmosMessageFilter;
-  [CosmosHandlerKind.Event]: CosmosEventFilter;
-};
-
 /**
  * Represents a Cosmos subquery network configuration, which is based on the CommonSubqueryNetworkConfig template.
  * @type {IProjectNetworkConfig}
