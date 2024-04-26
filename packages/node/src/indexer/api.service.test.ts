@@ -1,7 +1,6 @@
 // Copyright 2020-2024 SubQuery Pte Ltd authors & contributors
 // SPDX-License-Identifier: GPL-3.0
 
-import fs from 'fs';
 import path from 'path';
 import { toHex } from '@cosmjs/encoding';
 import { Uint53 } from '@cosmjs/math';
@@ -13,13 +12,10 @@ import { loadFromJsonOrYaml, makeTempDir } from '@subql/common';
 import {
   ConnectionPoolService,
   ConnectionPoolStateManager,
-  delay,
   NodeConfig,
 } from '@subql/node-core';
 import { GraphQLSchema } from 'graphql';
-import Pino from 'pino';
 import { SubqueryProject } from '../configure/SubqueryProject';
-import { LazyBlockContent } from '../utils/cosmos';
 import { ApiService } from './api.service';
 
 const TEST_BLOCKNUMBER = 3266772;
@@ -107,7 +103,7 @@ describe('ApiService', () => {
 
       const rpcFetchSpy = jest.spyOn(apiService as any, 'retryFetch');
 
-      await apiService.fetchBlocks([1]);
+      await apiService.fetchBlocks([4282099]);
 
       expect(rpcFetchSpy).toHaveBeenCalledTimes(1);
     });

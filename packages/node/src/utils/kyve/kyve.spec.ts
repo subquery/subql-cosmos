@@ -358,7 +358,6 @@ describe('KyveApi', () => {
     const blockRes = (kyveApi as any).decodeBlockResult(
       blockData.value.block_results,
     );
-    const rpcBlockResult = await tendermint.blockResults(height);
     const reconstructedKyveBlock = (kyveApi as any).injectLogs(blockRes);
 
     expect(JSON.parse(reconstructedKyveBlock.results[0].log).length).toBe(1);
@@ -457,8 +456,8 @@ describe('KyveApi', () => {
 
     const pollSpy = jest.spyOn(workerKyveApi as any, 'pollUntilReadable');
     await Promise.all([
-      kyveApi.fetchBlocksBatches(registry, [3856726], 1),
-      workerKyveApi.fetchBlocksBatches(registry, [3856726], 1),
+      kyveApi.fetchBlocksBatches(registry, [4326863], 1),
+      workerKyveApi.fetchBlocksBatches(registry, [4326863], 1),
     ]);
 
     expect(pollSpy).toHaveBeenCalledTimes(1);
