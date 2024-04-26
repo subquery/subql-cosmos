@@ -110,24 +110,26 @@ export class KyveApi {
     if (isMainThread) {
       const files = await fs.promises.readdir(fileCacheDir);
 
-      const isStale = async (file: string) =>
-        ((await fs.promises.stat(file)).mode & 0o777).toString(8) === '200';
-
-      files
-        .filter((f) => KyveApi.isBundleFile(f, poolId))
-        .map(async (bundleFile) => {
-          if (await isStale(bundleFile)) {
-            try {
-              logger.debug(`Removing stale bundle: ${bundleFile}`);
-              await fs.promises.unlink(bundleFile);
-            } catch (e) {
-              if (e.code !== 'ENOENT') {
-                logger.error(`Failed to clear bundle: ${bundleFile}`);
-                throw e;
-              }
-            }
+      const isStaleBundle = async (file: string) => {
+        try {
+          const isStale =
+            ((await fs.promises.stat(file)).mode & 0o777).toString(8) === '200';
+          if (isStale) {
+            logger.debug(`Removing stale bundle: ${file}`);
+            await fs.promises.unlink(file);
           }
-        });
+        } catch (e) {
+          if (e.code !== 'ENOENT') {
+            logger.error(`Failed to clear bundle: ${file}`);
+            throw e;
+          }
+        }
+      };
+      await Promise.all(
+        files
+          .filter((f) => KyveApi.isBundleFile(f, poolId))
+          .map((bundleFile) => isStaleBundle(bundleFile)),
+      );
     }
   }
 
@@ -186,7 +188,11 @@ export class KyveApi {
     );
   }
 
-  private async bundleIdIterator(height: number): Promise<number> {
+  /**
+   * Find bundleID based on height
+   * @description Increment bundleId by 1 until height is found in bundle
+   */
+  private async getBundleIdIncrement(height: number): Promise<number> {
     let bundle: BundleDetails;
     let bundleId: number;
 
@@ -206,7 +212,11 @@ export class KyveApi {
     return parseDecimal(bundle.id);
   }
 
-  private async getBundleId(height: number): Promise<number> {
+  /**
+   * Find bundleID based on height
+   * @description Binary search to find height in bundle
+   */
+  private async getBundleIdSearch(height: number): Promise<number> {
     const lowestCacheHeight = Object.keys(this.cachedBundleDetails);
 
     let low =
@@ -264,8 +274,8 @@ export class KyveApi {
 
       const bundleId =
         bundleIds.length === 0
-          ? await this.getBundleId(height)
-          : await this.bundleIdIterator(height);
+          ? await this.getBundleIdSearch(height)
+          : await this.getBundleIdIncrement(height);
 
       bundle = await this.cachedBundleDetails[bundleId];
     }
@@ -329,10 +339,17 @@ export class KyveApi {
       logger.debug(`Bundle ${bundle.id} ready`);
     } catch (e) {
       if (!['EEXIST', 'EACCES'].includes(e.code)) {
-        await fs.promises.unlink(bundleFilePath);
+        await this.unlinkFile(bundleFilePath);
       }
       throw e;
     }
+  }
+
+  private async unlinkFile(file: string): Promise<void> {
+    await fs.promises.unlink(file).catch((e) => {
+      // If file does not exist, no need to remove
+      if (e.code !== 'ENOENT') throw e;
+    });
   }
 
   private async getBundleData(bundle: BundleDetails): Promise<string> {
@@ -341,11 +358,11 @@ export class KyveApi {
       await this.downloadAndProcessBundle(bundle);
       return await this.readFromFile(bundleFilePath);
     } catch (e: any) {
-      if (['EEXIST', 'EACCES', 'ENOENT'].includes(e.code)) {
+      if (['EEXIST', 'EACCES'].includes(e.code)) {
         const res = await this.pollUntilReadable(bundleFilePath);
         return res;
       }
-      await fs.promises.unlink(bundleFilePath).catch();
+      await this.unlinkFile(bundleFilePath);
       throw e;
     }
   }
@@ -407,13 +424,8 @@ export class KyveApi {
     for (const bundle of toRemoveBundles) {
       const bundlePath = this.getBundleFilePath(bundle.id);
       try {
-        await fs.promises.unlink(bundlePath);
+        await this.unlinkFile(bundlePath);
         logger.debug(`Removed bundle ${bundle.id}`);
-      } catch (e) {
-        if (e.code !== 'ENOENT') {
-          // if it does not exist, should be removed
-          throw e;
-        }
       } finally {
         delete this.cachedBundleDetails[bundle.id];
       }

@@ -64,6 +64,7 @@ describe('KyveApi', () => {
   let decoderBlockSpy: jest.SpyInstance;
   let injectLogSpy: jest.SpyInstance;
   let readerSpy: jest.SpyInstance;
+  let getBundleDataSpy: jest.SpyInstance;
 
   let zippedMockResp: Buffer;
   let mockStream: Readable;
@@ -89,6 +90,7 @@ describe('KyveApi', () => {
     decoderBlockResultsSpy = jest.spyOn(kyveApi as any, 'decodeBlockResult');
     injectLogSpy = jest.spyOn(kyveApi as any, 'injectLogs');
     readerSpy = jest.spyOn(kyveApi as any, 'readFromFile');
+    getBundleDataSpy = jest.spyOn(kyveApi as any, 'getBundleData');
 
     zippedMockResp = gzipSync(Buffer.from(JSON.stringify(block_3856726)));
     mockStream = new Readable({
@@ -110,6 +112,7 @@ describe('KyveApi', () => {
     decoderBlockResultsSpy.mockRestore();
     injectLogSpy.mockRestore();
     readerSpy.mockRestore();
+    getBundleDataSpy.mockRestore();
 
     // reset cache
     ((kyveApi as any).cachedBundleDetails as Record<
@@ -149,17 +152,32 @@ describe('KyveApi', () => {
   it('ensure correct bundle ID on binary search', async () => {
     (kyveApi as any).currentBundleId = -1; // reset cached bundle Id
     const a = Date.now();
-    const firstBundle = await (kyveApi as any).getBundleId(120); // https://app.kyve.network/#/pools/2/bundles/0
+    const firstBundle = await (kyveApi as any).getBundleIdSearch(120); // https://app.kyve.network/#/pools/2/bundles/0
     const b = Date.now();
     console.log(`${b - a}ms`);
 
-    const laterBundle = await (kyveApi as any).getBundleId(3489747); // https://app.kyve.network/#/pools/2/bundles/5149474
+    const laterBundle = await (kyveApi as any).getBundleIdSearch(3489747); // https://app.kyve.network/#/pools/2/bundles/5149474
     expect(firstBundle).toBe(0);
     expect(laterBundle).toBe(113773);
   });
+  it('Ensure bundleId is defined', async () => {
+    getBundleDataSpy.mockResolvedValue(JSON.stringify({ mock: 'value' }));
+
+    await Promise.all([
+      (kyveApi as any).updateCurrentBundleAndDetails(1),
+      (kyveApi as any).updateCurrentBundleAndDetails(150),
+      (kyveApi as any).updateCurrentBundleAndDetails(151),
+      (kyveApi as any).updateCurrentBundleAndDetails(500),
+      (kyveApi as any).updateCurrentBundleAndDetails(1000),
+      (kyveApi as any).updateCurrentBundleAndDetails(2500),
+    ]);
+
+    expect(getBundleDataSpy).toHaveBeenCalledTimes(6);
+    expect(getBundleDataSpy).not.toHaveBeenCalledWith(undefined);
+  });
   it('Concurrent fetch with incrementing bundle id', async () => {
     // should increment from bundle id 8 to 9 only calling binary search once
-    const binarySearchSpy = jest.spyOn(kyveApi as any, 'getBundleId');
+    const binarySearchSpy = jest.spyOn(kyveApi as any, 'getBundleIdSearch');
     await Promise.all([
       kyveApi.getBlockByHeight(1338),
       kyveApi.getBlockByHeight(1339),
@@ -466,9 +484,9 @@ describe('KyveApi', () => {
       'bundle_1_0.json',
     ];
 
-    expect(files.filter((f) => (kyveApi as any).isBundleFile(f)).length).toBe(
-      4,
-    );
+    expect(
+      files.filter((f) => (KyveApi as any).isBundleFile(f, '2')).length,
+    ).toBe(4);
   });
   describe('able to wrap kyveBlock', () => {
     let rpcLazyBlockContent: LazyBlockContent;
