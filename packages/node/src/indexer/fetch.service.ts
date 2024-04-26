@@ -56,11 +56,6 @@ export class FetchService extends BaseFetchService<
     return this.apiService.unsafeApi;
   }
 
-  protected getGenesisHash(): string {
-    /* This funciton is for dictionary validation but is unused for cosmos. */
-    return this.apiService.networkMeta.genesisHash;
-  }
-
   protected async getFinalizedHeight(): Promise<number> {
     // Cosmos has instant finalization
     const height = await this.api.getHeight();

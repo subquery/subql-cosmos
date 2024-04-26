@@ -84,35 +84,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@apollo/client@npm:3.5.8":
-  version: 3.5.8
-  resolution: "@apollo/client@npm:3.5.8"
-  dependencies:
-    "@graphql-typed-document-node/core": ^3.0.0
-    "@wry/context": ^0.6.0
-    "@wry/equality": ^0.5.0
-    "@wry/trie": ^0.3.0
-    graphql-tag: ^2.12.3
-    hoist-non-react-statics: ^3.3.2
-    optimism: ^0.16.1
-    prop-types: ^15.7.2
-    symbol-observable: ^4.0.0
-    ts-invariant: ^0.9.4
-    tslib: ^2.3.0
-    zen-observable-ts: ^1.2.0
-  peerDependencies:
-    graphql: ^14.0.0 || ^15.0.0 || ^16.0.0
-    react: ^16.8.0 || ^17.0.0
-    subscriptions-transport-ws: ^0.9.0 || ^0.11.0
-  peerDependenciesMeta:
-    react:
-      optional: true
-    subscriptions-transport-ws:
-      optional: true
-  checksum: c896153784ae7b3adbf378e087c2a3150966fd5f5ea029907965dc5987f4751f2058c55142fe0a8e53f6c38124421b0e7f955f7fa5a4c28840be23c53b3a7e64
-  languageName: node
-  linkType: hard
-
 "@apollo/client@npm:^3.8.8":
   version: 3.8.8
   resolution: "@apollo/client@npm:3.8.8"
@@ -2572,7 +2543,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@graphql-typed-document-node/core@npm:^3.0.0, @graphql-typed-document-node/core@npm:^3.1.1":
+"@graphql-typed-document-node/core@npm:^3.1.1":
   version: 3.2.0
   resolution: "@graphql-typed-document-node/core@npm:3.2.0"
   peerDependencies:
@@ -3775,7 +3746,7 @@ __metadata:
     "@protobufs/google": ^0.0.10
     "@protobufs/ibc": ^0.1.0
     "@protobufs/tendermint": ^0.0.10
-    "@subql/common": ^3.5.0
+    "@subql/common": ^3.5.1
     "@subql/types-cosmos": "workspace:*"
     "@subql/x-cosmology-telescope": ^1.4.14
     "@types/bn.js": 4.11.6
@@ -3798,11 +3769,11 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@subql/common@npm:3.5.0, @subql/common@npm:^3.5.0":
-  version: 3.5.0
-  resolution: "@subql/common@npm:3.5.0"
+"@subql/common@npm:3.5.1, @subql/common@npm:^3.5.1":
+  version: 3.5.1
+  resolution: "@subql/common@npm:3.5.1"
   dependencies:
-    "@subql/types-core": 0.6.0
+    "@subql/types-core": 0.7.0
     axios: ^0.28.0
     class-transformer: ^0.5.1
     class-validator: ^0.14.0
@@ -3812,22 +3783,22 @@ __metadata:
     reflect-metadata: ^0.1.13
     semver: ^7.5.2
     update-notifier: 5.1.0
-  checksum: 63c374b82de90f2db5c76d8f3808e37100d3616707736806d3f43249ea0ca63f0c115104815cb842becb0d350e16e893a8d3942c0e865d62890e43362a455799
+  checksum: df16b2025635d5096b96c299805d3f9c85f7603b245037b2aae48fc0406e2eedab14af7f9e9b07247f166042854427c68a54d90e83588c8e1850471a14e43a0e
   languageName: node
   linkType: hard
 
-"@subql/node-core@npm:^8.0.1":
-  version: 8.0.1
-  resolution: "@subql/node-core@npm:8.0.1"
+"@subql/node-core@npm:^10.0.0":
+  version: 10.0.0
+  resolution: "@subql/node-core@npm:10.0.0"
   dependencies:
     "@apollo/client": ^3.8.8
     "@nestjs/common": ^9.4.0
     "@nestjs/event-emitter": ^2.0.0
     "@nestjs/schedule": ^3.0.1
-    "@subql/common": 3.5.0
-    "@subql/testing": 2.1.1-0
-    "@subql/types": 3.4.0
-    "@subql/utils": 2.9.0
+    "@subql/common": 3.5.1
+    "@subql/testing": 2.1.1
+    "@subql/types": 3.5.0
+    "@subql/utils": 2.9.1
     "@willsoto/nestjs-prometheus": ^5.4.0
     async-lock: ^1.4.0
     async-mutex: ^0.4.0
@@ -3839,11 +3810,11 @@ __metadata:
     merkle-tools: ^1.4.1
     prom-client: ^14.0.1
     source-map: ^0.7.4
-    tar: ^6.1.11
+    tar: ^6.2.1
     toposort-class: ^1.0.1
     vm2: ^3.9.19
     yargs: ^16.2.0
-  checksum: ead9feeef201b2ed9db1726e70d375d6a3ca5d44f7576dd14aa2949308d11a6a34abcc1013cd4d84eb8e57fd236609cdb93e359c0b85ff5b225257c99261635d
+  checksum: c52c304ea23c10a171ef411b877032c88733eb6a2262b4a167de9484f7e1fed567bdc36ad1bcb7f9a610d1774a348bd203dc82dd1f7c52f693ff7756c4097d4f
   languageName: node
   linkType: hard
 
@@ -3851,7 +3822,6 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@subql/node-cosmos@workspace:packages/node"
   dependencies:
-    "@apollo/client": 3.5.8
     "@cosmjs/cosmwasm-stargate": ^0.32.3
     "@cosmjs/proto-signing": ^0.32.3
     "@cosmjs/stargate": ^0.32.3
@@ -3862,9 +3832,9 @@ __metadata:
     "@nestjs/schedule": ^3.0.1
     "@nestjs/schematics": ^9.2.0
     "@nestjs/testing": ^9.4.0
-    "@subql/common": ^3.5.0
+    "@subql/common": ^3.5.1
     "@subql/common-cosmos": "workspace:*"
-    "@subql/node-core": ^8.0.1
+    "@subql/node-core": ^10.0.0
     "@subql/types-cosmos": "workspace:*"
     "@types/express": ^4.17.13
     "@types/jest": ^27.4.0
@@ -3891,30 +3861,21 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@subql/testing@npm:2.1.1-0":
-  version: 2.1.1-0
-  resolution: "@subql/testing@npm:2.1.1-0"
+"@subql/testing@npm:2.1.1":
+  version: 2.1.1
+  resolution: "@subql/testing@npm:2.1.1"
   dependencies:
-    "@subql/types-core": ^0.4.1-0
-  checksum: d27d1181f2afb1a394a80fc7d7e36bdd1e64981728d41214412cdeab930c45a7d3bd7cdc58d25d4653c3dcdaf2a456a4e7ae67e4f2ccb39f5494905d06cdecad
+    "@subql/types-core": ^0.7.0
+  checksum: 6b81d0130d364984e1a565228523b414c2fd66d128b2795161872657546ea83a7e23b42d59f968241f18c114afd7c511886418db8e89679f8a35861e8c24e5a9
   languageName: node
   linkType: hard
 
-"@subql/types-core@npm:0.6.0, @subql/types-core@npm:^0.6.0":
-  version: 0.6.0
-  resolution: "@subql/types-core@npm:0.6.0"
+"@subql/types-core@npm:0.7.0, @subql/types-core@npm:^0.7.0":
+  version: 0.7.0
+  resolution: "@subql/types-core@npm:0.7.0"
   dependencies:
     package-json-type: ^1.0.3
-  checksum: 0688f1973f830d1d2ab34864b00fc7efb105228b0328ac485c69950957da3a67a92d9477bc94945e57e3cccbf1b732bdea097c1a452a907e23704e9cbeff31fc
-  languageName: node
-  linkType: hard
-
-"@subql/types-core@npm:^0.4.1-0":
-  version: 0.4.1-0
-  resolution: "@subql/types-core@npm:0.4.1-0"
-  dependencies:
-    package-json-type: ^1.0.3
-  checksum: f7a51202b6e350e65f65a55136a2b48c8d6ae403850e96215995648656b3ef0779ef33ae526c7ffaa51b221b29255137e84ffd0abb5c1155095b1abfb15ef340
+  checksum: ba8d140333d315e80c28b44f29f56511302d0179001048e55ef2bbdded51deb7ddd37d77eee3d6fff1c18f2b944f2cd9f4e39da39e9f4bd9216d4e1b4bbf6378
   languageName: node
   linkType: hard
 
@@ -3925,24 +3886,24 @@ __metadata:
     "@cosmjs/cosmwasm-stargate": ^0.32.3
     "@cosmjs/proto-signing": ^0.32.3
     "@cosmjs/stargate": ^0.32.3
-    "@subql/types-core": ^0.6.0
+    "@subql/types-core": ^0.7.0
   languageName: unknown
   linkType: soft
 
-"@subql/types@npm:3.4.0":
-  version: 3.4.0
-  resolution: "@subql/types@npm:3.4.0"
+"@subql/types@npm:3.5.0":
+  version: 3.5.0
+  resolution: "@subql/types@npm:3.5.0"
   dependencies:
-    "@subql/types-core": 0.6.0
+    "@subql/types-core": 0.7.0
   peerDependencies:
     "@polkadot/api": ^10
-  checksum: a13e02ebdf35abc05104615f3884faf9f2d9037eece58ac05ba6cc4e07812ef40479645578327147ac82872e9466b5e2995a22076a7fdbc27fd6dd28f1cb669d
+  checksum: acecfafa56d3488f9ea25a8dd8d3038b1012f090d9f8c8046c74cbf17b983cf19a3d5711a88cb228bc48ce5d5348c9f0dd881a3eb504f319dcbb9b0c6303c526
   languageName: node
   linkType: hard
 
-"@subql/utils@npm:2.9.0":
-  version: 2.9.0
-  resolution: "@subql/utils@npm:2.9.0"
+"@subql/utils@npm:2.9.1":
+  version: 2.9.1
+  resolution: "@subql/utils@npm:2.9.1"
   dependencies:
     "@polkadot/util": ^12.5.1
     "@polkadot/util-crypto": ^12.5.1
@@ -3957,8 +3918,8 @@ __metadata:
     pino: ^6.13.3
     rotating-file-stream: ^3.0.2
     semver: ^7.5.2
-    tar: ^6.1.11
-  checksum: 2536add6833f9a1487ea17eccf0288e48f7a89bb67dfedbc46034902e350d4474be7f38cef06e938ee49ba25274c2271e2b5b6b46e04c965cdba5105f9af4599
+    tar: ^6.2.1
+  checksum: 555c215f44ac6f6828ade30c3643e260bf99ef3c14381d14a9e9ba3c9fa5cfd0a4e938b3a2fbd907379ad2b832bb79a5071f96966b32d751824affb9cea266c8
   languageName: node
   linkType: hard
 
@@ -4776,15 +4737,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@wry/context@npm:^0.6.0":
-  version: 0.6.1
-  resolution: "@wry/context@npm:0.6.1"
-  dependencies:
-    tslib: ^2.3.0
-  checksum: 4187863175061a8f54659f124e3e5c202e010b2b65bf886b4de9777ce8a45cf183b6f6d88f1f537002cbcbea52103a2eadc337d494106490def10acaf9522c5d
-  languageName: node
-  linkType: hard
-
 "@wry/context@npm:^0.7.0":
   version: 0.7.3
   resolution: "@wry/context@npm:0.7.3"
@@ -4794,21 +4746,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@wry/equality@npm:^0.5.0, @wry/equality@npm:^0.5.6":
+"@wry/equality@npm:^0.5.6":
   version: 0.5.6
   resolution: "@wry/equality@npm:0.5.6"
   dependencies:
     tslib: ^2.3.0
   checksum: 9addf8891bdff5e23eecff03641846e7a56c1de3c9362c25e69c0b2ee3303e74b22e9a0376920283cd9d3bdd1bada12df54be5eaa29c2d801d33d94992672e14
-  languageName: node
-  linkType: hard
-
-"@wry/trie@npm:^0.3.0":
-  version: 0.3.2
-  resolution: "@wry/trie@npm:0.3.2"
-  dependencies:
-    tslib: ^2.3.0
-  checksum: 151d06b519e1ff1c3acf6ee6846161b1d7d50bbecd4c48e5cd1b05f9e37c30602aff02e88f20105f6e6c54ae4123f9c4eb7715044d7fd927d4ba4ec3e755cd36
   languageName: node
   linkType: hard
 
@@ -8188,7 +8131,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"graphql-tag@npm:^2.12.3, graphql-tag@npm:^2.12.6":
+"graphql-tag@npm:^2.12.6":
   version: 2.12.6
   resolution: "graphql-tag@npm:2.12.6"
   dependencies:
@@ -11235,16 +11178,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"optimism@npm:^0.16.1":
-  version: 0.16.2
-  resolution: "optimism@npm:0.16.2"
-  dependencies:
-    "@wry/context": ^0.7.0
-    "@wry/trie": ^0.3.0
-  checksum: a98ed9a0b8ee2b031010222099b60860d52860bf8182889f2695a7cf2185f21aca59020f78e2b47c0ae7697843caa576798d792967314ff59f6aa7c5d9de7f3a
-  languageName: node
-  linkType: hard
-
 "optimism@npm:^0.18.0":
   version: 0.18.0
   resolution: "optimism@npm:0.18.0"
@@ -13306,7 +13239,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"tar@npm:^6.1.11, tar@npm:^6.1.2":
+"tar@npm:^6.1.11, tar@npm:^6.1.2, tar@npm:^6.2.1":
   version: 6.2.1
   resolution: "tar@npm:6.2.1"
   dependencies:
@@ -13502,15 +13435,6 @@ __metadata:
   dependencies:
     tslib: ^2.1.0
   checksum: bb07d56fe4aae69d8860e0301dfdee2d375281159054bc24bf1e49e513fb0835bf7f70a11351344d213a79199c5e695f37ebbf5a447188a377ce0cd81d91ddb5
-  languageName: node
-  linkType: hard
-
-"ts-invariant@npm:^0.9.4":
-  version: 0.9.4
-  resolution: "ts-invariant@npm:0.9.4"
-  dependencies:
-    tslib: ^2.1.0
-  checksum: c9e5726361fa266916966b2070605f8664b6dd1d8b0ef7565dbf056abb6a87be26195985ef62dd97aeb0894cf2f4ad5b7f0d89dadadc197eaa38e99222afa29c
   languageName: node
   linkType: hard
 
@@ -14541,7 +14465,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"zen-observable-ts@npm:^1.2.0, zen-observable-ts@npm:^1.2.5":
+"zen-observable-ts@npm:^1.2.5":
   version: 1.2.5
   resolution: "zen-observable-ts@npm:1.2.5"
   dependencies:
