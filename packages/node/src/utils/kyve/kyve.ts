@@ -115,14 +115,10 @@ export class KyveApi {
           const isStale =
             ((await fs.promises.stat(file)).mode & 0o777).toString(8) === '200';
           if (isStale) {
-            logger.debug(`Removing stale bundle: ${file}`);
-            await fs.promises.unlink(file);
+            await KyveApi.unlinkFile(file, `Removed stale bundle: ${file}`);
           }
         } catch (e) {
-          if (e.code !== 'ENOENT') {
-            logger.error(`Failed to clear bundle: ${file}`);
-            throw e;
-          }
+          if (e.code !== 'ENOENT') throw e;
         }
       };
       await Promise.all(
@@ -339,17 +335,25 @@ export class KyveApi {
       logger.debug(`Bundle ${bundle.id} ready`);
     } catch (e) {
       if (!['EEXIST', 'EACCES'].includes(e.code)) {
-        await this.unlinkFile(bundleFilePath);
+        await KyveApi.unlinkFile(bundleFilePath);
       }
       throw e;
     }
   }
 
-  private async unlinkFile(file: string): Promise<void> {
-    await fs.promises.unlink(file).catch((e) => {
+  private static async unlinkFile(
+    file: string,
+    loggerMsg?: string,
+  ): Promise<void> {
+    try {
+      await fs.promises.unlink(file);
+      if (loggerMsg) {
+        logger.debug(loggerMsg);
+      }
+    } catch (e) {
       // If file does not exist, no need to remove
       if (e.code !== 'ENOENT') throw e;
-    });
+    }
   }
 
   private async getBundleData(bundle: BundleDetails): Promise<string> {
@@ -362,7 +366,7 @@ export class KyveApi {
         const res = await this.pollUntilReadable(bundleFilePath);
         return res;
       }
-      await this.unlinkFile(bundleFilePath);
+      await KyveApi.unlinkFile(bundleFilePath);
       throw e;
     }
   }
@@ -424,8 +428,7 @@ export class KyveApi {
     for (const bundle of toRemoveBundles) {
       const bundlePath = this.getBundleFilePath(bundle.id);
       try {
-        await this.unlinkFile(bundlePath);
-        logger.debug(`Removed bundle ${bundle.id}`);
+        await KyveApi.unlinkFile(bundlePath, `Removed bundle ${bundle.id}`);
       } finally {
         delete this.cachedBundleDetails[bundle.id];
       }

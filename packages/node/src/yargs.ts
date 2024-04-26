@@ -34,6 +34,7 @@ export const yargsOptions = yargsBuilder({
       describe:
         'If indexing a network that Kyve supports adding a Kyve LCD endpoint will fetch blocks from Kyve',
       type: 'string',
+      default: 'https://api-us-1.kyve.network',
     },
     'kyve-storage-url': {
       demandOption: false,
