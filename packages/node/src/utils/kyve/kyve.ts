@@ -112,10 +112,17 @@ export class KyveApi {
 
       const isStaleBundle = async (file: string) => {
         try {
+          const bundlePath = path.join(fileCacheDir, file);
+
           const isStale =
-            ((await fs.promises.stat(file)).mode & 0o777).toString(8) === '200';
+            ((await fs.promises.stat(bundlePath)).mode & 0o777).toString(8) ===
+            '200';
+
           if (isStale) {
-            await KyveApi.unlinkFile(file, `Removed stale bundle: ${file}`);
+            await KyveApi.unlinkFile(
+              bundlePath,
+              `Removed stale bundle: ${file}`,
+            );
           }
         } catch (e) {
           if (e.code !== 'ENOENT') throw e;

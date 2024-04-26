@@ -321,8 +321,20 @@ describe('KyveApi', () => {
     });
 
     const files = await fs.promises.readdir(tmpPath);
-
     expect(files).not.toContain('bundle_2_0.json');
+  });
+  it('Able to clear stale files', async () => {
+    const bundlePath = (kyveApi as any).getBundleFilePath(0);
+    await fs.promises.writeFile(bundlePath, 'mock');
+    await fs.promises.chmod(bundlePath, 0o200);
+
+    await (KyveApi as any).clearStaleFiles(tmpPath, '2');
+
+    const isExist = await fs.promises
+      .access(bundlePath)
+      .then(() => true)
+      .catch(() => false);
+    expect(isExist).toBe(false);
   });
   it('Should increment bundleId when height exceeds cache', async () => {
     (kyveApi as any).cachedBundleDetails[0] = (kyveApi as any).getBundleById(0);

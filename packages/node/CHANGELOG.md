@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - Support for KYVE integration with supporting flags (#235)
-  - `--kyve-endpoint` (default value is `https://api-us-1.kyve.network`)
+  - `--kyve-endpoint` (default value is `https://api-us-1.kyve.network`, To disable use `false`)
   - `--kyve-chain-id` (default value is `kyve-1`)
   - `--kyve-storage-url` (default value is `https://arweave.net`) 
 

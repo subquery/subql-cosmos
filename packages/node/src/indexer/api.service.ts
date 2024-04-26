@@ -110,7 +110,10 @@ export class ApiService
       },
     );
 
-    if (this.nodeConfig.kyveEndpoint) {
+    if (
+      this.nodeConfig.kyveEndpoint &&
+      this.nodeConfig.kyveEndpoint !== 'false'
+    ) {
       try {
         this.kyveApi = await KyveApi.create(
           network.chainId,
@@ -120,8 +123,10 @@ export class ApiService
           this.project.fileCacheDir,
         );
       } catch (e) {
-        logger.warn(`Kyve Api is not connection. ${e}`);
+        logger.warn(`Kyve Api is not connected. ${e}`);
       }
+    } else {
+      logger.info(`Kyve not connected`);
     }
 
     return this;

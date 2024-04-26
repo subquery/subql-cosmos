@@ -32,7 +32,7 @@ export const yargsOptions = yargsBuilder({
     'kyve-endpoint': {
       demandOption: false,
       describe:
-        'If indexing a network that Kyve supports adding a Kyve LCD endpoint will fetch blocks from Kyve',
+        'If indexing a network that Kyve supports adding a Kyve LCD endpoint will fetch blocks from Kyve. Use `false` to disable kyve.',
       type: 'string',
       default: 'https://api-us-1.kyve.network',
     },
