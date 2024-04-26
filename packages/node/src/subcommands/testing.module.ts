@@ -15,6 +15,7 @@ import {
   StoreCacheService,
   StoreService,
   TestRunner,
+  SandboxService,
 } from '@subql/node-core';
 import { ConfigureModule } from '../configure/configure.module';
 import { SubqueryProject } from '../configure/SubqueryProject';
@@ -24,7 +25,6 @@ import { DsProcessorService } from '../indexer/ds-processor.service';
 import { DynamicDsService } from '../indexer/dynamic-ds.service';
 import { IndexerManager } from '../indexer/indexer.manager';
 import { ProjectService } from '../indexer/project.service';
-import { SandboxService } from '../indexer/sandbox.service';
 import { UnfinalizedBlocksService } from '../indexer/unfinalizedBlocks.service';
 
 @Module({

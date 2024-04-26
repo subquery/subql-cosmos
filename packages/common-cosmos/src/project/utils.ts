@@ -23,27 +23,29 @@ export function isRuntimeCosmosDs(ds: CosmosDatasource): ds is CosmosRuntimeData
   return ds.kind === CosmosDatasourceKind.Runtime;
 }
 
+type DefaultFilter = Record<string, unknown>;
+
 export function isBlockHandlerProcessor<E>(
-  hp: SecondLayerHandlerProcessor<CosmosHandlerKind, unknown, unknown>
-): hp is SecondLayerHandlerProcessor<CosmosHandlerKind.Block, unknown, E> {
+  hp: SecondLayerHandlerProcessor<CosmosHandlerKind, DefaultFilter, unknown>
+): hp is SecondLayerHandlerProcessor<CosmosHandlerKind.Block, DefaultFilter, E> {
   return hp.baseHandlerKind === CosmosHandlerKind.Block;
 }
 
 export function isTransactionHandlerProcessor<E>(
-  hp: SecondLayerHandlerProcessor<CosmosHandlerKind, unknown, unknown>
-): hp is SecondLayerHandlerProcessor<CosmosHandlerKind.Transaction, unknown, E> {
+  hp: SecondLayerHandlerProcessor<CosmosHandlerKind, DefaultFilter, unknown>
+): hp is SecondLayerHandlerProcessor<CosmosHandlerKind.Transaction, DefaultFilter, E> {
   return hp.baseHandlerKind === CosmosHandlerKind.Transaction;
 }
 
 export function isMessageHandlerProcessor<E>(
-  hp: SecondLayerHandlerProcessor<CosmosHandlerKind, unknown, unknown>
-): hp is SecondLayerHandlerProcessor<CosmosHandlerKind.Message, unknown, E> {
+  hp: SecondLayerHandlerProcessor<CosmosHandlerKind, DefaultFilter, unknown>
+): hp is SecondLayerHandlerProcessor<CosmosHandlerKind.Message, DefaultFilter, E> {
   return hp.baseHandlerKind === CosmosHandlerKind.Message;
 }
 
 export function isEventHandlerProcessor<E>(
-  hp: SecondLayerHandlerProcessor<CosmosHandlerKind, unknown, unknown>
-): hp is SecondLayerHandlerProcessor<CosmosHandlerKind.Event, unknown, E> {
+  hp: SecondLayerHandlerProcessor<CosmosHandlerKind, DefaultFilter, unknown>
+): hp is SecondLayerHandlerProcessor<CosmosHandlerKind.Event, DefaultFilter, E> {
   return hp.baseHandlerKind === CosmosHandlerKind.Event;
 }
 

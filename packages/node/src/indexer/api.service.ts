@@ -96,18 +96,12 @@ export class ApiService
 
     this.registry = await this.buildRegistry();
 
-    await this.createConnections(
-      network,
-      (endpoint) =>
-        CosmosClientConnection.create(
-          endpoint,
-          this.fetchBlocksBatches,
-          this.registry,
-        ),
-      (connection: CosmosClientConnection) => {
-        const api = connection.unsafeApi;
-        return api.getChainId();
-      },
+    await this.createConnections(network, (endpoint) =>
+      CosmosClientConnection.create(
+        endpoint,
+        this.fetchBlocksBatches,
+        this.registry,
+      ),
     );
 
     if (

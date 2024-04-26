@@ -11,6 +11,8 @@ import {
   InMemoryCacheService,
   WorkerInMemoryCacheService,
   NodeConfig,
+  SandboxService,
+  WorkerUnfinalizedBlocksService,
 } from '@subql/node-core';
 import { SubqueryProject } from '../../configure/SubqueryProject';
 import { ApiService } from '../api.service';
@@ -19,10 +21,8 @@ import { DsProcessorService } from '../ds-processor.service';
 import { DynamicDsService } from '../dynamic-ds.service';
 import { IndexerManager } from '../indexer.manager';
 import { ProjectService } from '../project.service';
-import { SandboxService } from '../sandbox.service';
 import { UnfinalizedBlocksService } from '../unfinalizedBlocks.service';
 import { WorkerService } from './worker.service';
-import { WorkerUnfinalizedBlocksService } from './worker.unfinalizedBlocks.service';
 
 @Module({
   providers: [
