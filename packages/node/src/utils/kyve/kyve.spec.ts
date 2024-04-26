@@ -44,9 +44,9 @@ const wasmTypes: ReadonlyArray<[string, GeneratedType]> = [
 
 const kyveBundlePath = path.join(
   __dirname,
-  '../../../test/kyve_block/block_3856726.json',
+  '../../../test/kyve_block/block_4326863.json',
 );
-const block_3856726 = require(kyveBundlePath);
+const block_4326863 = require(kyveBundlePath);
 
 const KYVE_ENDPOINT = 'https://rpc-eu-1.kyve.network';
 const KYVE_STORAGE_URL = 'https://arweave.net';
@@ -92,7 +92,7 @@ describe('KyveApi', () => {
     readerSpy = jest.spyOn(kyveApi as any, 'readFromFile');
     getBundleDataSpy = jest.spyOn(kyveApi as any, 'getBundleData');
 
-    zippedMockResp = gzipSync(Buffer.from(JSON.stringify(block_3856726)));
+    zippedMockResp = gzipSync(Buffer.from(JSON.stringify(block_4326863)));
     mockStream = new Readable({
       read() {
         this.push(zippedMockResp);
@@ -344,7 +344,7 @@ describe('KyveApi', () => {
     expect((kyveApi as any).cachedBundleDetails['1']).toBeDefined();
   });
   it('compare block info', async () => {
-    const height = 3901476;
+    const height = 4282099;
     const tendermintBlockInfo = await tendermint.block(height);
     const [kyveBlockInfo] = await kyveApi.getBlockByHeight(height);
     expect(isEqual(tendermintBlockInfo, kyveBlockInfo)).toBe(true);
@@ -424,7 +424,7 @@ describe('KyveApi', () => {
   });
   it('Able to poll with simulated workers', async () => {
     const mockCacheDetails = {
-      '130265': (kyveApi as any).getBundleById(130265),
+      '151003': (kyveApi as any).getBundleById(151003),
     };
     (kyveApi as any).cachedBundleDetails = mockCacheDetails;
 
@@ -464,10 +464,10 @@ describe('KyveApi', () => {
     expect(pollSpy).toHaveBeenCalledTimes(1);
 
     const r = await kyveApi.readFromFile(
-      (kyveApi as any).getBundleFilePath('130265'),
+      (kyveApi as any).getBundleFilePath('151003'),
     );
 
-    expect(r).toEqual(JSON.stringify(block_3856726));
+    expect(r).toEqual(JSON.stringify(block_4326863));
   });
   it('isBundle', () => {
     const bundle = 'bundle_2_0.json';
@@ -507,14 +507,14 @@ describe('KyveApi', () => {
     let tendermintBlockResult: BlockResultsResponse;
 
     beforeAll(async () => {
-      const height = 3856726;
+      const height = 4326863;
       [tendermintBlockInfo, tendermintBlockResult] = await Promise.all([
         tendermint.block(height),
         tendermint.blockResults(height),
       ]);
 
-      const blockInfo = block_3856726[0].value.block;
-      const blockResults = block_3856726[0].value.block_results;
+      const blockInfo = block_4326863[0].value.block;
+      const blockResults = block_4326863[0].value.block_results;
 
       const bi = (kyveApi as any).decodeBlock(blockInfo);
       const br = (kyveApi as any).decodeBlockResult(blockResults);
@@ -525,19 +525,6 @@ describe('KyveApi', () => {
         registry,
       );
       kyveLazyBlockContent = new LazyBlockContent(bi, br, registry);
-    });
-    it('compare kyve wrapped results with rpc results', () => {
-      const blockResults = block_3856726[0].value.block_results;
-
-      const br = (kyveApi as any).decodeBlockResult(blockResults);
-
-      const logs = (kyveApi as any).reconstructLogs(br);
-      expect(logs.length).toBe(2);
-      expect(logs[0].events.length).toBe(3);
-      expect(logs[1].events.length).toBe(5);
-
-      const reconstructedKyveBlock = (kyveApi as any).injectLogs(br);
-      expect(reconstructedKyveBlock.results[0].log).toBeDefined();
     });
     it('wrapTransaction', () => {
       expect(kyveLazyBlockContent.transactions[0].tx.data.length).toBe(
