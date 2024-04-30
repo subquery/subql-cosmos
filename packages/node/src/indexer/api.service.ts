@@ -115,6 +115,7 @@ export class ApiService
           this.nodeConfig.kyveStorageUrl,
           this.nodeConfig.kyveChainId,
           this.project.fileCacheDir,
+          KYVE_BUFFER_RANGE * this.nodeConfig.batchSize,
         );
       } catch (e) {
         logger.warn(`Kyve Api is not connected. ${e}`);
@@ -131,25 +132,20 @@ export class ApiService
     heights: number[],
     numAttempts = MAX_RECONNECT_ATTEMPTS,
   ): Promise<IBlock<BlockContent>[]> {
-    if (this.kyveApi) {
-      const bufferSize = KYVE_BUFFER_RANGE * this.nodeConfig.batchSize;
-      try {
-        return await this.kyveApi.fetchBlocksBatches(
-          this.registry,
-          heights,
-          bufferSize,
-        );
-      } catch (e) {
-        logger.warn(
-          e,
-          `Failed to fetch blocks: ${JSON.stringify(
-            heights,
-          )} via Kyve, switching to rpc`,
-        );
-      }
-    }
-
     return this.retryFetch(async () => {
+      if (this.kyveApi) {
+        try {
+          return await this.kyveApi.fetchBlocksBatches(this.registry, heights);
+        } catch (e) {
+          console.log('Kyve error', e, e.stack);
+          logger.warn(
+            e,
+            `Failed to fetch blocks: ${JSON.stringify(
+              heights,
+            )} via Kyve, trying with RPC`,
+          );
+        }
+      }
       // Get the latest fetch function from the provider
       const apiInstance = this.connectionPoolService.api;
       return apiInstance.fetchBlocks(heights);

@@ -29,6 +29,7 @@ import { isTmpDir } from '../project';
 import { BundleDetails } from './kyveTypes';
 
 const BUNDLE_TIMEOUT = 10000; //ms
+const WRITER_TIMEOUT = 3; //sec
 const POLL_TIMER = 3; // sec
 const POLL_LIMIT = 10;
 const MAX_COMPRESSION_BYTE_SIZE = 2 * 10 ** 9;
@@ -55,6 +56,7 @@ export class KyveApi {
     private readonly tmpCacheDir: string,
     private readonly poolId: string,
     private readonly lcdClient: KyveLCDClientType,
+    private readonly removeBuffer: number,
   ) {}
 
   static async create(
@@ -63,6 +65,7 @@ export class KyveApi {
     storageUrl: string,
     kyveChainId: SupportedChains,
     tmpCacheDir: string,
+    removeBuffer: number, // The buffer before a bundle file is removed from disc
   ): Promise<KyveApi> {
     if (!isTmpDir(tmpCacheDir)) {
       throw new Error('File cache directory must be a tmp directory');
@@ -77,7 +80,13 @@ export class KyveApi {
     await KyveApi.clearStaleFiles(tmpCacheDir, poolId);
 
     logger.info(`Kyve API connected`);
-    return new KyveApi(storageUrl, tmpCacheDir, poolId, lcdClient);
+    return new KyveApi(
+      storageUrl,
+      tmpCacheDir,
+      poolId,
+      lcdClient,
+      removeBuffer,
+    );
   }
 
   private static async fetchPoolId(
@@ -317,7 +326,8 @@ export class KyveApi {
           writeStream.on('open', resolve);
           writeStream.on('error', reject);
         }),
-        BUNDLE_TIMEOUT,
+        WRITER_TIMEOUT,
+        `Timeout waiting for write stream on file ${bundleFilePath}`,
       );
 
       const zippedBundleData = await this.retrieveBundleData(bundle.storage_id);
@@ -527,12 +537,15 @@ export class KyveApi {
   async fetchBlocksBatches(
     registry: Registry,
     blockArray: number[],
-    bufferSize: number,
   ): Promise<IBlock<BlockContent>[]> {
     const blocks = await this.fetchBlocksArray(blockArray);
     const minHeight = Math.min(...blockArray);
 
-    await this.clearFileCache(this.cachedBundleDetails, minHeight, bufferSize);
+    await this.clearFileCache(
+      this.cachedBundleDetails,
+      minHeight,
+      this.removeBuffer,
+    );
 
     return blocks.map(([blockInfo, blockResults]) => {
       try {

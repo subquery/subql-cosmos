@@ -79,6 +79,7 @@ describe('KyveApi', () => {
       KYVE_STORAGE_URL,
       KYVE_CHAINID,
       tmpPath,
+      300,
     );
     const client = new HttpClient('https://rpc.mainnet.archway.io:443');
     tendermint = await Tendermint37Client.create(client);
@@ -310,8 +311,8 @@ describe('KyveApi', () => {
     const heights_1 = [150, 300, 1, 301, 450, 550];
     const heights_2 = [498, 600, 801, 1100];
     const blockArr = await Promise.all([
-      kyveApi.fetchBlocksBatches(registry, heights_1, 300),
-      kyveApi.fetchBlocksBatches(registry, heights_2, 300),
+      kyveApi.fetchBlocksBatches(registry, heights_1),
+      kyveApi.fetchBlocksBatches(registry, heights_2),
     ]);
 
     blockArr.forEach((blockContent) => {
@@ -433,6 +434,7 @@ describe('KyveApi', () => {
       KYVE_STORAGE_URL,
       KYVE_CHAINID,
       tmpPath,
+      1,
     );
 
     (workerKyveApi as any).cachedBundleDetails = mockCacheDetails;
@@ -456,8 +458,8 @@ describe('KyveApi', () => {
 
     const pollSpy = jest.spyOn(workerKyveApi as any, 'pollUntilReadable');
     await Promise.all([
-      kyveApi.fetchBlocksBatches(registry, [4326863], 1),
-      workerKyveApi.fetchBlocksBatches(registry, [4326863], 1),
+      kyveApi.fetchBlocksBatches(registry, [4326863]),
+      workerKyveApi.fetchBlocksBatches(registry, [4326863]),
     ]);
 
     expect(pollSpy).toHaveBeenCalledTimes(1);
