@@ -16,6 +16,7 @@ import {
   isCustomCosmosDs,
 } from '@subql/common-cosmos';
 import {
+  CronFilter,
   insertBlockFiltersCronSchedules,
   ISubqueryProject,
   loadProjectTemplates,
@@ -31,7 +32,6 @@ import {
   CosmosBlockFilter,
 } from '@subql/types-cosmos';
 import { buildSchemaFromString } from '@subql/utils';
-import Cron from 'cron-converter';
 import { GraphQLSchema } from 'graphql';
 import { processNetworkConfig } from '../utils/project';
 
@@ -41,12 +41,7 @@ export type CosmosProjectDsTemplate =
   | RuntimeDatasourceTemplate
   | CustomDatasourceTemplate;
 
-export type SubqlProjectBlockFilter = CosmosBlockFilter & {
-  cronSchedule?: {
-    schedule: Cron.Seeker;
-    next: number;
-  };
-};
+export type SubqlProjectBlockFilter = CosmosBlockFilter & CronFilter;
 
 const NOT_SUPPORT = (name: string) => {
   throw new Error(`Manifest specVersion ${name} is not supported`);

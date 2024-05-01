@@ -6,7 +6,7 @@ import { TextDecoder } from 'util';
 import { sha256 } from '@cosmjs/crypto';
 import { toHex } from '@cosmjs/encoding';
 import { DecodeObject, decodeTxRaw, Registry } from '@cosmjs/proto-signing';
-import { Block, fromTendermintEvent } from '@cosmjs/stargate';
+import { fromTendermintEvent } from '@cosmjs/stargate';
 import { Log, parseRawLog } from '@cosmjs/stargate/build/logs';
 import { toRfc3339WithNanoseconds } from '@cosmjs/tendermint-rpc';
 import {
@@ -16,7 +16,12 @@ import {
   Event,
   Header as CosmosHeader,
 } from '@cosmjs/tendermint-rpc/build/tendermint37';
-import { IBlock, getLogger, Header } from '@subql/node-core';
+import {
+  IBlock,
+  getLogger,
+  Header,
+  filterBlockTimestamp,
+} from '@subql/node-core';
 import {
   CosmosEventFilter,
   CosmosMessageFilter,
@@ -63,10 +68,13 @@ export function filterBlock(
   if (!filter) {
     return true;
   }
-  if (filter.timestamp) {
-    if (!filterBlockTimestamp(data, filter as SubqlProjectBlockFilter)) {
-      return;
-    }
+  if (
+    !filterBlockTimestamp(
+      getBlockTimestamp(data.header).getTime(),
+      filter as SubqlProjectBlockFilter,
+    )
+  ) {
+    return false;
   }
   if (filter.modulo && data.block.header.height % filter.modulo !== 0) {
     return false;
@@ -76,30 +84,6 @@ export function filterBlock(
 
 export function getBlockTimestamp(blockHeader: CosmosHeader): Date {
   return new Date(toRfc3339WithNanoseconds(blockHeader.time));
-}
-
-export function filterBlockTimestamp(
-  block: CosmosBlock,
-  filter: SubqlProjectBlockFilter,
-): boolean {
-  const unixTimestamp = getBlockTimestamp(block.header).getTime();
-  if (unixTimestamp > filter.cronSchedule.next) {
-    logger.info(
-      `Block with timestamp ${new Date(
-        unixTimestamp,
-      ).toString()} is about to be indexed`,
-    );
-    logger.info(
-      `Next block will be indexed at ${new Date(
-        filter.cronSchedule.next,
-      ).toString()}`,
-    );
-    filter.cronSchedule.schedule.prev();
-    return true;
-  } else {
-    filter.cronSchedule.schedule.prev();
-    return false;
-  }
 }
 
 export function filterTx(
