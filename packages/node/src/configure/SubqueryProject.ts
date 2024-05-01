@@ -28,8 +28,10 @@ import {
   CustomDatasourceTemplate,
   RuntimeDatasourceTemplate,
   CosmosHandlerKind,
+  CosmosBlockFilter,
 } from '@subql/types-cosmos';
 import { buildSchemaFromString } from '@subql/utils';
+import Cron from 'cron-converter';
 import { GraphQLSchema } from 'graphql';
 import { processNetworkConfig } from '../utils/project';
 
@@ -38,6 +40,13 @@ const { version: packageVersion } = require('../../package.json');
 export type CosmosProjectDsTemplate =
   | RuntimeDatasourceTemplate
   | CustomDatasourceTemplate;
+
+export type SubqlProjectBlockFilter = CosmosBlockFilter & {
+  cronSchedule?: {
+    schedule: Cron.Seeker;
+    next: number;
+  };
+};
 
 const NOT_SUPPORT = (name: string) => {
   throw new Error(`Manifest specVersion ${name} is not supported`);

@@ -33,6 +33,7 @@
     "@subql/common-cosmos": "workspace:*",
     "@subql/node-core": "10.0.1-0",
     "@subql/types-cosmos": "workspace:*",
+    "cron-converter": "^1.0.2",
     "lodash": "^4.17.21",
     "protobufjs": "^6.11.4",
     "reflect-metadata": "^0.1.13",
