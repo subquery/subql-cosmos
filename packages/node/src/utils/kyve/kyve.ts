@@ -4,7 +4,6 @@
 import assert from 'assert';
 import fs from 'fs';
 import { isMainThread } from 'node:worker_threads';
-import os from 'os';
 import path from 'path';
 import * as zlib from 'zlib';
 import { JsonRpcSuccessResponse } from '@cosmjs/json-rpc';
@@ -19,9 +18,7 @@ import { Responses } from '@cosmjs/tendermint-rpc/build/tendermint37/adaptor'; /
 import KyveSDK, { KyveLCDClientType } from '@kyvejs/sdk';
 import { SupportedChains } from '@kyvejs/sdk/src/constants'; // Currently these types are not exported
 import { QueryPoolsResponse } from '@kyvejs/types/lcd/kyve/query/v1beta1/pools';
-import { LocalReader } from '@subql/common';
 import { delay, getLogger, IBlock, timeout } from '@subql/node-core';
-import { Reader } from '@subql/types-core';
 import axios, { AxiosResponse } from 'axios';
 import { BlockContent } from '../../indexer/types';
 import { formatBlockUtil, LazyBlockContent } from '../cosmos';
@@ -30,6 +27,7 @@ import { BundleDetails } from './kyveTypes';
 
 const BUNDLE_TIMEOUT = 10000; //ms
 const WRITER_TIMEOUT = 3; //sec
+const PROCESS_BUNDLE_TIMEOUT = 20; //sec
 const POLL_TIMER = 3; // sec
 const POLL_LIMIT = 10;
 const MAX_COMPRESSION_BYTE_SIZE = 2 * 10 ** 9;
@@ -39,6 +37,10 @@ const BUNDLE_FILE_ID_REG = (poolId: string) =>
 const parseDecimal = (value: string) => parseInt(value, 10);
 
 const logger = getLogger('kyve');
+
+class ExistsError extends Error {
+  readonly code = 'EEXIST';
+}
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const { version: packageVersion } = require('../../../package.json');
@@ -77,7 +79,7 @@ export class KyveApi {
 
     const poolId = await KyveApi.fetchPoolId(chainId, lcdClient);
 
-    await KyveApi.clearStaleFiles(tmpCacheDir, poolId);
+    await this.clearStaleFiles(tmpCacheDir, poolId);
 
     logger.info(`Kyve API connected`);
     return new KyveApi(
@@ -116,33 +118,32 @@ export class KyveApi {
     fileCacheDir: string,
     poolId: string,
   ): Promise<void> {
-    if (isMainThread) {
-      const files = await fs.promises.readdir(fileCacheDir);
-
-      const isStaleBundle = async (file: string) => {
-        try {
-          const bundlePath = path.join(fileCacheDir, file);
-
-          const isStale =
-            ((await fs.promises.stat(bundlePath)).mode & 0o777).toString(8) ===
-            '200';
-
-          if (isStale) {
-            await KyveApi.unlinkFile(
-              bundlePath,
-              `Removed stale bundle: ${file}`,
-            );
-          }
-        } catch (e) {
-          if (e.code !== 'ENOENT') throw e;
-        }
-      };
-      await Promise.all(
-        files
-          .filter((f) => KyveApi.isBundleFile(f, poolId))
-          .map((bundleFile) => isStaleBundle(bundleFile)),
-      );
+    if (!isMainThread) {
+      return;
     }
+    const files = await fs.promises.readdir(fileCacheDir);
+
+    const isStaleBundle = async (file: string) => {
+      try {
+        const bundlePath = path.join(fileCacheDir, file);
+
+        const isStale =
+          ((await fs.promises.stat(bundlePath)).mode & 0o777).toString(8) ===
+          '200';
+
+        if (isStale) {
+          await KyveApi.unlinkFile(bundlePath, `Removed stale bundle: ${file}`);
+        }
+      } catch (e) {
+        logger.error(e, 'Error clearing stale files');
+        if (e.code !== 'ENOENT') throw e;
+      }
+    };
+    await Promise.all(
+      files
+        .filter((f) => KyveApi.isBundleFile(f, poolId))
+        .map((bundleFile) => isStaleBundle(bundleFile)),
+    );
   }
 
   private static isBundleFile(filename: string, poolId: string): boolean {
@@ -173,7 +174,7 @@ export class KyveApi {
 
   private async getBundleById(bundleId: number): Promise<BundleDetails> {
     return (this.cachedBundleDetails[bundleId] ??= (() => {
-      logger.debug(`getBundleId ${bundleId}`);
+      // logger.debug(`getBundleId ${bundleId}`);
       return this.lcdClient.kyve.query.v1beta1.finalizedBundle({
         pool_id: this.poolId,
         id: bundleId.toString(),
@@ -292,7 +293,7 @@ export class KyveApi {
       bundle = await this.cachedBundleDetails[bundleId];
     }
 
-    return JSON.parse(await this.getBundleData(bundle));
+    return this.getBundleData(bundle);
   }
 
   private async pollUntilReadable(bundleFilePath: string): Promise<string> {
@@ -309,12 +310,14 @@ export class KyveApi {
         }
       }
     }
-    throw new Error('Timeout waiting for bundle');
+    throw new Error(`Timeout waiting for bundle ${bundleFilePath}`);
   }
 
   async downloadAndProcessBundle(bundle: BundleDetails): Promise<void> {
     const bundleFilePath = this.getBundleFilePath(bundle.id);
 
+    // We use mode to control permissions amongst workers.
+    // The mode is updated once the file is finished downloading
     const writeStream = fs.createWriteStream(bundleFilePath, {
       flags: 'wx',
       mode: 0o200, // Ensure that only writer has access to file
@@ -322,13 +325,24 @@ export class KyveApi {
 
     try {
       await timeout(
-        new Promise((resolve, reject) => {
+        new Promise<void>((resolve, reject) => {
           writeStream.on('open', resolve);
           writeStream.on('error', reject);
         }),
         WRITER_TIMEOUT,
         `Timeout waiting for write stream on file ${bundleFilePath}`,
-      );
+      ).catch(async (e) => {
+        // Timeout might be becaus of a race condition creating a write stream
+        // So check the file exists and allow continuing
+        if (e.code === undefined) {
+          await fs.promises.stat(bundleFilePath).catch((e2) => {
+            // Throw the original error if we get an error seeing if the file exists
+            throw e;
+          });
+          throw new ExistsError('File exists when rechecking');
+        }
+        throw e;
+      });
 
       const zippedBundleData = await this.retrieveBundleData(bundle.storage_id);
 
@@ -337,15 +351,18 @@ export class KyveApi {
       });
 
       logger.debug(`Retrieving bundle ${bundle.id}`);
-      logger.info(`Fetching blocks ${bundle.from_key} to ${bundle.to_key}`);
 
-      await new Promise((resolve, reject) => {
-        zippedBundleData.data
-          .pipe(gunzip)
-          .pipe(writeStream)
-          .on('error', reject)
-          .on('finish', resolve);
-      });
+      await timeout(
+        new Promise((resolve, reject) => {
+          zippedBundleData.data
+            .pipe(gunzip)
+            .pipe(writeStream)
+            .on('error', reject)
+            .on('finish', resolve);
+        }),
+        PROCESS_BUNDLE_TIMEOUT,
+        `Timeout processing bundle from download bundleId=${bundle.id}`,
+      );
 
       await fs.promises.chmod(bundleFilePath, 0o444);
 
@@ -373,16 +390,27 @@ export class KyveApi {
     }
   }
 
-  private async getBundleData(bundle: BundleDetails): Promise<string> {
+  private async getBundleData(
+    bundle: BundleDetails,
+  ): Promise<KyveBundleData[]> {
     const bundleFilePath = this.getBundleFilePath(bundle.id);
+    let bundleData: string;
+
     try {
       await this.downloadAndProcessBundle(bundle);
-      return await this.readFromFile(bundleFilePath);
+      bundleData = await this.readFromFile(bundleFilePath);
     } catch (e: any) {
       if (['EEXIST', 'EACCES'].includes(e.code)) {
-        const res = await this.pollUntilReadable(bundleFilePath);
-        return res;
+        bundleData = await this.pollUntilReadable(bundleFilePath);
+      } else {
+        throw e;
       }
+    }
+
+    try {
+      return JSON.parse(bundleData);
+    } catch (e) {
+      logger.debug(`Bundle data is invalid ${bundleFilePath}`);
       await KyveApi.unlinkFile(bundleFilePath);
       throw e;
     }
@@ -565,26 +593,5 @@ export class KyveApi {
         throw e;
       }
     });
-  }
-
-  static async getFileCacheDir(
-    reader: Reader,
-    projectRoot: string,
-    chainId: string,
-  ): Promise<string> {
-    if (isTmpDir(projectRoot)) return projectRoot;
-    if (reader instanceof LocalReader) {
-      const tmpDir = path.join(os.tmpdir(), `kyveTmpFileCache_${chainId}`);
-      try {
-        await fs.promises.mkdir(tmpDir);
-        return tmpDir;
-      } catch (e) {
-        if (e.code === 'EEXIST') {
-          return tmpDir;
-        }
-        throw e;
-      }
-    }
-    return projectRoot;
   }
 }

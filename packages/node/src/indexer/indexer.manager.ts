@@ -29,7 +29,6 @@ import {
   CosmosCustomDatasource,
   CosmosDatasource,
 } from '@subql/types-cosmos';
-import { CosmosProjectDs } from '../configure/SubqueryProject';
 import * as CosmosUtil from '../utils/cosmos';
 import {
   ApiService as CosmosApiService,
@@ -107,8 +106,8 @@ export class IndexerManager extends BaseIndexerManager<
 
   protected async indexBlockData(
     blockContent: BlockContent,
-    dataSources: CosmosProjectDs[],
-    getVM: (d: CosmosProjectDs) => Promise<IndexerSandbox>,
+    dataSources: CosmosDatasource[],
+    getVM: (d: CosmosDatasource) => Promise<IndexerSandbox>,
   ): Promise<void> {
     await this.indexBlockContent(blockContent, dataSources, getVM);
 
@@ -140,8 +139,8 @@ export class IndexerManager extends BaseIndexerManager<
 
   private async indexBlockContent(
     block: BlockContent,
-    dataSources: CosmosProjectDs[],
-    getVM: (d: CosmosProjectDs) => Promise<IndexerSandbox>,
+    dataSources: CosmosDatasource[],
+    getVM: (d: CosmosDatasource) => Promise<IndexerSandbox>,
   ): Promise<void> {
     for (const ds of dataSources) {
       await this.indexData(CosmosHandlerKind.Block, block.block, ds, getVM);
@@ -150,8 +149,8 @@ export class IndexerManager extends BaseIndexerManager<
 
   private async indexTransaction(
     tx: CosmosTransaction,
-    dataSources: CosmosProjectDs[],
-    getVM: (d: CosmosProjectDs) => Promise<IndexerSandbox>,
+    dataSources: CosmosDatasource[],
+    getVM: (d: CosmosDatasource) => Promise<IndexerSandbox>,
   ): Promise<void> {
     for (const ds of dataSources) {
       await this.indexData(CosmosHandlerKind.Transaction, tx, ds, getVM);
@@ -160,8 +159,8 @@ export class IndexerManager extends BaseIndexerManager<
 
   private async indexMessage(
     message: CosmosMessage,
-    dataSources: CosmosProjectDs[],
-    getVM: (d: CosmosProjectDs) => Promise<IndexerSandbox>,
+    dataSources: CosmosDatasource[],
+    getVM: (d: CosmosDatasource) => Promise<IndexerSandbox>,
   ): Promise<void> {
     for (const ds of dataSources) {
       await this.indexData(CosmosHandlerKind.Message, message, ds, getVM);
@@ -170,8 +169,8 @@ export class IndexerManager extends BaseIndexerManager<
 
   private async indexEvent(
     event: CosmosEvent,
-    dataSources: CosmosProjectDs[],
-    getVM: (d: CosmosProjectDs) => Promise<IndexerSandbox>,
+    dataSources: CosmosDatasource[],
+    getVM: (d: CosmosDatasource) => Promise<IndexerSandbox>,
   ): Promise<void> {
     for (const ds of dataSources) {
       await this.indexData(CosmosHandlerKind.Event, event, ds, getVM);

@@ -6300,9 +6300,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@subql/node-core@npm:^10.0.0":
-  version: 10.0.0
-  resolution: "@subql/node-core@npm:10.0.0"
+"@subql/node-core@npm:10.0.1-0":
+  version: 10.0.1-0
+  resolution: "@subql/node-core@npm:10.0.1-0"
   dependencies:
     "@apollo/client": ^3.8.8
     "@nestjs/common": ^9.4.0
@@ -6327,7 +6327,7 @@ __metadata:
     toposort-class: ^1.0.1
     vm2: ^3.9.19
     yargs: ^16.2.0
-  checksum: c52c304ea23c10a171ef411b877032c88733eb6a2262b4a167de9484f7e1fed567bdc36ad1bcb7f9a610d1774a348bd203dc82dd1f7c52f693ff7756c4097d4f
+  checksum: 6fe1f5eeac265c05f5d0a37c120bd95c459d1fff62899f95545019b657f184d5789511074d8f39fb58dc744c0e18bca7603f34a52f46af2b0533491eb90a6dab
   languageName: node
   linkType: hard
 
@@ -6349,7 +6349,7 @@ __metadata:
     "@nestjs/testing": ^9.4.0
     "@subql/common": ^3.5.1
     "@subql/common-cosmos": "workspace:*"
-    "@subql/node-core": ^10.0.0
+    "@subql/node-core": 10.0.1-0
     "@subql/types-cosmos": "workspace:*"
     "@types/express": ^4.17.13
     "@types/jest": ^27.4.0

@@ -37,7 +37,7 @@ function testCosmosProject(
     root: './',
     schema: new GraphQLSchema({}),
     templates: [],
-    fileCacheDir,
+    tempDir: fileCacheDir,
   } as SubqueryProject;
 }
 

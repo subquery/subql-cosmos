@@ -4,6 +4,7 @@
 import path from 'path';
 import { Inject, Injectable, OnApplicationShutdown } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
+import { CosmosDataSource } from '@subql/common-cosmos';
 import {
   NodeConfig,
   StoreService,
@@ -16,10 +17,7 @@ import {
   InMemoryCacheService,
   createIndexerWorker,
 } from '@subql/node-core';
-import {
-  CosmosProjectDs,
-  SubqueryProject,
-} from '../../configure/SubqueryProject';
+import { SubqueryProject } from '../../configure/SubqueryProject';
 import { CosmosClientConnection } from '../cosmosClient.connection';
 import { DynamicDsService } from '../dynamic-ds.service';
 import { BlockContent } from '../types';
@@ -32,13 +30,14 @@ type IndexerWorker = IIndexerWorker & {
 
 @Injectable()
 export class WorkerBlockDispatcherService
-  extends WorkerBlockDispatcher<CosmosProjectDs, IndexerWorker, BlockContent>
+  extends WorkerBlockDispatcher<CosmosDataSource, IndexerWorker, BlockContent>
   implements OnApplicationShutdown
 {
   constructor(
     nodeConfig: NodeConfig,
     eventEmitter: EventEmitter2,
-    @Inject('IProjectService') projectService: IProjectService<CosmosProjectDs>,
+    @Inject('IProjectService')
+    projectService: IProjectService<CosmosDataSource>,
     @Inject('IProjectUpgradeService')
     projectUpgadeService: IProjectUpgradeService,
     cacheService: InMemoryCacheService,
@@ -64,7 +63,7 @@ export class WorkerBlockDispatcherService
           IIndexerWorker,
           CosmosClientConnection,
           BlockContent,
-          CosmosProjectDs
+          CosmosDataSource
         >(
           path.resolve(__dirname, '../../../dist/indexer/worker/worker.js'),
           [],
@@ -75,6 +74,9 @@ export class WorkerBlockDispatcherService
           connectionPoolState,
           project.root,
           projectService.startHeight,
+          {
+            tempDir: project.tempDir,
+          },
         ),
     );
   }

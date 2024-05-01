@@ -14,8 +14,9 @@ import {
   IProjectUpgradeService,
   profiler,
 } from '@subql/node-core';
+import { CosmosDatasource } from '@subql/types-cosmos';
 import { Sequelize } from '@subql/x-sequelize';
-import { SubqueryProject, CosmosProjectDs } from '../configure/SubqueryProject';
+import { SubqueryProject } from '../configure/SubqueryProject';
 import { ApiService } from './api.service';
 import { DsProcessorService } from './ds-processor.service';
 import { DynamicDsService } from './dynamic-ds.service';
@@ -27,7 +28,7 @@ const { version: packageVersion } = require('../../package.json');
 @Injectable()
 export class ProjectService extends BaseProjectService<
   ApiService,
-  CosmosProjectDs
+  CosmosDatasource
 > {
   protected packageVersion = packageVersion;
 

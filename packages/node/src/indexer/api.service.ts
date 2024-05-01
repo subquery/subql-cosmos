@@ -114,7 +114,7 @@ export class ApiService
           this.nodeConfig.kyveEndpoint,
           this.nodeConfig.kyveStorageUrl,
           this.nodeConfig.kyveChainId,
-          this.project.fileCacheDir,
+          this.project.tempDir,
           KYVE_BUFFER_RANGE * this.nodeConfig.batchSize,
         );
       } catch (e) {
@@ -137,7 +137,6 @@ export class ApiService
         try {
           return await this.kyveApi.fetchBlocksBatches(this.registry, heights);
         } catch (e) {
-          console.log('Kyve error', e, e.stack);
           logger.warn(
             e,
             `Failed to fetch blocks: ${JSON.stringify(
@@ -194,16 +193,6 @@ export class CosmosClient extends CosmWasmClient {
   ) {
     super(tendermintClient);
   }
-
-  /*
-  async chainId(): Promise<string> {
-    return this.getChainId();
-  }
-
-  async finalisedHeight(): Promise<number> {
-    return this.getHeight();
-  }
-  */
 
   // eslint-disable-next-line @typescript-eslint/require-await
   async blockInfo(height?: number): Promise<BlockResponse> {
