@@ -10,6 +10,7 @@ import {
   WorkerConnectionPoolStateManager,
   InMemoryCacheService,
   WorkerInMemoryCacheService,
+  NodeConfig,
   SandboxService,
   WorkerUnfinalizedBlocksService,
 } from '@subql/node-core';
@@ -38,16 +39,23 @@ import { WorkerService } from './worker.service';
         project: SubqueryProject,
         connectionPoolService: ConnectionPoolService<CosmosClientConnection>,
         eventEmitter: EventEmitter2,
+        nodeConfig: NodeConfig,
       ) => {
         const apiService = new ApiService(
           project,
           connectionPoolService,
           eventEmitter,
+          nodeConfig,
         );
         await apiService.init();
         return apiService;
       },
-      inject: ['ISubqueryProject', ConnectionPoolService, EventEmitter2],
+      inject: [
+        'ISubqueryProject',
+        ConnectionPoolService,
+        EventEmitter2,
+        NodeConfig,
+      ],
     },
     SandboxService,
     DsProcessorService,

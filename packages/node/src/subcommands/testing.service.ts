@@ -10,7 +10,8 @@ import {
   TestingService as BaseTestingService,
   TestRunner,
 } from '@subql/node-core';
-import { CosmosProjectDs, SubqueryProject } from '../configure/SubqueryProject';
+import { CosmosDatasource } from '@subql/types-cosmos';
+import { SubqueryProject } from '../configure/SubqueryProject';
 import { CosmosClient, CosmosSafeClient } from '../indexer/api.service';
 import { IndexerManager } from '../indexer/indexer.manager';
 import { ProjectService } from '../indexer/project.service';
@@ -22,7 +23,7 @@ export class TestingService extends BaseTestingService<
   CosmosClient,
   CosmosSafeClient,
   BlockContent,
-  CosmosProjectDs
+  CosmosDatasource
 > {
   constructor(
     nodeConfig: NodeConfig,
@@ -38,7 +39,7 @@ export class TestingService extends BaseTestingService<
         CosmosClient,
         CosmosSafeClient,
         BlockContent,
-        CosmosProjectDs
+        CosmosDatasource
       >,
     ]
   > {

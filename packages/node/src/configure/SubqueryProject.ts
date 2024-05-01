@@ -2,41 +2,46 @@
 // SPDX-License-Identifier: GPL-3.0
 
 import assert from 'assert';
+import fs from 'fs';
+import os from 'os';
+import { sep } from 'path';
+import { isMainThread } from 'worker_threads';
 import { Injectable } from '@nestjs/common';
 import { validateSemver } from '@subql/common';
 import {
   CosmosProjectNetworkConfig,
   parseCosmosProjectManifest,
-  CosmosDataSource,
   ProjectManifestV1_0_0Impl,
   isRuntimeCosmosDs,
   isCustomCosmosDs,
 } from '@subql/common-cosmos';
 import {
+  CronFilter,
   insertBlockFiltersCronSchedules,
   ISubqueryProject,
   loadProjectTemplates,
-  SubqlProjectDs,
   updateDataSourcesV1_0_0,
+  WorkerHost,
 } from '@subql/node-core';
 import { ParentProject, Reader, RunnerSpecs } from '@subql/types-core';
 import {
+  CosmosDatasource,
   CustomDatasourceTemplate,
   RuntimeDatasourceTemplate,
   CosmosHandlerKind,
+  CosmosBlockFilter,
 } from '@subql/types-cosmos';
 import { buildSchemaFromString } from '@subql/utils';
-import Cron from 'cron-converter';
 import { GraphQLSchema } from 'graphql';
 import { processNetworkConfig } from '../utils/project';
 
 const { version: packageVersion } = require('../../package.json');
 
-export type CosmosProjectDs = SubqlProjectDs<CosmosDataSource>;
-
 export type CosmosProjectDsTemplate =
-  | SubqlProjectDs<RuntimeDatasourceTemplate>
-  | SubqlProjectDs<CustomDatasourceTemplate>;
+  | RuntimeDatasourceTemplate
+  | CustomDatasourceTemplate;
+
+export type SubqlProjectBlockFilter = CosmosBlockFilter & CronFilter;
 
 const NOT_SUPPORT = (name: string) => {
   throw new Error(`Manifest specVersion ${name} is not supported`);
@@ -47,22 +52,23 @@ type NetworkConfig = CosmosProjectNetworkConfig & { chainId: string };
 
 @Injectable()
 export class SubqueryProject implements ISubqueryProject {
-  #dataSources: CosmosProjectDs[];
+  #dataSources: CosmosDatasource[];
 
   constructor(
     readonly id: string,
     readonly root: string,
     readonly network: NetworkConfig,
-    dataSources: CosmosProjectDs[],
+    dataSources: CosmosDatasource[],
     readonly schema: GraphQLSchema,
     readonly templates: CosmosProjectDsTemplate[],
     readonly runner?: RunnerSpecs,
     readonly parent?: ParentProject,
+    readonly tempDir?: string,
   ) {
     this.#dataSources = dataSources;
   }
 
-  get dataSources(): CosmosProjectDs[] {
+  get dataSources(): CosmosDatasource[] {
     return this.#dataSources;
   }
 
@@ -111,6 +117,23 @@ export class SubqueryProject implements ISubqueryProject {
 }
 
 type SUPPORT_MANIFEST = ProjectManifestV1_0_0Impl;
+
+/**
+ * Gets a temp dir shared between main thread and workers
+ * */
+function getTempDir(): string {
+  if (isMainThread) return fs.mkdtempSync(`${os.tmpdir()}${sep}`);
+  const workerTempDir = (
+    (global as any).host as WorkerHost<any> | undefined
+  )?.getWorkerData()?.tempDir;
+
+  if (!workerTempDir) {
+    throw new Error(
+      'Worker expected tempDir to be provided through workerData',
+    );
+  }
+  return workerTempDir;
+}
 
 async function loadProjectFromManifestBase(
   projectManifest: SUPPORT_MANIFEST,
@@ -177,5 +200,6 @@ async function loadProjectFromManifestBase(
     templates,
     runner,
     projectManifest.parent,
+    getTempDir(),
   );
 }

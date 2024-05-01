@@ -25,7 +25,7 @@ import {
 } from 'cosmjs-types/cosmwasm/wasm/v1/tx';
 import { CosmosClient } from '../indexer/api.service';
 import { HttpClient } from '../indexer/rpc-clients';
-import { filterMessageData, wrapEvent } from './cosmos';
+import { decodeMsg, filterMessageData, wrapEvent } from './cosmos';
 
 const ENDPOINT = 'https://rpc-archive.junonetwork.io/';
 
@@ -113,7 +113,7 @@ describe('CosmosUtils', () => {
       msg: {
         typeUrl: decodedTx.body.messages[0].typeUrl,
         get decodedMsg() {
-          return api.decodeMsg<any>(decodedTx.body.messages[0]);
+          return decodeMsg<any>(decodedTx.body.messages[0], registry);
         },
       },
     };
@@ -157,7 +157,7 @@ describe('CosmosUtils', () => {
       hash: '',
       decodedTx: {} as DecodedTxRaw,
     };
-    const events = wrapEvent({} as CosmosBlock, [tx], api, 0);
+    const events = wrapEvent({} as CosmosBlock, [tx], api.registry, 0);
     expect(events.length).toEqual(0);
   });
 

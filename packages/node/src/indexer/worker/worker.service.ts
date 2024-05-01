@@ -13,7 +13,6 @@ import {
   IBlock,
 } from '@subql/node-core';
 import { CosmosDatasource } from '@subql/types-cosmos';
-import { CosmosProjectDs } from '../../configure/SubqueryProject';
 import { ApiService } from '../api.service';
 import { IndexerManager } from '../indexer.manager';
 import { BlockContent } from '../types';
@@ -41,7 +40,7 @@ export class WorkerService extends BaseWorkerService<
     private apiService: ApiService,
     private indexerManager: IndexerManager,
     @Inject('IProjectService')
-    projectService: IProjectService<CosmosProjectDs>,
+    projectService: IProjectService<CosmosDatasource>,
     @Inject('IProjectUpgradeService')
     projectUpgradeService: IProjectUpgradeService,
     nodeConfig: NodeConfig,

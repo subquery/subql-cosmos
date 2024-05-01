@@ -14,10 +14,8 @@ import {
   IProjectUpgradeService,
   IBlock,
 } from '@subql/node-core';
-import {
-  CosmosProjectDs,
-  SubqueryProject,
-} from '../../configure/SubqueryProject';
+import { CosmosDatasource } from '@subql/types-cosmos';
+import { SubqueryProject } from '../../configure/SubqueryProject';
 import { ApiService } from '../api.service';
 import { IndexerManager } from '../indexer.manager';
 import { BlockContent } from '../types';
@@ -27,7 +25,7 @@ import { BlockContent } from '../types';
  */
 @Injectable()
 export class BlockDispatcherService
-  extends BlockDispatcher<BlockContent, CosmosProjectDs>
+  extends BlockDispatcher<BlockContent, CosmosDatasource>
   implements OnApplicationShutdown
 {
   constructor(
@@ -35,7 +33,8 @@ export class BlockDispatcherService
     nodeConfig: NodeConfig,
     private indexerManager: IndexerManager,
     eventEmitter: EventEmitter2,
-    @Inject('IProjectService') projectService: IProjectService<CosmosProjectDs>,
+    @Inject('IProjectService')
+    projectService: IProjectService<CosmosDatasource>,
     @Inject('IProjectUpgradeService')
     projectUpgradeService: IProjectUpgradeService,
     storeService: StoreService,

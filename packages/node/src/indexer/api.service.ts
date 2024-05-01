@@ -1,11 +1,10 @@
 // Copyright 2020-2024 SubQuery Pte Ltd authors & contributors
 // SPDX-License-Identifier: GPL-3.0
 
-import { TextDecoder } from 'util';
 import { CosmWasmClient, IndexedTx } from '@cosmjs/cosmwasm-stargate';
 import { toHex } from '@cosmjs/encoding';
 import { Uint53 } from '@cosmjs/math';
-import { DecodeObject, GeneratedType, Registry } from '@cosmjs/proto-signing';
+import { GeneratedType, Registry } from '@cosmjs/proto-signing';
 import { Block, defaultRegistryTypes, SearchTxQuery } from '@cosmjs/stargate';
 import {
   Tendermint37Client,
@@ -13,17 +12,18 @@ import {
 } from '@cosmjs/tendermint-rpc';
 import {
   BlockResponse,
-  Validator,
   BlockResultsResponse,
+  Validator,
 } from '@cosmjs/tendermint-rpc/build/tendermint37/responses';
 import { Inject, Injectable, OnApplicationShutdown } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { CosmosProjectNetConfig } from '@subql/common-cosmos';
 import {
-  getLogger,
-  ConnectionPoolService,
   ApiService as BaseApiService,
+  ConnectionPoolService,
+  getLogger,
   IBlock,
+  NodeConfig,
 } from '@subql/node-core';
 import { CosmWasmSafeClient } from '@subql/types-cosmos/interfaces';
 import {
@@ -34,12 +34,17 @@ import {
   MsgStoreCode,
   MsgUpdateAdmin,
 } from 'cosmjs-types/cosmwasm/wasm/v1/tx';
+import { CosmosNodeConfig } from '../configure/NodeConfig';
 import { SubqueryProject } from '../configure/SubqueryProject';
 import * as CosmosUtil from '../utils/cosmos';
+import { KyveApi } from '../utils/kyve/kyve';
 import { CosmosClientConnection } from './cosmosClient.connection';
 import { BlockContent } from './types';
 
 const logger = getLogger('api');
+
+const MAX_RECONNECT_ATTEMPTS = 5;
+const KYVE_BUFFER_RANGE = 10;
 
 @Injectable()
 export class ApiService
@@ -47,14 +52,18 @@ export class ApiService
   implements OnApplicationShutdown
 {
   private fetchBlocksBatches = CosmosUtil.fetchBlocksBatches;
+  private nodeConfig: CosmosNodeConfig;
+  private kyveApi?: KyveApi;
   registry: Registry;
 
   constructor(
     @Inject('ISubqueryProject') private project: SubqueryProject,
     connectionPoolService: ConnectionPoolService<CosmosClientConnection>,
     eventEmitter: EventEmitter2,
+    nodeConfig: NodeConfig,
   ) {
     super(connectionPoolService, eventEmitter);
+    this.nodeConfig = new CosmosNodeConfig(nodeConfig);
   }
 
   private async buildRegistry(): Promise<Registry> {
@@ -95,7 +104,51 @@ export class ApiService
       ),
     );
 
+    if (
+      this.nodeConfig.kyveEndpoint &&
+      this.nodeConfig.kyveEndpoint !== 'false'
+    ) {
+      try {
+        this.kyveApi = await KyveApi.create(
+          network.chainId,
+          this.nodeConfig.kyveEndpoint,
+          this.nodeConfig.kyveStorageUrl,
+          this.nodeConfig.kyveChainId,
+          this.project.tempDir,
+          KYVE_BUFFER_RANGE * this.nodeConfig.batchSize,
+        );
+      } catch (e) {
+        logger.warn(`Kyve Api is not connected. ${e}`);
+      }
+    } else {
+      logger.info(`Kyve not connected`);
+    }
+
     return this;
+  }
+
+  // Overrides the super function because of the kyve integration
+  async fetchBlocks(
+    heights: number[],
+    numAttempts = MAX_RECONNECT_ATTEMPTS,
+  ): Promise<IBlock<BlockContent>[]> {
+    return this.retryFetch(async () => {
+      if (this.kyveApi) {
+        try {
+          return await this.kyveApi.fetchBlocksBatches(this.registry, heights);
+        } catch (e) {
+          logger.warn(
+            e,
+            `Failed to fetch blocks: ${JSON.stringify(
+              heights,
+            )} via Kyve, trying with RPC`,
+          );
+        }
+      }
+      // Get the latest fetch function from the provider
+      const apiInstance = this.connectionPoolService.api;
+      return apiInstance.fetchBlocks(heights);
+    }, numAttempts);
   }
 
   get api(): CosmosClient {
@@ -141,16 +194,6 @@ export class CosmosClient extends CosmWasmClient {
     super(tendermintClient);
   }
 
-  /*
-  async chainId(): Promise<string> {
-    return this.getChainId();
-  }
-
-  async finalisedHeight(): Promise<number> {
-    return this.getHeight();
-  }
-  */
-
   // eslint-disable-next-line @typescript-eslint/require-await
   async blockInfo(height?: number): Promise<BlockResponse> {
     return this.tendermintClient.block(height);
@@ -164,25 +207,6 @@ export class CosmosClient extends CosmWasmClient {
   // eslint-disable-next-line @typescript-eslint/require-await
   async blockResults(height: number): Promise<BlockResultsResponse> {
     return this.tendermintClient.blockResults(height);
-  }
-
-  decodeMsg<T = unknown>(msg: DecodeObject): T {
-    try {
-      const decodedMsg = this.registry.decode(msg);
-      if (
-        [
-          '/cosmwasm.wasm.v1.MsgExecuteContract',
-          '/cosmwasm.wasm.v1.MsgMigrateContract',
-          '/cosmwasm.wasm.v1.MsgInstantiateContract',
-        ].includes(msg.typeUrl)
-      ) {
-        decodedMsg.msg = JSON.parse(new TextDecoder().decode(decodedMsg.msg));
-      }
-      return decodedMsg;
-    } catch (e) {
-      logger.error(e, 'Failed to decode message');
-      throw e;
-    }
   }
 
   static handleError(e: Error): Error {

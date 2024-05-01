@@ -2,18 +2,26 @@
 // SPDX-License-Identifier: GPL-3.0
 
 import assert from 'assert';
+import { TextDecoder } from 'util';
 import { sha256 } from '@cosmjs/crypto';
 import { toHex } from '@cosmjs/encoding';
-import { decodeTxRaw } from '@cosmjs/proto-signing';
+import { DecodeObject, decodeTxRaw, Registry } from '@cosmjs/proto-signing';
 import { fromTendermintEvent } from '@cosmjs/stargate';
 import { Log, parseRawLog } from '@cosmjs/stargate/build/logs';
+import { toRfc3339WithNanoseconds } from '@cosmjs/tendermint-rpc';
 import {
   BlockResponse,
   BlockResultsResponse,
   TxData,
   Event,
+  Header as CosmosHeader,
 } from '@cosmjs/tendermint-rpc/build/tendermint37';
-import { IBlock, getLogger, Header } from '@subql/node-core';
+import {
+  IBlock,
+  getLogger,
+  Header,
+  filterBlockTimestamp,
+} from '@subql/node-core';
 import {
   CosmosEventFilter,
   CosmosMessageFilter,
@@ -25,10 +33,33 @@ import {
   CosmosTxFilter,
 } from '@subql/types-cosmos';
 import { isObjectLike } from 'lodash';
+import { SubqlProjectBlockFilter } from '../configure/SubqueryProject';
 import { CosmosClient } from '../indexer/api.service';
 import { BlockContent } from '../indexer/types';
 
 const logger = getLogger('fetch');
+
+export function decodeMsg<T = unknown>(
+  msg: DecodeObject,
+  registry: Registry,
+): T {
+  try {
+    const decodedMsg = registry.decode(msg);
+    if (
+      [
+        '/cosmwasm.wasm.v1.MsgExecuteContract',
+        '/cosmwasm.wasm.v1.MsgMigrateContract',
+        '/cosmwasm.wasm.v1.MsgInstantiateContract',
+      ].includes(msg.typeUrl)
+    ) {
+      decodedMsg.msg = JSON.parse(new TextDecoder().decode(decodedMsg.msg));
+    }
+    return decodedMsg;
+  } catch (e) {
+    logger.error(e, 'Failed to decode message');
+    throw e;
+  }
+}
 
 export function filterBlock(
   data: CosmosBlock,
@@ -37,10 +68,22 @@ export function filterBlock(
   if (!filter) {
     return true;
   }
+  if (
+    !filterBlockTimestamp(
+      getBlockTimestamp(data.header).getTime(),
+      filter as SubqlProjectBlockFilter,
+    )
+  ) {
+    return false;
+  }
   if (filter.modulo && data.block.header.height % filter.modulo !== 0) {
     return false;
   }
   return true;
+}
+
+export function getBlockTimestamp(blockHeader: CosmosHeader): Date {
+  return new Date(toRfc3339WithNanoseconds(blockHeader.time));
 }
 
 export function filterTx(
@@ -166,7 +209,7 @@ export function filterEvents(
   return filteredEvents;
 }
 
-async function getBlockByHeight(
+async function getBlockByHeightByRpc(
   api: CosmosClient,
   height: number,
 ): Promise<[BlockResponse, BlockResultsResponse]> {
@@ -181,11 +224,13 @@ async function getBlockByHeight(
 }
 
 export async function fetchCosmosBlocksArray(
-  api: CosmosClient,
+  getBlockByHeight: (
+    height: number,
+  ) => Promise<[BlockResponse, BlockResultsResponse]>,
   blockArray: number[],
 ): Promise<[BlockResponse, BlockResultsResponse][]> {
   return Promise.all(
-    blockArray.map(async (height) => getBlockByHeight(api, height)),
+    blockArray.map(async (height) => getBlockByHeight(height)),
   );
 }
 
@@ -214,11 +259,11 @@ export function wrapTx(
   }));
 }
 
-function wrapCosmosMsg(
+export function wrapCosmosMsg(
   block: CosmosBlock,
   tx: CosmosTransaction,
   idx: number,
-  api: CosmosClient,
+  registry: Registry,
 ): CosmosMessage {
   const rawMessage = tx.decodedTx.body.messages[idx];
   return {
@@ -229,7 +274,7 @@ function wrapCosmosMsg(
       typeUrl: rawMessage.typeUrl,
       get decodedMsg() {
         delete this.decodedMsg;
-        return (this.decodedMsg = api.decodeMsg(rawMessage));
+        return (this.decodedMsg = decodeMsg(rawMessage, registry));
       },
     },
   };
@@ -238,12 +283,12 @@ function wrapCosmosMsg(
 function wrapMsg(
   block: CosmosBlock,
   txs: CosmosTransaction[],
-  api: CosmosClient,
+  registry: Registry,
 ): CosmosMessage[] {
   const msgs: CosmosMessage[] = [];
   for (const tx of txs) {
     for (let i = 0; i < tx.decodedTx.body.messages.length; i++) {
-      msgs.push(wrapCosmosMsg(block, tx, i, api));
+      msgs.push(wrapCosmosMsg(block, tx, i, registry));
     }
   }
   return msgs;
@@ -270,7 +315,7 @@ export function wrapBlockBeginAndEndEvents(
 export function wrapEvent(
   block: CosmosBlock,
   txs: CosmosTransaction[],
-  api: CosmosClient,
+  registry: Registry,
   idxOffset: number, //use this offset to avoid clash with idx of begin block events
 ): CosmosEvent[] {
   const events: CosmosEvent[] = [];
@@ -286,7 +331,7 @@ export function wrapEvent(
     for (const log of logs) {
       let msg: CosmosMessage;
       try {
-        msg = wrapCosmosMsg(block, tx, log.msg_index, api);
+        msg = wrapCosmosMsg(block, tx, log.msg_index, registry);
       } catch (e) {
         // Example where this can happen https://sei.explorers.guru/transaction/8D4CA68E917E15652E10CB960DE604AEEB1B183D6E94A85E9CD98403F15550B7
         logger.warn(
@@ -333,7 +378,11 @@ export async function fetchBlocksBatches(
   api: CosmosClient,
   blockArray: number[],
 ): Promise<IBlock<BlockContent>[]> {
-  const blocks = await fetchCosmosBlocksArray(api, blockArray);
+  const blocks = await fetchCosmosBlocksArray(
+    (height: number) => getBlockByHeightByRpc(api, height),
+    blockArray,
+  );
+
   return blocks.map(([blockInfo, blockResults]) => {
     try {
       assert(
@@ -342,7 +391,7 @@ export async function fetchBlocksBatches(
       );
 
       return formatBlockUtil(
-        new LazyBlockContent(blockInfo, blockResults, api),
+        new LazyBlockContent(blockInfo, blockResults, api.registry),
       );
     } catch (e) {
       logger.error(
@@ -354,7 +403,7 @@ export async function fetchBlocksBatches(
   });
 }
 
-class LazyBlockContent implements BlockContent {
+export class LazyBlockContent implements BlockContent {
   private _wrappedBlock: CosmosBlock;
   private _wrappedTransaction: CosmosTransaction[];
   private _wrappedMessage: CosmosMessage[];
@@ -366,7 +415,7 @@ class LazyBlockContent implements BlockContent {
   constructor(
     private _blockInfo: BlockResponse,
     private _results: BlockResultsResponse,
-    private _api: CosmosClient,
+    private _registry: Registry,
   ) {}
 
   get block() {
@@ -387,7 +436,11 @@ class LazyBlockContent implements BlockContent {
 
   get messages() {
     if (!this._wrappedMessage) {
-      this._wrappedMessage = wrapMsg(this.block, this.transactions, this._api);
+      this._wrappedMessage = wrapMsg(
+        this.block,
+        this.transactions,
+        this._registry,
+      );
     }
     return this._wrappedMessage;
   }
@@ -397,7 +450,7 @@ class LazyBlockContent implements BlockContent {
       this._wrappedEvent = wrapEvent(
         this.block,
         this.transactions,
-        this._api,
+        this._registry,
         this._eventIdx,
       );
       this._eventIdx += this._wrappedEvent.length;

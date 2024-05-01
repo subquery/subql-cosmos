@@ -7,12 +7,13 @@ import {
   DatasourceParams,
   DynamicDsService as BaseDynamicDsService,
 } from '@subql/node-core';
-import { CosmosProjectDs, SubqueryProject } from '../configure/SubqueryProject';
+import { CosmosDatasource } from '@subql/types-cosmos';
+import { SubqueryProject } from '../configure/SubqueryProject';
 import { DsProcessorService } from './ds-processor.service';
 
 @Injectable()
 export class DynamicDsService extends BaseDynamicDsService<
-  CosmosProjectDs,
+  CosmosDatasource,
   SubqueryProject
 > {
   constructor(
@@ -24,8 +25,8 @@ export class DynamicDsService extends BaseDynamicDsService<
 
   protected async getDatasource(
     params: DatasourceParams,
-  ): Promise<CosmosProjectDs> {
-    const dsObj = this.getTemplate<CosmosProjectDs>(
+  ): Promise<CosmosDatasource> {
+    const dsObj = this.getTemplate<CosmosDatasource>(
       params.templateName,
       params.startBlock,
     );
