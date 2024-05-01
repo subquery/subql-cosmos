@@ -33,15 +33,10 @@
     "@subql/common-cosmos": "workspace:*",
     "@subql/node-core": "10.0.1-0",
     "@subql/types-cosmos": "workspace:*",
-    "cron-converter": "^1.0.2",
-    "eventemitter2": "^6.4.5",
     "lodash": "^4.17.21",
-    "pg": "^8.7.1",
     "protobufjs": "^6.11.4",
     "reflect-metadata": "^0.1.13",
     "rimraf": "^3.0.2",
-    "rxjs": "^7.5.2",
-    "vm2": "^3.9.9",
     "yargs": "^16.2.0"
   },
   "devDependencies": {
