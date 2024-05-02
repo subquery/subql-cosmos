@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.11.1] - 2024-05-02
+### Fixed
+- Sandbox Uint8Array and missing pg dep issue
+
 ## [3.11.0] - 2024-05-02
 ### Added
 - Support for KYVE integration with supporting flags (#235)
@@ -402,7 +406,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Init release
 
-[Unreleased]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/3.11.0...HEAD
+[Unreleased]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/3.11.1...HEAD
+[3.11.1]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/3.11.0...node-cosmos/3.11.1
 [3.11.0]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/3.10.0...node-cosmos/3.11.0
 [3.10.0]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/3.9.2...node-cosmos/3.10.0
 [3.9.2]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/3.9.1...node-cosmos/3.9.2
