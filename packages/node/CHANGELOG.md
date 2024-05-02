@@ -5,13 +5,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [3.11.0] - 2024-05-02
 ### Added
 - Support for KYVE integration with supporting flags (#235)
   - `--kyve-endpoint` (default value is `https://api-us-1.kyve.network`, To disable use `false`)
   - `--kyve-chain-id` (default value is `kyve-1`)
-  - `--kyve-storage-url` (default value is `https://arweave.net`) 
+  - `--kyve-storage-url` (default value is `https://arweave.net`)
+
 ### Removed
 - Unused @apollo/client dependency causing version conflicts (#253)
+
 ### Changed
 - Update dependencies and apply changes to match (#254)
 
@@ -398,7 +402,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Init release
 
-[Unreleased]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/3.10.0...HEAD
+[Unreleased]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/3.11.0...HEAD
+[3.11.0]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/3.10.0...node-cosmos/3.11.0
 [3.10.0]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/3.9.2...node-cosmos/3.10.0
 [3.9.2]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/3.9.1...node-cosmos/3.9.2
 [3.9.1]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/3.9.0...node-cosmos/3.9.1
