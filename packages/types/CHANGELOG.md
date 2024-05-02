@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [3.4.0] - 2024-05-02
 ### Changed
 - Update `@subql/types-core` and use types from there (#254)
 
@@ -114,7 +116,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix chainTypes not being in deployments
 
 ## [0.0.5] - 2022-06-15
-[Unreleased]: https://github.com/subquery/subql-cosmos/compare/types-cosmos/3.3.0...HEAD
+[Unreleased]: https://github.com/subquery/subql-cosmos/compare/types-cosmos/3.4.0...HEAD
+[3.4.0]: https://github.com/subquery/subql-cosmos/compare/types-cosmos/3.3.0...types-cosmos/3.4.0
 [3.3.0]: https://github.com/subquery/subql-cosmos/compare/types-cosmos/3.2.4...types-cosmos/3.3.0
 [3.2.4]: https://github.com/subquery/subql-cosmos/compare/types-cosmos/3.2.3...types-cosmos/3.2.4
 [3.2.3]: https://github.com/subquery/subql-cosmos/compare/types-cosmos/3.2.2...types-cosmos/3.2.3
