@@ -23,6 +23,7 @@ import {
   MsgStoreCode,
   MsgUpdateAdmin,
 } from 'cosmjs-types/cosmwasm/wasm/v1/tx';
+import { isLong, fromInt } from 'long';
 import { CosmosClient } from '../indexer/api.service';
 import { HttpClient } from '../indexer/rpc-clients';
 import { decodeMsg, filterMessageData, wrapEvent } from './cosmos';
@@ -173,74 +174,74 @@ describe('CosmosUtils', () => {
     expect(spy).toHaveBeenCalled();
   });
 
-  // it('can filter long type decoded msg for true', () => {
-  //   const msg: CosmosMessage = {
-  //     tx: null,
-  //     msg: {
-  //       typeUrl: '/cosmwasm.wasm.v1.MsgInstantiateContract',
-  //       decodedMsg: {
-  //         codeId: longify(4),
-  //       },
-  //     },
-  //   } as unknown as CosmosMessage;
+  it('can filter long type decoded msg for true', () => {
+    const msg: CosmosMessage = {
+      tx: null,
+      msg: {
+        typeUrl: '/cosmwasm.wasm.v1.MsgInstantiateContract',
+        decodedMsg: {
+          codeId: fromInt(4),
+        },
+      },
+    } as unknown as CosmosMessage;
 
-  //   const filter: CosmosMessageFilter = {
-  //     type: '/cosmwasm.wasm.v1.MsgInstantiateContract',
-  //     values: {
-  //       codeId: '4',
-  //     },
-  //     includeFailedTx: true,
-  //   };
+    const filter: CosmosMessageFilter = {
+      type: '/cosmwasm.wasm.v1.MsgInstantiateContract',
+      values: {
+        codeId: '4',
+      },
+      includeFailedTx: true,
+    };
 
-  //   const result = filterMessageData(msg, filter);
-  //   expect(result).toEqual(true);
-  // });
+    const result = filterMessageData(msg, filter);
+    expect(result).toEqual(true);
+  });
 
-  // it('can filter long type decoded msg for number filter', () => {
-  //   const msg: CosmosMessage = {
-  //     tx: null,
-  //     msg: {
-  //       typeUrl: '/cosmwasm.wasm.v1.MsgInstantiateContract',
-  //       decodedMsg: {
-  //         codeId: longify(4),
-  //       },
-  //     },
-  //   } as unknown as CosmosMessage;
+  it('can filter long type decoded msg for number filter', () => {
+    const msg: CosmosMessage = {
+      tx: null,
+      msg: {
+        typeUrl: '/cosmwasm.wasm.v1.MsgInstantiateContract',
+        decodedMsg: {
+          codeId: fromInt(4),
+        },
+      },
+    } as unknown as CosmosMessage;
 
-  //   const filter: CosmosMessageFilter = {
-  //     type: '/cosmwasm.wasm.v1.MsgInstantiateContract',
-  //     values: {
-  //       codeId: 4 as unknown as string,
-  //     },
-  //     includeFailedTx: true,
-  //   };
+    const filter: CosmosMessageFilter = {
+      type: '/cosmwasm.wasm.v1.MsgInstantiateContract',
+      values: {
+        codeId: 4 as unknown as string,
+      },
+      includeFailedTx: true,
+    };
 
-  //   const result = filterMessageData(msg, filter);
-  //   expect(result).toEqual(true);
-  // });
+    const result = filterMessageData(msg, filter);
+    expect(result).toEqual(true);
+  });
 
-  // it('can filter long type decoded msg for false', () => {
-  //   const msg: CosmosMessage = {
-  //     tx: null,
-  //     msg: {
-  //       typeUrl: '/cosmwasm.wasm.v1.MsgInstantiateContract',
-  //       decodedMsg: {
-  //         codeId: longify(4),
-  //       },
-  //     },
-  //   } as unknown as CosmosMessage;
+  it('can filter long type decoded msg for false', () => {
+    const msg: CosmosMessage = {
+      tx: null,
+      msg: {
+        typeUrl: '/cosmwasm.wasm.v1.MsgInstantiateContract',
+        decodedMsg: {
+          codeId: fromInt(4),
+        },
+      },
+    } as unknown as CosmosMessage;
 
-  //   const filter: CosmosMessageFilter = {
-  //     type: '/cosmwasm.wasm.v1.MsgInstantiateContract',
-  //     values: {
-  //       codeId: '5',
-  //     },
-  //     includeFailedTx: true,
-  //   };
+    const filter: CosmosMessageFilter = {
+      type: '/cosmwasm.wasm.v1.MsgInstantiateContract',
+      values: {
+        codeId: '5',
+      },
+      includeFailedTx: true,
+    };
 
-  //   const result = filterMessageData(msg, filter);
-  //   expect(result).toEqual(false);
-  // });
+    const result = filterMessageData(msg, filter);
+    expect(result).toEqual(false);
+  });
 
   describe('filterMessageData function', () => {
     const baseData = {
