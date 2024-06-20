@@ -16,6 +16,7 @@ import {
   IProjectUpgradeService,
   InMemoryCacheService,
   SandboxService,
+  MonitorService,
 } from '@subql/node-core';
 import { SubqueryProject } from '../configure/SubqueryProject';
 import { ApiService } from './api.service';
@@ -57,6 +58,7 @@ import { UnfinalizedBlocksService } from './unfinalizedBlocks.service';
         dynamicDsService: DynamicDsService,
         unfinalizedBlocks: UnfinalizedBlocksService,
         connectionPoolState: ConnectionPoolStateManager<CosmosClientConnection>,
+        monitorService?: MonitorService,
       ) =>
         nodeConfig.workers
           ? new WorkerBlockDispatcherService(
@@ -72,6 +74,7 @@ import { UnfinalizedBlocksService } from './unfinalizedBlocks.service';
               dynamicDsService,
               unfinalizedBlocks,
               connectionPoolState,
+              monitorService,
             )
           : new BlockDispatcherService(
               apiService,
@@ -100,6 +103,7 @@ import { UnfinalizedBlocksService } from './unfinalizedBlocks.service';
         DynamicDsService,
         UnfinalizedBlocksService,
         ConnectionPoolStateManager,
+        MonitorService,
       ],
     },
     FetchService,
@@ -116,8 +120,9 @@ import { UnfinalizedBlocksService } from './unfinalizedBlocks.service';
       useClass: ProjectService,
       provide: 'IProjectService',
     },
+    MonitorService,
     UnfinalizedBlocksService,
   ],
-  exports: [StoreService, StoreCacheService],
+  exports: [StoreService, StoreCacheService, MonitorService, PoiService],
 })
 export class FetchModule {}

@@ -3,7 +3,7 @@
 
 import { NestFactory } from '@nestjs/core';
 import { findAvailablePort, notifyUpdates } from '@subql/common';
-import { getLogger, NestLogger } from '@subql/node-core';
+import { exitWithError, getLogger, NestLogger } from '@subql/node-core';
 import { AppModule } from './app.module';
 import { ApiService } from './indexer/api.service';
 import { FetchService } from './indexer/fetch.service';
@@ -28,12 +28,14 @@ export async function bootstrap(): Promise<void> {
 
   const port = validate(argv.port) ?? (await findAvailablePort(DEFAULT_PORT));
   if (!port) {
-    logger.error(
-      `Unable to find available port (tried ports in range (${port}..${
-        port + 10
-      })). Try setting a free port manually by setting the --port flag`,
+    exitWithError(
+      new Error(
+        `Unable to find available port (tried ports in range (${port}..${
+          port + 10
+        })). Try setting a free port manually by setting the --port flag`,
+      ),
+      logger,
     );
-    process.exit(1);
   }
 
   if (argv.unsafe) {

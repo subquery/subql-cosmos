@@ -31,7 +31,7 @@ const COSMOS_NODE_NAME = `@subql/node-cosmos`;
 
 export class CosmosRunnerNodeImpl extends RunnerNodeImpl {
   @Equals(COSMOS_NODE_NAME, {message: `Runner Cosmos node name incorrect, suppose be '${COSMOS_NODE_NAME}'`})
-  name: string;
+  name: string = COSMOS_NODE_NAME;
 }
 
 export class CosmosRuntimeDataSourceImpl
@@ -73,7 +73,7 @@ export class CosmosProjectNetwork extends CommonProjectNetworkV1_0_0<CosmosChain
   @Type(() => CosmosCustomModuleImpl)
   @IsOptional()
   @ValidateNested({each: true})
-  chaintypes?: Map<string, CosmosCustomModuleImpl>;
+  declare chaintypes?: Map<string, CosmosCustomModuleImpl>;
 }
 
 export class RuntimeDatasourceTemplateImpl extends CosmosRuntimeDataSourceImpl implements RuntimeDatasourceTemplate {
@@ -137,7 +137,7 @@ export class ProjectManifestV1_0_0Impl
   }
 
   @Equals('1.0.0')
-  specVersion: string;
+  specVersion = '1.0.0';
   @IsString()
   name: string;
   @IsString()
