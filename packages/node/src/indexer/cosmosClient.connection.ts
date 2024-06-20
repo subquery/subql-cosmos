@@ -10,6 +10,7 @@ import {
   ApiErrorType,
   IApiConnectionSpecific,
   NetworkMetadataPayload,
+  exitWithError,
 } from '@subql/node-core';
 import { getLogger } from '@subql/node-core/dist';
 import { CosmosClient, CosmosSafeClient } from './api.service';
@@ -67,8 +68,10 @@ export class CosmosClientConnection
     const rpcClient =
       endpoint.includes('ws://') || endpoint.includes('wss://')
         ? new WebsocketClient(endpoint, (err) => {
-            logger.error(err, `Websocket connection failed`);
-            process.exit(1);
+            exitWithError(
+              new Error(`Websocket connection failed`, { cause: err }),
+              logger,
+            );
           })
         : new HttpClient(httpEndpoint);
 

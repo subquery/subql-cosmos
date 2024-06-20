@@ -16,6 +16,7 @@ import {
   IProjectUpgradeService,
   InMemoryCacheService,
   createIndexerWorker,
+  MonitorServiceInterface,
 } from '@subql/node-core';
 import { SubqueryProject } from '../../configure/SubqueryProject';
 import { CosmosClientConnection } from '../cosmosClient.connection';
@@ -48,6 +49,7 @@ export class WorkerBlockDispatcherService
     dynamicDsService: DynamicDsService,
     unfinalizedBlocksSevice: UnfinalizedBlocksService,
     connectionPoolState: ConnectionPoolStateManager<CosmosClientConnection>,
+    monitorService?: MonitorServiceInterface,
   ) {
     super(
       nodeConfig,
@@ -74,10 +76,12 @@ export class WorkerBlockDispatcherService
           connectionPoolState,
           project.root,
           projectService.startHeight,
+          monitorService,
           {
             tempDir: project.tempDir,
           },
         ),
+      monitorService,
     );
   }
 
