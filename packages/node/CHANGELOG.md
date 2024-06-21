@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [3.12.0] - 2024-06-21
 ### Added
 - Add monitor service to record block indexing actions in order to improve POI accuracy, and provide debug info for Admin api (#264)
 - The ability to specify filters when creating dynamic data sources (#265)
@@ -416,7 +418,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Init release
 
-[Unreleased]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/3.11.2...HEAD
+[Unreleased]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/3.12.0...HEAD
+[3.12.0]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/3.11.2...node-cosmos/3.12.0
 [3.11.2]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/3.11.1...node-cosmos/3.11.2
 [3.11.1]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/3.11.0...node-cosmos/3.11.1
 [3.11.0]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/3.10.0...node-cosmos/3.11.0
