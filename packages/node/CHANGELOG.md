@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - Add monitor service to record block indexing actions in order to improve POI accuracy, and provide debug info for Admin api (#264)
+- The ability to specify filters when creating dynamic data sources (#265)
 
 ### Changed
 - Update dependencies (#264)
