@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [4.4.0] - 2024-06-21
 ### Changed
 - Add default value in model class to follow ES2022 rule (#264)
 
@@ -140,7 +142,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix chainTypes not being in deployments
 
 ## [0.0.5] - 2022-06-15
-[Unreleased]: https://github.com/subquery/subql-cosmos/compare/common-cosmos/4.3.0...HEAD
+[Unreleased]: https://github.com/subquery/subql-cosmos/compare/common-cosmos/4.4.0...HEAD
+[4.4.0]: https://github.com/subquery/subql-cosmos/compare/common-cosmos/4.3.0...common-cosmos/4.4.0
 [4.3.0]: https://github.com/subquery/subql-cosmos/compare/common-cosmos/4.2.0...common-cosmos/4.3.0
 [4.2.0]: https://github.com/subquery/subql-cosmos/compare/common-cosmos/4.1.1...common-cosmos/4.2.0
 [4.1.1]: https://github.com/subquery/subql-cosmos/compare/common-cosmos/4.1.0...common-cosmos/4.1.1
