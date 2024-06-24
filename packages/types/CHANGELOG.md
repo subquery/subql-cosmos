@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Add type `CosmosNetworkModule` to support cosmos module (#267)
+
 ## [3.4.0] - 2024-05-02
 ### Changed
 - Update `@subql/types-core` and use types from there (#254)

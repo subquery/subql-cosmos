@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Add alias follow type of `CosmosNetworkModule`. Also add method `networkCliCodegen` include steps of cosmos codegen. (#267)
+
 ## [4.4.0] - 2024-06-21
 ### Changed
 - Add default value in model class to follow ES2022 rule (#264)
