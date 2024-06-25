@@ -242,9 +242,7 @@ export async function generateProto(
   projectPath: string,
   prepareDirPath: (path: string, recreate: boolean) => Promise<void>,
   renderTemplate: (templatePath: string, outputPath: string, templateData: Data) => Promise<void>,
-  upperFirst: (string?: string) => string,
-  /** @deprecated */
-  mkdirProto?: (projectPath: string) => Promise<string>
+  upperFirst: (string?: string) => string
 ): Promise<void> {
   let tmpPath: string;
   try {
@@ -280,7 +278,16 @@ export async function generateProto(
   }
 }
 
-export async function networkCliCodegen(
+/**
+ * Generates typescript interfaces from proto files and cosmwasm abis
+ * @param manifest
+ * @param projectPath
+ * @param prepareDirPath
+ * @param renderTemplate
+ * @param upperFirst
+ * @param datasources
+ */
+export async function projectCodegen(
   manifest: ProjectManifestV1_0_0[],
   projectPath: string,
   prepareDirPath: (path: string, recreate: boolean) => Promise<void>,
@@ -290,13 +297,12 @@ export async function networkCliCodegen(
 ): Promise<void> {
   const chainTypes = getChaintypes(manifest);
   if (chainTypes.length) {
-    await generateProto(chainTypes, projectPath, prepareDirPath, renderTemplate, upperFirst, tempProtoDir);
+    await generateProto(chainTypes, projectPath, prepareDirPath, renderTemplate, upperFirst);
   }
   await generateCosmwasm(datasources, projectPath, prepareDirPath, upperFirst, renderTemplate);
 }
 
-//Deprecated export in future version
-export function getChaintypes(manifest: ProjectManifestV1_0_0[]): Map<string, CustomModule>[] {
+function getChaintypes(manifest: ProjectManifestV1_0_0[]): Map<string, CustomModule>[] {
   return manifest
     .filter((m) => validateCosmosManifest(m))
     .map((m) => (m as CosmosProjectManifestV1_0_0).network.chaintypes)

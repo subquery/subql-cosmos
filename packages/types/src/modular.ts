@@ -3,10 +3,11 @@
 
 import {INetworkCommonModule, ProjectManifestV1_0_0} from '@subql/types-core';
 import {Data} from 'ejs';
-import {CosmosRuntimeDatasource} from './project';
+import {CosmosCustomDatasource, CosmosDatasource, CosmosRuntimeDatasource} from './project';
 
-export interface CosmosNetworkModule extends INetworkCommonModule {
-  networkCliCodegen(
+export interface CosmosNetworkModule
+  extends INetworkCommonModule<CosmosDatasource, CosmosRuntimeDatasource, CosmosCustomDatasource> {
+  projectCodegen(
     manifest: ProjectManifestV1_0_0[],
     projectPath: string,
     prepareDirPath: (path: string, recreate: boolean) => Promise<void>,
