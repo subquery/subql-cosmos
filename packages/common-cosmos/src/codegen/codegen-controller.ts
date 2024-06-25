@@ -5,7 +5,13 @@ import fs from 'fs';
 import path from 'path';
 import cosmwasmCodegen from '@cosmwasm/ts-codegen';
 import {makeTempDir} from '@subql/common';
-import {CosmosChaintypes, CustomModule, CosmosRuntimeDatasource} from '@subql/types-cosmos';
+import {ProjectManifestV1_0_0} from '@subql/types-core/dist/project/versioned/v1_0_0/types';
+import {
+  CosmosChaintypes,
+  CustomModule,
+  CosmosRuntimeDatasource,
+  CosmosProjectManifestV1_0_0,
+} from '@subql/types-cosmos';
 import telescope from '@subql/x-cosmology-telescope';
 import {Data} from 'ejs';
 import {copySync} from 'fs-extra';
@@ -13,7 +19,7 @@ import {upperFirst} from 'lodash';
 import {IDLObject} from 'wasm-ast-types';
 import {isRuntimeCosmosDs} from '../project';
 import {COSMWASM_OPTS, TELESCOPE_OPTS} from './constants';
-import {loadCosmwasmAbis, tmpProtoDir} from './util';
+import {loadCosmwasmAbis, tmpProtoDir, validateCosmosManifest} from './util';
 
 const TYPE_ROOT_DIR = 'src/types';
 
@@ -236,9 +242,7 @@ export async function generateProto(
   projectPath: string,
   prepareDirPath: (path: string, recreate: boolean) => Promise<void>,
   renderTemplate: (templatePath: string, outputPath: string, templateData: Data) => Promise<void>,
-  upperFirst: (string?: string) => string,
-  /** @deprecated */
-  mkdirProto?: (projectPath: string) => Promise<string>
+  upperFirst: (string?: string) => string
 ): Promise<void> {
   let tmpPath: string;
   try {
@@ -272,4 +276,35 @@ export async function generateProto(
   } finally {
     fs.rmSync(tmpPath, {recursive: true, force: true});
   }
+}
+
+/**
+ * Generates typescript interfaces from proto files and cosmwasm abis
+ * @param manifest
+ * @param projectPath
+ * @param prepareDirPath
+ * @param renderTemplate
+ * @param upperFirst
+ * @param datasources
+ */
+export async function projectCodegen(
+  manifest: ProjectManifestV1_0_0[],
+  projectPath: string,
+  prepareDirPath: (path: string, recreate: boolean) => Promise<void>,
+  renderTemplate: (templatePath: string, outputPath: string, templateData: Data) => Promise<void>,
+  upperFirst: (string?: string) => string,
+  datasources: CosmosRuntimeDatasource[]
+): Promise<void> {
+  const chainTypes = getChaintypes(manifest);
+  if (chainTypes.length) {
+    await generateProto(chainTypes, projectPath, prepareDirPath, renderTemplate, upperFirst);
+  }
+  await generateCosmwasm(datasources, projectPath, prepareDirPath, upperFirst, renderTemplate);
+}
+
+function getChaintypes(manifest: ProjectManifestV1_0_0[]): Map<string, CustomModule>[] {
+  return manifest
+    .filter((m) => validateCosmosManifest(m))
+    .map((m) => (m as CosmosProjectManifestV1_0_0).network.chaintypes)
+    .filter((value) => value && Object.keys(value).length !== 0);
 }
