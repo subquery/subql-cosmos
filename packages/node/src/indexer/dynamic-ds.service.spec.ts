@@ -150,4 +150,86 @@ describe('Creating dynamic ds', () => {
       type: '/cosmwasm.wasm.v1.MsgExecuteContract',
     });
   });
+
+  it('should not add empty properties to dynamic ds', async () => {
+    const ds = await dynamiDsService.createDynamicDatasource({
+      templateName: 'cosmos',
+      startBlock: 100,
+      args: {
+        // values: { contract: 'cosmos1' },
+        attributes: { _contract_address: 'cosmos_wasm' },
+      },
+    });
+
+    expect(ds).toEqual({
+      kind: CosmosDatasourceKind.Runtime,
+      startBlock: 100,
+      mapping: {
+        file: '',
+        handlers: [
+          {
+            handler: 'handleEvent',
+            kind: CosmosHandlerKind.Event,
+            filter: {
+              type: 'execute',
+              messageFilter: {
+                type: '/cosmwasm.wasm.v1.MsgExecuteContract',
+              },
+              attributes: {
+                _contract_address: 'cosmos_wasm',
+              },
+            },
+          },
+          {
+            handler: 'handleMessage',
+            kind: CosmosHandlerKind.Message,
+            filter: {
+              type: '/cosmwasm.wasm.v1.MsgExecuteContract',
+            },
+          },
+        ],
+      },
+    });
+
+    const ds2 = await dynamiDsService.createDynamicDatasource({
+      templateName: 'cosmos',
+      startBlock: 100,
+      args: {
+        values: { contract: 'cosmos1' },
+      },
+    });
+
+    expect(ds2).toEqual({
+      kind: CosmosDatasourceKind.Runtime,
+      startBlock: 100,
+      mapping: {
+        file: '',
+        handlers: [
+          {
+            handler: 'handleEvent',
+            kind: CosmosHandlerKind.Event,
+            filter: {
+              type: 'execute',
+              messageFilter: {
+                type: '/cosmwasm.wasm.v1.MsgExecuteContract',
+                values: {
+                  contract: 'cosmos1',
+                },
+              },
+            },
+          },
+          {
+            handler: 'handleMessage',
+            kind: CosmosHandlerKind.Message,
+            filter: {
+              type: '/cosmwasm.wasm.v1.MsgExecuteContract',
+              values: {
+                contract: 'cosmos1',
+              },
+            },
+          },
+        ],
+      },
+    });
+  });
 });

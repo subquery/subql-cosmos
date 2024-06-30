@@ -1,6 +1,7 @@
 // Copyright 2020-2024 SubQuery Pte Ltd authors & contributors
 // SPDX-License-Identifier: GPL-3.0
 
+import assert from 'assert';
 import { Inject, Injectable } from '@nestjs/common';
 import {
   CosmosRuntimeDataSourceImpl,
@@ -82,37 +83,45 @@ export class DynamicDsService extends BaseDynamicDsService<
         dsObj.mapping.handlers = dsObj.mapping.handlers.map((handler) => {
           switch (handler.kind) {
             case CosmosHandlerKind.Event:
-              if (handler.filter) {
-                return {
-                  ...handler,
-                  filter: {
-                    ...handler.filter,
-                    messageFilter: {
-                      ...handler.filter.messageFilter,
-                      values: {
-                        ...handler.filter.messageFilter.values,
-                        ...(params.args.values as Record<string, string>),
-                      },
-                    },
-                    attributes: {
-                      ...handler.filter.attributes,
-                      ...(params.args.attributes as Record<string, string>),
-                    },
-                  },
+              assert(
+                handler.filter,
+                'Dynamic datasources must have some predfined filter',
+              );
+              if (params.args.values) {
+                if (!handler.filter.messageFilter) {
+                  throw new Error(
+                    'Cannot set values on handler without predefined messageFilter type',
+                  );
+                }
+                handler.filter.messageFilter.values ??= {};
+                handler.filter.messageFilter.values = {
+                  ...handler.filter.messageFilter.values,
+                  ...(params.args.values as Record<string, string>),
+                };
+              }
+              if (params.args.attributes) {
+                handler.filter.attributes ??= {};
+                handler.filter.attributes = {
+                  ...handler.filter.attributes,
+                  ...(params.args.attributes as Record<string, string>),
                 };
               }
               return handler;
             case CosmosHandlerKind.Message:
-              if (handler.filter) {
-                return {
-                  ...handler,
-                  filter: {
-                    ...handler.filter,
-                    values: {
-                      ...handler.filter.values,
-                      ...(params.args.values as Record<string, string>),
-                    },
-                  },
+              assert(
+                handler.filter,
+                'Dynamic datasources must have some predfined filter',
+              );
+              if (params.args.values) {
+                if (!handler.filter) {
+                  throw new Error(
+                    'Cannot set values on handler without predefined messageFilter type',
+                  );
+                }
+                handler.filter.values ??= {};
+                handler.filter.values = {
+                  ...handler.filter.values,
+                  ...(params.args.values as Record<string, string>),
                 };
               }
               return handler;
