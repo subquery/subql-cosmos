@@ -60,6 +60,22 @@ describe('Creating dynamic ds', () => {
             ],
           },
         },
+        {
+          name: 'cosmos2',
+          kind: CosmosDatasourceKind.Runtime,
+          mapping: {
+            file: '',
+            handlers: [
+              {
+                handler: 'handleEvent',
+                kind: CosmosHandlerKind.Event,
+                filter: {
+                  type: 'execute',
+                },
+              },
+            ],
+          },
+        },
       ],
       null,
       null,
@@ -148,6 +164,115 @@ describe('Creating dynamic ds', () => {
 
     expect(project.templates[0].mapping.handlers[1].filter).toEqual({
       type: '/cosmwasm.wasm.v1.MsgExecuteContract',
+    });
+  });
+
+  it('should not add empty properties to dynamic ds', async () => {
+    const ds = await dynamiDsService.createDynamicDatasource({
+      templateName: 'cosmos',
+      startBlock: 100,
+      args: {
+        attributes: { _contract_address: 'cosmos_wasm' },
+      },
+    });
+
+    expect(ds).toEqual({
+      kind: CosmosDatasourceKind.Runtime,
+      startBlock: 100,
+      mapping: {
+        file: '',
+        handlers: [
+          {
+            handler: 'handleEvent',
+            kind: CosmosHandlerKind.Event,
+            filter: {
+              type: 'execute',
+              messageFilter: {
+                type: '/cosmwasm.wasm.v1.MsgExecuteContract',
+              },
+              attributes: {
+                _contract_address: 'cosmos_wasm',
+              },
+            },
+          },
+          {
+            handler: 'handleMessage',
+            kind: CosmosHandlerKind.Message,
+            filter: {
+              type: '/cosmwasm.wasm.v1.MsgExecuteContract',
+            },
+          },
+        ],
+      },
+    });
+
+    const ds2 = await dynamiDsService.createDynamicDatasource({
+      templateName: 'cosmos',
+      startBlock: 100,
+      args: {
+        values: { contract: 'cosmos1' },
+      },
+    });
+
+    expect(ds2).toEqual({
+      kind: CosmosDatasourceKind.Runtime,
+      startBlock: 100,
+      mapping: {
+        file: '',
+        handlers: [
+          {
+            handler: 'handleEvent',
+            kind: CosmosHandlerKind.Event,
+            filter: {
+              type: 'execute',
+              messageFilter: {
+                type: '/cosmwasm.wasm.v1.MsgExecuteContract',
+                values: {
+                  contract: 'cosmos1',
+                },
+              },
+            },
+          },
+          {
+            handler: 'handleMessage',
+            kind: CosmosHandlerKind.Message,
+            filter: {
+              type: '/cosmwasm.wasm.v1.MsgExecuteContract',
+              values: {
+                contract: 'cosmos1',
+              },
+            },
+          },
+        ],
+      },
+    });
+
+    const ds3 = await dynamiDsService.createDynamicDatasource({
+      templateName: 'cosmos2',
+      startBlock: 100,
+      args: {
+        attributes: { _contract_address: 'cosmos_wasm' },
+      },
+    });
+
+    expect(ds3).toEqual({
+      kind: CosmosDatasourceKind.Runtime,
+      startBlock: 100,
+      mapping: {
+        file: '',
+        handlers: [
+          {
+            handler: 'handleEvent',
+            kind: CosmosHandlerKind.Event,
+            filter: {
+              type: 'execute',
+              attributes: {
+                _contract_address: 'cosmos_wasm',
+              },
+            },
+          },
+        ],
+      },
     });
   });
 });

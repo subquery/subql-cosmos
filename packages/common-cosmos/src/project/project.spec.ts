@@ -44,7 +44,9 @@ describe('project.yaml', () => {
     const cosmosManifest = loadFromJsonOrYaml(
       path.join(projectsDir, './protoTest1', 'bad-chaintypes-project.yaml')
     ) as any;
-    expect(() => parseCosmosProjectManifest(cosmosManifest)).toThrow('failed to parse project.yaml');
+    expect(() => parseCosmosProjectManifest(cosmosManifest)).toThrow(
+      'Failed to parse project. Please see below for more information'
+    );
   });
   it('Ensure chaintypes existence on manifest deployment', () => {
     const cosmosManifest = loadFromJsonOrYaml(path.join(projectsDir, './protoTest1', 'project.yaml')) as any;
