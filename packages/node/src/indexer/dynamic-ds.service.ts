@@ -93,14 +93,12 @@ export class DynamicDsService extends BaseDynamicDsService<
                     'Cannot set values on handler without predefined messageFilter type',
                   );
                 }
-                handler.filter.messageFilter.values ??= {};
                 handler.filter.messageFilter.values = {
                   ...handler.filter.messageFilter.values,
                   ...(params.args.values as Record<string, string>),
                 };
               }
               if (params.args.attributes) {
-                handler.filter.attributes ??= {};
                 handler.filter.attributes = {
                   ...handler.filter.attributes,
                   ...(params.args.attributes as Record<string, string>),
@@ -118,7 +116,6 @@ export class DynamicDsService extends BaseDynamicDsService<
                     'Cannot set values on handler without predefined messageFilter type',
                   );
                 }
-                handler.filter.values ??= {};
                 handler.filter.values = {
                   ...handler.filter.values,
                   ...(params.args.values as Record<string, string>),
