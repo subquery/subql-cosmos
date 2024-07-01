@@ -6,6 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.5.0] - 2024-07-01
 ### Added
 - Add type `CosmosNetworkModule` to support cosmos module (#267)
 
@@ -119,7 +120,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix chainTypes not being in deployments
 
 ## [0.0.5] - 2022-06-15
-[Unreleased]: https://github.com/subquery/subql-cosmos/compare/types-cosmos/3.4.0...HEAD
+[Unreleased]: https://github.com/subquery/subql-cosmos/compare/types-cosmos/3.5.0...HEAD
+[3.5.0]: https://github.com/subquery/subql-cosmos/compare/types-cosmos/3.4.0...types-cosmos/3.5.0
 [3.4.0]: https://github.com/subquery/subql-cosmos/compare/types-cosmos/3.3.0...types-cosmos/3.4.0
 [3.3.0]: https://github.com/subquery/subql-cosmos/compare/types-cosmos/3.2.4...types-cosmos/3.3.0
 [3.2.4]: https://github.com/subquery/subql-cosmos/compare/types-cosmos/3.2.3...types-cosmos/3.2.4

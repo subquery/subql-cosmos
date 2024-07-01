@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [3.12.1] - 2024-07-01
 ### Fixed
 - Error creating dynamic ds if filter values are undefined (#268)
 
@@ -420,7 +422,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Init release
 
-[Unreleased]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/3.12.0...HEAD
+[Unreleased]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/3.12.1...HEAD
+[3.12.1]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/3.12.0...node-cosmos/3.12.1
 [3.12.0]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/3.11.2...node-cosmos/3.12.0
 [3.11.2]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/3.11.1...node-cosmos/3.11.2
 [3.11.1]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/3.11.0...node-cosmos/3.11.1
