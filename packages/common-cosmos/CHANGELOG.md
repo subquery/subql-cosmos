@@ -6,6 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.0.0] - 2024-07-01
 ### Added
 - Add alias follow type of `CosmosNetworkModule`. Also add method `networkCliCodegen` include steps of cosmos codegen. (#267)
 
@@ -145,7 +146,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix chainTypes not being in deployments
 
 ## [0.0.5] - 2022-06-15
-[Unreleased]: https://github.com/subquery/subql-cosmos/compare/common-cosmos/4.4.0...HEAD
+[Unreleased]: https://github.com/subquery/subql-cosmos/compare/common-cosmos/5.0.0...HEAD
+[5.0.0]: https://github.com/subquery/subql-cosmos/compare/common-cosmos/4.4.0...common-cosmos/5.0.0
 [4.4.0]: https://github.com/subquery/subql-cosmos/compare/common-cosmos/4.3.0...common-cosmos/4.4.0
 [4.3.0]: https://github.com/subquery/subql-cosmos/compare/common-cosmos/4.2.0...common-cosmos/4.3.0
 [4.2.0]: https://github.com/subquery/subql-cosmos/compare/common-cosmos/4.1.1...common-cosmos/4.2.0
