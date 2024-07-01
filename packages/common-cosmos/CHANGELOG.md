@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [5.0.0] - 2024-07-01
 ### Added
-- Add alias follow type of `CosmosNetworkModule`. Also add method `networkCliCodegen` include steps of cosmos codegen. (#267)
+- Add alias follow type of `CosmosNetworkModule`. Also add method `projectCodegen` include steps of cosmos codegen. (#267)
 
 ## [4.4.0] - 2024-06-21
 ### Changed
