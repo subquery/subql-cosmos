@@ -235,7 +235,7 @@ export class KyveApi {
     let low =
       lowestCacheHeight.length > 0
         ? Math.min(...lowestCacheHeight.map(parseDecimal))
-        : -1;
+        : 0;
     let high = await this.getLatestBundleId();
 
     while (low <= high) {
