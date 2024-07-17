@@ -28,9 +28,9 @@ import { CosmosClient } from '../indexer/api.service';
 import { HttpClient } from '../indexer/rpc-clients';
 import { decodeMsg, filterMessageData, wrapEvent } from './cosmos';
 
-const ENDPOINT = 'https://rpc-archive.junonetwork.io/';
+const ENDPOINT = 'https://rpc.mainnet.archway.io';
 
-const TEST_BLOCKNUMBER = 4136538;
+const TEST_BLOCKNUMBER = 4_136_542; //https://www.mintscan.io/archway/block/4136542?chainId=archway-1
 
 const TEST_FAILTX_BLOCKNUMBER = 4136536;
 
@@ -38,8 +38,9 @@ const TEST_MESSAGE_FILTER_TRUE: CosmosMessageFilter = {
   type: '/cosmwasm.wasm.v1.MsgExecuteContract',
   contractCall: 'swap',
   values: {
-    sender: 'juno1p5afwncel44vfrvylghncu2su7we57gmf7gjcu',
-    contract: 'juno1e8n6ch7msks487ecznyeagmzd5ml2pq9tgedqt2u63vra0q0r9mqrjy6ys',
+    sender: 'archway1nh8r3fka9amu4dvzf5r3lsyyx8xqm74c4vwz4s',
+    contract:
+      'archway1ymgz3t32j2h7j5rehwhac83tc0lkh8udc8yfh2y2hnqt9kn76xjq4zwfgw',
   },
 };
 
@@ -56,8 +57,8 @@ const TEST_NESTED_MESSAGE_FILTER_TRUE: CosmosMessageFilter = {
   type: '/cosmwasm.wasm.v1.MsgExecuteContract',
   contractCall: 'swap',
   values: {
-    'msg.swap.input_token': 'Token1',
-  },
+    'msg.swap.swap_to_asset_index': 1,
+  } as any, // TODO update types
 };
 
 const TEST_NESTED_MESSAGE_FILTER_FALSE: CosmosMessageFilter = {
