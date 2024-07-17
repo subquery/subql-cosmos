@@ -15,7 +15,7 @@ import { DsProcessorService } from '../ds-processor.service';
 import { BlockContent } from '../types';
 import { DictionaryV1 } from './v1';
 
-const logger = getLogger('eth-dictionary');
+const logger = getLogger('DictionaryService');
 
 @Injectable()
 export class DictionaryService extends BaseDictionaryService<

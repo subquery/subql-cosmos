@@ -114,9 +114,16 @@ export function filterMessageData(
   }
   if (filter.values) {
     for (const key in filter.values) {
-      let decodedMsgData = key
-        .split('.')
-        .reduce((acc, curr) => acc[curr], data.msg.decodedMsg);
+      let decodedMsgData: unknown;
+      try {
+        decodedMsgData = key
+          .split('.')
+          .reduce((acc, curr) => acc[curr], data.msg.decodedMsg);
+      } catch (e) {
+        // This message is assuming an error where acc[curr] is undefined and tries to access a further nested property
+        logger.warn(`Message doesn't contain data at value with path ${key}`);
+        return false;
+      }
 
       //stringify Long for equality check
       if (isLong(decodedMsgData)) {

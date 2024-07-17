@@ -151,7 +151,6 @@ describe('KyveApi', () => {
   });
 
   it('ensure correct bundle ID on binary search', async () => {
-    (kyveApi as any).currentBundleId = -1; // reset cached bundle Id
     const a = Date.now();
     const firstBundle = await (kyveApi as any).getBundleIdSearch(120); // https://app.kyve.network/#/pools/2/bundles/0
     const b = Date.now();
@@ -161,6 +160,7 @@ describe('KyveApi', () => {
     expect(firstBundle).toBe(0);
     expect(laterBundle).toBe(113773);
   });
+
   it('Ensure bundleId is defined', async () => {
     getBundleDataSpy.mockResolvedValue(JSON.stringify({ mock: 'value' }));
 
