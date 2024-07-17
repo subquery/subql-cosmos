@@ -9,7 +9,12 @@ import {
   CosmosHandlerKind,
   CosmosDataSource,
 } from '@subql/common-cosmos';
-import { NodeConfig, BaseFetchService, getModulos } from '@subql/node-core';
+import {
+  NodeConfig,
+  BaseFetchService,
+  getModulos,
+  Header,
+} from '@subql/node-core';
 import { SubqueryProject } from '../configure/SubqueryProject';
 import * as CosmosUtil from '../utils/cosmos';
 import { cosmosBlockToHeader } from '../utils/cosmos';
@@ -37,7 +42,7 @@ export class FetchService extends BaseFetchService<
     @Inject('IBlockDispatcher')
     blockDispatcher: ICosmosBlockDispatcher,
     dictionaryService: DictionaryService,
-    private unfinalizedBlocksService: UnfinalizedBlocksService,
+    unfinalizedBlocksService: UnfinalizedBlocksService,
     eventEmitter: EventEmitter2,
     schedulerRegistry: SchedulerRegistry,
   ) {
@@ -49,6 +54,7 @@ export class FetchService extends BaseFetchService<
       dictionaryService,
       eventEmitter,
       schedulerRegistry,
+      unfinalizedBlocksService,
     );
   }
 
@@ -56,13 +62,10 @@ export class FetchService extends BaseFetchService<
     return this.apiService.unsafeApi;
   }
 
-  protected async getFinalizedHeight(): Promise<number> {
+  protected async getFinalizedHeader(): Promise<Header> {
     // Cosmos has instant finalization
     const height = await this.api.getHeight();
-    const header = cosmosBlockToHeader(height);
-    this.unfinalizedBlocksService.registerFinalizedBlock(header);
-
-    return height;
+    return cosmosBlockToHeader(height);
   }
 
   protected async getBestHeight(): Promise<number> {

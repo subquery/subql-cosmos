@@ -6,10 +6,7 @@ import { toHex } from '@cosmjs/encoding';
 import { Uint53 } from '@cosmjs/math';
 import { GeneratedType, Registry } from '@cosmjs/proto-signing';
 import { Block, defaultRegistryTypes, SearchTxQuery } from '@cosmjs/stargate';
-import {
-  Tendermint37Client,
-  toRfc3339WithNanoseconds,
-} from '@cosmjs/tendermint-rpc';
+import { CometClient, toRfc3339WithNanoseconds } from '@cosmjs/tendermint-rpc';
 import {
   BlockResponse,
   BlockResultsResponse,
@@ -188,15 +185,15 @@ export class ApiService
 
 export class CosmosClient extends CosmWasmClient {
   constructor(
-    private readonly tendermintClient: Tendermint37Client,
+    private readonly _cometClient: CometClient,
     public registry: Registry,
   ) {
-    super(tendermintClient);
+    super(_cometClient);
   }
 
   // eslint-disable-next-line @typescript-eslint/require-await
   async blockInfo(height?: number): Promise<BlockResponse> {
-    return this.tendermintClient.block(height);
+    return this._cometClient.block(height);
   }
 
   // eslint-disable-next-line @typescript-eslint/require-await
@@ -206,7 +203,7 @@ export class CosmosClient extends CosmWasmClient {
 
   // eslint-disable-next-line @typescript-eslint/require-await
   async blockResults(height: number): Promise<BlockResultsResponse> {
-    return this.tendermintClient.blockResults(height);
+    return this._cometClient.blockResults(height);
   }
 
   static handleError(e: Error): Error {
@@ -237,8 +234,8 @@ export class CosmosSafeClient
 {
   height: number;
 
-  constructor(tmClient: Tendermint37Client, height: number) {
-    super(tmClient);
+  constructor(cometClient: CometClient, height: number) {
+    super(cometClient);
     this.height = height;
   }
 

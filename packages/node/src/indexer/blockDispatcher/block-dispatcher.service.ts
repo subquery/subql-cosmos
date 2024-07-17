@@ -55,9 +55,7 @@ export class BlockDispatcherService
     );
   }
 
-  async init(
-    onDynamicDsCreated: (height: number) => Promise<void>,
-  ): Promise<void> {
+  async init(onDynamicDsCreated: (height: number) => void): Promise<void> {
     await super.init(onDynamicDsCreated);
   }
 
