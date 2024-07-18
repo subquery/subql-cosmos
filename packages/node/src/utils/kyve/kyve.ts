@@ -9,18 +9,18 @@ import * as zlib from 'zlib';
 import { JsonRpcSuccessResponse } from '@cosmjs/json-rpc';
 import { Registry } from '@cosmjs/proto-signing';
 import { logs } from '@cosmjs/stargate';
-import {
-  BlockResponse,
-  BlockResultsResponse,
-  TxData,
-} from '@cosmjs/tendermint-rpc/build/tendermint37';
 import { Responses } from '@cosmjs/tendermint-rpc/build/tendermint37/adaptor'; // adaptor is not exported
 import KyveSDK, { KyveLCDClientType } from '@kyvejs/sdk';
 import { SupportedChains } from '@kyvejs/sdk/src/constants'; // Currently these types are not exported
 import { QueryPoolsResponse } from '@kyvejs/types/lcd/kyve/query/v1beta1/pools';
 import { delay, getLogger, IBlock, timeout } from '@subql/node-core';
+import { TxData } from '@subql/types-cosmos';
 import axios, { AxiosResponse } from 'axios';
-import { BlockContent } from '../../indexer/types';
+import {
+  BlockContent,
+  BlockResponse,
+  BlockResultsResponse,
+} from '../../indexer/types';
 import { formatBlockUtil, LazyBlockContent } from '../cosmos';
 import { isTmpDir } from '../project';
 import { BundleDetails } from './kyveTypes';

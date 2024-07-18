@@ -3,10 +3,16 @@
 
 import {CosmWasmClient} from '@cosmjs/cosmwasm-stargate';
 import {DecodedTxRaw} from '@cosmjs/proto-signing';
-import {Event} from '@cosmjs/stargate';
 import {Log} from '@cosmjs/stargate/build/logs';
-import {Validator, TxData, Block, BlockId, Header} from '@cosmjs/tendermint-rpc/build/tendermint37';
+import type {tendermint34, tendermint37, comet38} from '@cosmjs/tendermint-rpc';
 import Long from 'long';
+
+export type Block = tendermint34.Block | tendermint37.Block | comet38.Block;
+export type BlockId = tendermint34.BlockId | tendermint37.BlockId | comet38.BlockId;
+export type Validator = tendermint34.Validator | tendermint37.Validator | comet38.Validator;
+export type TxData = tendermint34.TxData | tendermint37.TxData | comet38.TxData;
+export type TxEvent = tendermint34.Event | tendermint37.Event | comet38.Event;
+export type Header = tendermint34.Header | tendermint37.Header | comet38.Header;
 
 export interface CosmWasmSafeClient extends CosmWasmClient {
   validators: () => Promise<readonly Validator[]>;
@@ -46,7 +52,7 @@ export interface CosmosEvent {
   tx: CosmosTransaction;
   msg: CosmosMessage;
   log: Log;
-  event: Event;
+  event: TxEvent;
 }
 
 export type DynamicDatasourceCreator = (name: string, args: Record<string, unknown>) => Promise<void>;

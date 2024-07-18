@@ -8,14 +8,12 @@ import { toHex } from '@cosmjs/encoding';
 import { DecodeObject, decodeTxRaw, Registry } from '@cosmjs/proto-signing';
 import { fromTendermintEvent } from '@cosmjs/stargate';
 import { Log, parseRawLog } from '@cosmjs/stargate/build/logs';
-import { toRfc3339WithNanoseconds } from '@cosmjs/tendermint-rpc';
 import {
-  BlockResponse,
-  BlockResultsResponse,
-  TxData,
-  Event,
-  Header as CosmosHeader,
-} from '@cosmjs/tendermint-rpc/build/tendermint37';
+  toRfc3339WithNanoseconds,
+  tendermint34,
+  tendermint37,
+  comet38,
+} from '@cosmjs/tendermint-rpc';
 import {
   IBlock,
   getLogger,
@@ -23,6 +21,9 @@ import {
   filterBlockTimestamp,
 } from '@subql/node-core';
 import {
+  TxData,
+  TxEvent,
+  Header as CosmosHeader,
   CosmosEventFilter,
   CosmosMessageFilter,
   CosmosBlock,
@@ -36,7 +37,11 @@ import { isObjectLike } from 'lodash';
 import { isLong } from 'long';
 import { SubqlProjectBlockFilter } from '../configure/SubqueryProject';
 import { CosmosClient } from '../indexer/api.service';
-import { BlockContent } from '../indexer/types';
+import {
+  BlockContent,
+  BlockResponse,
+  BlockResultsResponse,
+} from '../indexer/types';
 
 const logger = getLogger('fetch');
 
@@ -311,7 +316,7 @@ function wrapMsg(
 
 export function wrapBlockBeginAndEndEvents(
   block: CosmosBlock,
-  events: Event[],
+  events: TxEvent[],
   idxOffset: number,
 ): CosmosEvent[] {
   return events.map(
@@ -327,47 +332,64 @@ export function wrapBlockBeginAndEndEvents(
   );
 }
 
+// With tendermint34 the Attrbutes type key and value were Uint8Arrays
+function attrToString(value: string | Uint8Array): string {
+  return typeof value === 'string'
+    ? value
+    : Buffer.from(value).toString('utf8');
+}
+
 export function wrapEvent(
   block: CosmosBlock,
   txs: CosmosTransaction[],
   registry: Registry,
   idxOffset: number, //use this offset to avoid clash with idx of begin block events
 ): CosmosEvent[] {
-  const events: CosmosEvent[] = [];
+  const cosmosEvents: CosmosEvent[] = [];
+
   for (const tx of txs) {
-    let logs: Log[];
+    let txEvents: readonly TxEvent[];
     try {
-      logs = parseRawLog(tx.tx.log) as Log[];
+      txEvents = tx.tx.events;
     } catch (e) {
       //parsing fails if transaction had failed.
       logger.debug('Failed to parse raw log, most likely a failed transaction');
-      continue;
+      return cosmosEvents;
     }
-    for (const log of logs) {
+    for (const txEvent of txEvents) {
       let msg: CosmosMessage;
       try {
-        msg = wrapCosmosMsg(block, tx, log.msg_index, registry);
+        const eventMsgIndex = txEvent.attributes.find(
+          (attr) => attrToString(attr.key) === 'msg_index',
+        )?.value;
+
+        if (eventMsgIndex === undefined) {
+          continue;
+        }
+
+        const msgNumber = parseInt(attrToString(eventMsgIndex), 10);
+        msg = wrapCosmosMsg(block, tx, msgNumber, registry);
       } catch (e) {
         // Example where this can happen https://sei.explorers.guru/transaction/8D4CA68E917E15652E10CB960DE604AEEB1B183D6E94A85E9CD98403F15550B7
-        logger.warn(
-          `Unable to find message for event. tx=${tx.hash} messageIdx=${log.msg_index}`,
-        );
+        logger.warn(`Unable to find message for event. tx=${tx.hash}`);
+        continue;
       }
-      for (let i = 0; i < log.events.length; i++) {
-        const event: CosmosEvent = {
-          idx: idxOffset++,
-          msg,
-          tx,
-          block,
-          log,
-          event: log.events[i],
-        };
-        events.push(event);
-      }
+      const cosmosEvent: CosmosEvent = {
+        idx: idxOffset++,
+        msg,
+        tx,
+        block,
+        log: {
+          msg_index: msg.idx,
+          log: txEvent.log,
+          events: txEvent.events,
+        },
+        event: txEvent,
+      };
+      cosmosEvents.push(cosmosEvent);
     }
   }
-
-  return events;
+  return cosmosEvents;
 }
 
 /*

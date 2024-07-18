@@ -7,8 +7,9 @@ import {
   decodeTxRaw,
   DecodedTxRaw,
 } from '@cosmjs/proto-signing';
-import { defaultRegistryTypes } from '@cosmjs/stargate';
-import { Tendermint37Client } from '@cosmjs/tendermint-rpc';
+import { Block, defaultRegistryTypes } from '@cosmjs/stargate';
+import { connectComet, CometClient } from '@cosmjs/tendermint-rpc';
+import { IBlock } from '@subql/node-core';
 import {
   CosmosMessageFilter,
   CosmosBlock,
@@ -25,8 +26,13 @@ import {
 } from 'cosmjs-types/cosmwasm/wasm/v1/tx';
 import { isLong, fromInt } from 'long';
 import { CosmosClient } from '../indexer/api.service';
-import { HttpClient } from '../indexer/rpc-clients';
-import { decodeMsg, filterMessageData, wrapEvent } from './cosmos';
+import { BlockContent } from '../indexer/types';
+import {
+  decodeMsg,
+  fetchBlocksBatches,
+  filterMessageData,
+  wrapEvent,
+} from './cosmos';
 
 const ENDPOINT = 'https://rpc.mainnet.archway.io';
 
@@ -88,8 +94,7 @@ describe('CosmosUtils', () => {
   let msg: CosmosMessage;
 
   beforeAll(async () => {
-    const client = new HttpClient(ENDPOINT);
-    const tendermint = await Tendermint37Client.create(client);
+    const tendermint = await connectComet(ENDPOINT);
     const wasmTypes: ReadonlyArray<[string, GeneratedType]> = [
       ['/cosmwasm.wasm.v1.MsgClearAdmin', MsgClearAdmin],
       ['/cosmwasm.wasm.v1.MsgExecuteContract', MsgExecuteContract],
@@ -332,5 +337,52 @@ describe('CosmosUtils', () => {
 
   afterEach(() => {
     api.disconnect();
+  });
+});
+
+describe('Cosmos 0.50 support', () => {
+  let api: CosmosClient;
+  let client: CometClient;
+  let block: IBlock<BlockContent>;
+
+  beforeAll(async () => {
+    client = await connectComet('https://rpc.neutron.quokkastake.io');
+    const wasmTypes: ReadonlyArray<[string, GeneratedType]> = [
+      ['/cosmwasm.wasm.v1.MsgClearAdmin', MsgClearAdmin],
+      ['/cosmwasm.wasm.v1.MsgExecuteContract', MsgExecuteContract],
+      ['/cosmwasm.wasm.v1.MsgMigrateContract', MsgMigrateContract],
+      ['/cosmwasm.wasm.v1.MsgStoreCode', MsgStoreCode],
+      ['/cosmwasm.wasm.v1.MsgInstantiateContract', MsgInstantiateContract],
+      ['/cosmwasm.wasm.v1.MsgUpdateAdmin', MsgUpdateAdmin],
+    ];
+
+    const registry = new Registry([...defaultRegistryTypes, ...wasmTypes]);
+    api = new CosmosClient(client, registry);
+
+    const blocks = await fetchBlocksBatches(api, [12_495_419]);
+    block = blocks[0];
+  });
+
+  // This test is just to ensure
+  it('Is a cosmos 0.50 network', async () => {
+    const status = await client.status();
+
+    expect(status.nodeInfo.version).toMatch('0.38.');
+  });
+
+  // TODO requires these changes https://github.com/cosmos/cosmjs/compare/main...bryanchriswhite:cosmjs:main
+  it('correctly has finalized block events instead of being/end block events', () => {
+    expect(block.block.beginBlockEvents).toBeDefined();
+    expect(block.block.finalizedBlockEvents).toBeDefined();
+  });
+
+  it('correctly parses events', () => {
+    expect(block.block.events).toBeDefined();
+
+    const withLogs = block.block.events.filter((l) => !!l.log);
+
+    console.log('LOGS', withLogs);
+    expect(block.block.transactions[0].tx.events).toBeDefined();
+    expect(block.block.transactions[0].tx.log).toBeDefined();
   });
 });

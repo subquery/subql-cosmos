@@ -7,11 +7,6 @@ import { Uint53 } from '@cosmjs/math';
 import { GeneratedType, Registry } from '@cosmjs/proto-signing';
 import { Block, defaultRegistryTypes, SearchTxQuery } from '@cosmjs/stargate';
 import { CometClient, toRfc3339WithNanoseconds } from '@cosmjs/tendermint-rpc';
-import {
-  BlockResponse,
-  BlockResultsResponse,
-  Validator,
-} from '@cosmjs/tendermint-rpc/build/tendermint37/responses';
 import { Inject, Injectable, OnApplicationShutdown } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { CosmosProjectNetConfig } from '@subql/common-cosmos';
@@ -36,7 +31,7 @@ import { SubqueryProject } from '../configure/SubqueryProject';
 import * as CosmosUtil from '../utils/cosmos';
 import { KyveApi } from '../utils/kyve/kyve';
 import { CosmosClientConnection } from './cosmosClient.connection';
-import { BlockContent } from './types';
+import { BlockContent, BlockResponse, BlockResultsResponse } from './types';
 
 const logger = getLogger('api');
 
@@ -257,7 +252,9 @@ export class CosmosSafeClient
     };
   }
 
-  async validators(): Promise<readonly Validator[]> {
+  async validators(): Promise<
+    Awaited<ReturnType<CometClient['validators']>>['validators']
+  > {
     return (
       await this.forceGetCometClient().validators({
         height: this.height,

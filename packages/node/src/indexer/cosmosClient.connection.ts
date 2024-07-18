@@ -30,7 +30,7 @@ const logger = getLogger('CosmosClientConnection');
 /**
  * Auto-detects the version of the backend and uses a suitable client.
  */
-export async function connectComet(
+async function connectComet(
   client: WebsocketClient | HttpClient,
 ): Promise<CometClient> {
   // Tendermint/CometBFT 0.34/0.37/0.38 auto-detection. Starting with 0.37 we seem to get reliable versions again 🎉
