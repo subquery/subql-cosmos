@@ -8,12 +8,7 @@ import { toHex } from '@cosmjs/encoding';
 import { DecodeObject, decodeTxRaw, Registry } from '@cosmjs/proto-signing';
 import { fromTendermintEvent } from '@cosmjs/stargate';
 import { Log, parseRawLog } from '@cosmjs/stargate/build/logs';
-import {
-  toRfc3339WithNanoseconds,
-  tendermint34,
-  tendermint37,
-  comet38,
-} from '@cosmjs/tendermint-rpc';
+import { toRfc3339WithNanoseconds } from '@cosmjs/tendermint-rpc';
 import {
   IBlock,
   getLogger,

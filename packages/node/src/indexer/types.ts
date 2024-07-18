@@ -29,8 +29,6 @@ export interface BlockContent {
   events: CosmosEvent[];
   beginBlockEvents?: CosmosEvent[];
   endBlockEvents?: CosmosEvent[];
-  /* From Cosmos 0.50/Comet0.38 this replaces beginBlockEvents/endBlockEvents */
-  finalizedBlockEvents?: CosmosEvent[];
 }
 
 export type BestBlocks = Record<number, string>;
