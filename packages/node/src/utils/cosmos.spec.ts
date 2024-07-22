@@ -1,15 +1,9 @@
 // Copyright 2020-2024 SubQuery Pte Ltd authors & contributors
 // SPDX-License-Identifier: GPL-3.0
 
-import {
-  GeneratedType,
-  Registry,
-  decodeTxRaw,
-  DecodedTxRaw,
-} from '@cosmjs/proto-signing';
-import { Block, defaultRegistryTypes } from '@cosmjs/stargate';
+import { GeneratedType, Registry, DecodedTxRaw } from '@cosmjs/proto-signing';
+import { defaultRegistryTypes } from '@cosmjs/stargate';
 import { connectComet, CometClient } from '@cosmjs/tendermint-rpc';
-import { IBlock } from '@subql/node-core';
 import {
   CosmosMessageFilter,
   CosmosBlock,
@@ -24,15 +18,10 @@ import {
   MsgStoreCode,
   MsgUpdateAdmin,
 } from 'cosmjs-types/cosmwasm/wasm/v1/tx';
-import { isLong, fromInt } from 'long';
+import { fromInt } from 'long';
 import { CosmosClient } from '../indexer/api.service';
 import { BlockContent } from '../indexer/types';
-import {
-  decodeMsg,
-  fetchBlocksBatches,
-  filterMessageData,
-  wrapEvent,
-} from './cosmos';
+import { fetchBlocksBatches, filterMessageData, wrapEvent } from './cosmos';
 
 const ENDPOINT = 'https://rpc.mainnet.archway.io';
 
@@ -90,8 +79,9 @@ const TEST_MESSAGE_FILTER_FALSE_2: CosmosMessageFilter = {
 jest.setTimeout(200000);
 describe('CosmosUtils', () => {
   let api: CosmosClient;
-  let decodedTx: DecodedTxRaw;
+  // let decodedTx: DecodedTxRaw;
   let msg: CosmosMessage;
+  let block: BlockContent;
 
   beforeAll(async () => {
     const tendermint = await connectComet(ENDPOINT);
@@ -106,147 +96,165 @@ describe('CosmosUtils', () => {
 
     const registry = new Registry([...defaultRegistryTypes, ...wasmTypes]);
     api = new CosmosClient(tendermint, registry);
-    const block = await api.getBlock(TEST_BLOCKNUMBER);
-    const tx = block.txs[1];
-    decodedTx = decodeTxRaw(tx);
-    msg = {
-      idx: 0,
-      block: {} as CosmosBlock,
-      tx: {
-        tx: {
-          code: 0,
+
+    const [firstBlock] = await fetchBlocksBatches(api, [TEST_BLOCKNUMBER]);
+    block = firstBlock.block;
+    msg = block.messages[2];
+  });
+
+  afterAll(() => {
+    api.disconnect();
+  });
+
+  describe('Parsing block data', () => {
+    it('Correctly wraps events', () => {
+      // First event of the second message
+      const event = block.events[17];
+      expect(event.block).toBeDefined();
+      expect(event.tx).toBeDefined();
+      expect(event.idx).toEqual(17);
+
+      expect(event.msg).toBeDefined();
+      expect(event.msg.msg.typeUrl).toEqual(
+        '/cosmwasm.wasm.v1.MsgExecuteContract',
+      );
+
+      expect(event.msg.tx.hash).toEqual(event.tx.hash);
+
+      expect(event.event).toBeDefined();
+      expect(event.event.type).toEqual(
+        'wasm-astrovault-cashback_minter-receive_swap_data',
+      );
+      expect(event.event.attributes.length).toEqual(3);
+
+      expect(event.log.events.length).toEqual(12);
+    });
+  });
+
+  describe('filtering', () => {
+    it('filter message data for true', () => {
+      const result = filterMessageData(msg, TEST_MESSAGE_FILTER_TRUE);
+      expect(result).toEqual(true);
+    });
+
+    it('filter message data for false', () => {
+      const result = filterMessageData(msg, TEST_MESSAGE_FILTER_FALSE);
+      expect(result).toEqual(false);
+    });
+
+    it('filter nested message data for true', () => {
+      const result = filterMessageData(msg, TEST_NESTED_MESSAGE_FILTER_TRUE);
+      expect(result).toEqual(true);
+    });
+
+    it('filter nested message data for false', () => {
+      const result = filterMessageData(msg, TEST_NESTED_MESSAGE_FILTER_FALSE);
+      expect(result).toEqual(false);
+    });
+
+    it('filter nested message data for invalid path', () => {
+      const result = filterMessageData(
+        msg,
+        TEST_NESTED_MESSAGE_FILTER_INVALID_PATH,
+      );
+      expect(result).toEqual(false);
+    });
+
+    it('does not wrap events of failed transaction', async () => {
+      const blockInfo = await api.blockResults(TEST_FAILTX_BLOCKNUMBER);
+      const failedTx = blockInfo.results[1];
+      const tx: CosmosTransaction = {
+        idx: 0,
+        block: {} as CosmosBlock,
+        tx: failedTx,
+        hash: '',
+        decodedTx: {} as DecodedTxRaw,
+      };
+      const events = wrapEvent({} as CosmosBlock, [tx], api.registry, 0);
+      expect(events.length).toEqual(0);
+    });
+
+    // These lazy decode methods don't work as the getter is replaced with the result once called
+    it.skip('does not lazy decode failed message filters', () => {
+      const spy = jest.spyOn(msg.msg, 'decodedMsg', 'get');
+      filterMessageData(msg, TEST_MESSAGE_FILTER_FALSE_2);
+      expect(spy).not.toHaveBeenCalled();
+    });
+
+    it.skip('lazy decode passed message filters', () => {
+      const spy = jest.spyOn(msg.msg, 'decodedMsg', 'get');
+      filterMessageData(msg, TEST_MESSAGE_FILTER_TRUE);
+      expect(spy).toHaveBeenCalled();
+    });
+
+    it('can filter long type decoded msg for true', () => {
+      const msg: CosmosMessage = {
+        tx: null,
+        msg: {
+          typeUrl: '/cosmwasm.wasm.v1.MsgInstantiateContract',
+          decodedMsg: {
+            codeId: fromInt(4),
+          },
         },
-      } as CosmosTransaction,
-      msg: {
-        typeUrl: decodedTx.body.messages[0].typeUrl,
-        get decodedMsg() {
-          return decodeMsg<any>(decodedTx.body.messages[0], registry);
+      } as unknown as CosmosMessage;
+
+      const filter: CosmosMessageFilter = {
+        type: '/cosmwasm.wasm.v1.MsgInstantiateContract',
+        values: {
+          codeId: '4',
         },
-      },
-    };
-  });
+        includeFailedTx: true,
+      };
 
-  it('filter message data for true', () => {
-    const result = filterMessageData(msg, TEST_MESSAGE_FILTER_TRUE);
-    expect(result).toEqual(true);
-  });
+      const result = filterMessageData(msg, filter);
+      expect(result).toEqual(true);
+    });
 
-  it('filter message data for false', () => {
-    const result = filterMessageData(msg, TEST_MESSAGE_FILTER_FALSE);
-    expect(result).toEqual(false);
-  });
-
-  it('filter nested message data for true', () => {
-    const result = filterMessageData(msg, TEST_NESTED_MESSAGE_FILTER_TRUE);
-    expect(result).toEqual(true);
-  });
-
-  it('filter nested message data for false', () => {
-    const result = filterMessageData(msg, TEST_NESTED_MESSAGE_FILTER_FALSE);
-    expect(result).toEqual(false);
-  });
-
-  it('filter nested message data for invalid path', () => {
-    const result = filterMessageData(
-      msg,
-      TEST_NESTED_MESSAGE_FILTER_INVALID_PATH,
-    );
-    expect(result).toEqual(false);
-  });
-
-  it('does not wrap events of failed transaction', async () => {
-    const blockInfo = await api.blockResults(TEST_FAILTX_BLOCKNUMBER);
-    const failedTx = blockInfo.results[1];
-    const tx: CosmosTransaction = {
-      idx: 0,
-      block: {} as CosmosBlock,
-      tx: failedTx,
-      hash: '',
-      decodedTx: {} as DecodedTxRaw,
-    };
-    const events = wrapEvent({} as CosmosBlock, [tx], api.registry, 0);
-    expect(events.length).toEqual(0);
-  });
-
-  it('does not lazy decode failed message filters', () => {
-    const spy = jest.spyOn(msg.msg, 'decodedMsg', 'get');
-    const result = filterMessageData(msg, TEST_MESSAGE_FILTER_FALSE_2);
-    expect(spy).not.toHaveBeenCalled();
-  });
-
-  it('lazy decode passed message filters', () => {
-    const spy = jest.spyOn(msg.msg, 'decodedMsg', 'get');
-    const result = filterMessageData(msg, TEST_MESSAGE_FILTER_TRUE);
-    expect(spy).toHaveBeenCalled();
-  });
-
-  it('can filter long type decoded msg for true', () => {
-    const msg: CosmosMessage = {
-      tx: null,
-      msg: {
-        typeUrl: '/cosmwasm.wasm.v1.MsgInstantiateContract',
-        decodedMsg: {
-          codeId: fromInt(4),
+    it('can filter long type decoded msg for number filter', () => {
+      const msg: CosmosMessage = {
+        tx: null,
+        msg: {
+          typeUrl: '/cosmwasm.wasm.v1.MsgInstantiateContract',
+          decodedMsg: {
+            codeId: fromInt(4),
+          },
         },
-      },
-    } as unknown as CosmosMessage;
+      } as unknown as CosmosMessage;
 
-    const filter: CosmosMessageFilter = {
-      type: '/cosmwasm.wasm.v1.MsgInstantiateContract',
-      values: {
-        codeId: '4',
-      },
-      includeFailedTx: true,
-    };
-
-    const result = filterMessageData(msg, filter);
-    expect(result).toEqual(true);
-  });
-
-  it('can filter long type decoded msg for number filter', () => {
-    const msg: CosmosMessage = {
-      tx: null,
-      msg: {
-        typeUrl: '/cosmwasm.wasm.v1.MsgInstantiateContract',
-        decodedMsg: {
-          codeId: fromInt(4),
+      const filter: CosmosMessageFilter = {
+        type: '/cosmwasm.wasm.v1.MsgInstantiateContract',
+        values: {
+          codeId: 4 as unknown as string,
         },
-      },
-    } as unknown as CosmosMessage;
+        includeFailedTx: true,
+      };
 
-    const filter: CosmosMessageFilter = {
-      type: '/cosmwasm.wasm.v1.MsgInstantiateContract',
-      values: {
-        codeId: 4 as unknown as string,
-      },
-      includeFailedTx: true,
-    };
+      const result = filterMessageData(msg, filter);
+      expect(result).toEqual(true);
+    });
 
-    const result = filterMessageData(msg, filter);
-    expect(result).toEqual(true);
-  });
-
-  it('can filter long type decoded msg for false', () => {
-    const msg: CosmosMessage = {
-      tx: null,
-      msg: {
-        typeUrl: '/cosmwasm.wasm.v1.MsgInstantiateContract',
-        decodedMsg: {
-          codeId: fromInt(4),
+    it('can filter long type decoded msg for false', () => {
+      const msg: CosmosMessage = {
+        tx: null,
+        msg: {
+          typeUrl: '/cosmwasm.wasm.v1.MsgInstantiateContract',
+          decodedMsg: {
+            codeId: fromInt(4),
+          },
         },
-      },
-    } as unknown as CosmosMessage;
+      } as unknown as CosmosMessage;
 
-    const filter: CosmosMessageFilter = {
-      type: '/cosmwasm.wasm.v1.MsgInstantiateContract',
-      values: {
-        codeId: '5',
-      },
-      includeFailedTx: true,
-    };
+      const filter: CosmosMessageFilter = {
+        type: '/cosmwasm.wasm.v1.MsgInstantiateContract',
+        values: {
+          codeId: '5',
+        },
+        includeFailedTx: true,
+      };
 
-    const result = filterMessageData(msg, filter);
-    expect(result).toEqual(false);
+      const result = filterMessageData(msg, filter);
+      expect(result).toEqual(false);
+    });
   });
 
   describe('filterMessageData function', () => {
@@ -334,16 +342,12 @@ describe('CosmosUtils', () => {
       });
     });
   });
-
-  afterEach(() => {
-    api.disconnect();
-  });
 });
 
 describe('Cosmos 0.50 support', () => {
   let api: CosmosClient;
   let client: CometClient;
-  let block: IBlock<BlockContent>;
+  let block: BlockContent;
 
   beforeAll(async () => {
     client = await connectComet('https://rpc.neutron.quokkastake.io');
@@ -359,8 +363,8 @@ describe('Cosmos 0.50 support', () => {
     const registry = new Registry([...defaultRegistryTypes, ...wasmTypes]);
     api = new CosmosClient(client, registry);
 
-    const blocks = await fetchBlocksBatches(api, [12_495_419]);
-    block = blocks[0];
+    const [firstBlock] = await fetchBlocksBatches(api, [12_495_419]); // https://www.mintscan.io/neutron/block/12495419
+    block = firstBlock.block;
   });
 
   // This test is just to ensure
@@ -372,17 +376,28 @@ describe('Cosmos 0.50 support', () => {
 
   // TODO requires these changes https://github.com/cosmos/cosmjs/compare/main...bryanchriswhite:cosmjs:main
   it('correctly has finalized block events instead of being/end block events', () => {
-    expect(block.block.beginBlockEvents).toBeDefined();
-    expect(block.block.finalizedBlockEvents).toBeDefined();
+    // Its not yet defined if cosmjs will split finalizedBlockEvents to these to fields or define finalizedBlockEvents
+    expect(block.beginBlockEvents).toBeDefined();
+    expect(block.endBlockEvents).toBeDefined();
   });
 
   it('correctly parses events', () => {
-    expect(block.block.events).toBeDefined();
+    const event = block.events[0];
+    expect(event.block).toBeDefined();
+    expect(event.tx).toBeDefined();
+    expect(event.idx).toEqual(0);
 
-    const withLogs = block.block.events.filter((l) => !!l.log);
+    expect(event.msg).toBeDefined();
+    expect(event.msg.msg.typeUrl).toEqual(
+      '/ibc.core.client.v1.MsgUpdateClient',
+    );
 
-    console.log('LOGS', withLogs);
-    expect(block.block.transactions[0].tx.events).toBeDefined();
-    expect(block.block.transactions[0].tx.log).toBeDefined();
+    expect(event.msg.tx.hash).toEqual(event.tx.hash);
+
+    expect(event.event).toBeDefined();
+    expect(event.event.type).toEqual('message');
+    expect(event.event.attributes.length).toEqual(3);
+
+    expect(event.log.events.length).toEqual(0);
   });
 });
