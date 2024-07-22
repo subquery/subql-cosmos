@@ -378,6 +378,7 @@ export function wrapEvent(
           logger.warn(
             `Unable to find message for event. tx=${tx.hash} messageIdx=${log.msg_index}`,
           );
+          continue;
         }
         for (let i = 0; i < log.events.length; i++) {
           appendEvent(msg, log.events[i], log);
@@ -392,6 +393,7 @@ export function wrapEvent(
             (attr) => attrToString(attr.key) === 'msg_index',
           )?.value;
 
+          // Event doesn't have a message
           if (eventMsgIndex === undefined) {
             continue;
           }
