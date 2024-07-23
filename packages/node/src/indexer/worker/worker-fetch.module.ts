@@ -4,17 +4,11 @@
 import { Module } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import {
+  WorkerCoreModule,
   ConnectionPoolService,
   WorkerDynamicDsService,
-  ConnectionPoolStateManager,
-  WorkerConnectionPoolStateManager,
-  InMemoryCacheService,
-  WorkerInMemoryCacheService,
   NodeConfig,
-  SandboxService,
   WorkerUnfinalizedBlocksService,
-  MonitorService,
-  WorkerMonitorService,
 } from '@subql/node-core';
 import { SubqueryProject } from '../../configure/SubqueryProject';
 import { ApiService } from '../api.service';
@@ -27,14 +21,9 @@ import { UnfinalizedBlocksService } from '../unfinalizedBlocks.service';
 import { WorkerService } from './worker.service';
 
 @Module({
+  imports: [WorkerCoreModule],
   providers: [
     IndexerManager,
-    {
-      provide: ConnectionPoolStateManager,
-      useFactory: () =>
-        new WorkerConnectionPoolStateManager((global as any).host),
-    },
-    ConnectionPoolService,
     {
       provide: ApiService,
       useFactory: async (
@@ -59,7 +48,6 @@ import { WorkerService } from './worker.service';
         NodeConfig,
       ],
     },
-    SandboxService,
     DsProcessorService,
     {
       provide: DynamicDsService,
@@ -75,15 +63,6 @@ import { WorkerService } from './worker.service';
       useFactory: () =>
         new WorkerUnfinalizedBlocksService((global as any).host),
     },
-    {
-      provide: InMemoryCacheService,
-      useFactory: () => new WorkerInMemoryCacheService((global as any).host),
-    },
-    {
-      provide: MonitorService,
-      useFactory: () => new WorkerMonitorService((global as any).host),
-    },
   ],
-  exports: [],
 })
 export class WorkerFetchModule {}
