@@ -107,6 +107,7 @@ describe('ApiService', () => {
 
       expect(rpcFetchSpy).toHaveBeenCalledTimes(1);
     });
+
     it.skip('query block info', async () => {
       await prepareApiService(ENDPOINT, CHAINID, tmpPath);
 

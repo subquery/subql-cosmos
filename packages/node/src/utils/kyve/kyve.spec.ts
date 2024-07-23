@@ -9,11 +9,7 @@ import { gzipSync } from 'zlib';
 import { JsonRpcSuccessResponse } from '@cosmjs/json-rpc';
 import { GeneratedType, Registry } from '@cosmjs/proto-signing';
 import { defaultRegistryTypes } from '@cosmjs/stargate';
-import { Tendermint37Client } from '@cosmjs/tendermint-rpc';
-import {
-  BlockResponse,
-  BlockResultsResponse,
-} from '@cosmjs/tendermint-rpc/build/tendermint37/responses';
+import { connectComet, CometClient } from '@cosmjs/tendermint-rpc';
 import KyveSDK from '@kyvejs/sdk';
 import { makeTempDir } from '@subql/common';
 import { delay } from '@subql/node-core';
@@ -28,7 +24,7 @@ import {
 } from 'cosmjs-types/cosmwasm/wasm/v1/tx';
 import { isEqual } from 'lodash';
 import rimraf from 'rimraf';
-import { HttpClient } from '../../indexer/rpc-clients';
+import { BlockResponse, BlockResultsResponse } from '../../indexer/types';
 import { LazyBlockContent } from '../cosmos';
 import { KyveApi } from './kyve';
 import { BundleDetails } from './kyveTypes';
@@ -55,7 +51,7 @@ const KYVE_CHAINID = 'kyve-1';
 jest.setTimeout(100000);
 describe('KyveApi', () => {
   let kyveApi: KyveApi;
-  let tendermint: Tendermint37Client;
+  let tendermint: CometClient;
   let registry: Registry;
 
   let tmpPath: string;
@@ -81,8 +77,7 @@ describe('KyveApi', () => {
       tmpPath,
       300,
     );
-    const client = new HttpClient('https://rpc.mainnet.archway.io:443');
-    tendermint = await Tendermint37Client.create(client);
+    tendermint = await connectComet('https://rpc.mainnet.archway.io:443');
   });
 
   beforeEach(async () => {

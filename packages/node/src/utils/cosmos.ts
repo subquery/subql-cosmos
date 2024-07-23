@@ -10,19 +10,15 @@ import { fromTendermintEvent } from '@cosmjs/stargate';
 import { Log, parseRawLog } from '@cosmjs/stargate/build/logs';
 import { toRfc3339WithNanoseconds } from '@cosmjs/tendermint-rpc';
 import {
-  BlockResponse,
-  BlockResultsResponse,
-  TxData,
-  Event,
-  Header as CosmosHeader,
-} from '@cosmjs/tendermint-rpc/build/tendermint37';
-import {
   IBlock,
   getLogger,
   Header,
   filterBlockTimestamp,
 } from '@subql/node-core';
 import {
+  TxData,
+  TxEvent,
+  Header as CosmosHeader,
   CosmosEventFilter,
   CosmosMessageFilter,
   CosmosBlock,
@@ -36,7 +32,11 @@ import { isObjectLike } from 'lodash';
 import { isLong } from 'long';
 import { SubqlProjectBlockFilter } from '../configure/SubqueryProject';
 import { CosmosClient } from '../indexer/api.service';
-import { BlockContent } from '../indexer/types';
+import {
+  BlockContent,
+  BlockResponse,
+  BlockResultsResponse,
+} from '../indexer/types';
 
 const logger = getLogger('fetch');
 
@@ -311,7 +311,7 @@ function wrapMsg(
 
 export function wrapBlockBeginAndEndEvents(
   block: CosmosBlock,
-  events: Event[],
+  events: TxEvent[],
   idxOffset: number,
 ): CosmosEvent[] {
   return events.map(
@@ -327,6 +327,13 @@ export function wrapBlockBeginAndEndEvents(
   );
 }
 
+// With tendermint34 the Attrbutes type key and value were Uint8Arrays
+function attrToString(value: string | Uint8Array): string {
+  return typeof value === 'string'
+    ? value
+    : Buffer.from(value).toString('utf8');
+}
+
 export function wrapEvent(
   block: CosmosBlock,
   txs: CosmosTransaction[],
@@ -335,35 +342,74 @@ export function wrapEvent(
 ): CosmosEvent[] {
   const events: CosmosEvent[] = [];
   for (const tx of txs) {
-    let logs: Log[];
-    try {
-      logs = parseRawLog(tx.tx.log) as Log[];
-    } catch (e) {
-      //parsing fails if transaction had failed.
-      logger.debug('Failed to parse raw log, most likely a failed transaction');
-      continue;
-    }
-    for (const log of logs) {
-      let msg: CosmosMessage;
+    const appendEvent = (msg: CosmosMessage, event: TxEvent, log: Log) => {
+      events.push({
+        idx: idxOffset++,
+        block,
+        tx,
+        msg,
+        event,
+        log,
+      });
+    };
+
+    /**
+     * Is there a better way of doing this?
+     * 34,37 also provide tx.tx.events, but logs don't seem to be recoverable that way.
+     * Are logs even of use? They are just a subset of event attributes */
+    if (tx.tx?.log) {
+      // Tendermint34, Tendermint37
+      let logs: Log[];
       try {
-        msg = wrapCosmosMsg(block, tx, log.msg_index, registry);
+        logs = parseRawLog(tx.tx.log) as Log[];
       } catch (e) {
-        // Example where this can happen https://sei.explorers.guru/transaction/8D4CA68E917E15652E10CB960DE604AEEB1B183D6E94A85E9CD98403F15550B7
-        logger.warn(
-          `Unable to find message for event. tx=${tx.hash} messageIdx=${log.msg_index}`,
+        //parsing fails if transaction had failed.
+        logger.debug(
+          'Failed to parse raw log, most likely a failed transaction',
         );
+        continue;
       }
-      for (let i = 0; i < log.events.length; i++) {
-        const event: CosmosEvent = {
-          idx: idxOffset++,
-          msg,
-          tx,
-          block,
-          log,
-          event: log.events[i],
-        };
-        events.push(event);
+      for (const log of logs) {
+        let msg: CosmosMessage;
+        try {
+          msg = wrapCosmosMsg(block, tx, log.msg_index, registry);
+        } catch (e) {
+          // Example where this can happen https://sei.explorers.guru/transaction/8D4CA68E917E15652E10CB960DE604AEEB1B183D6E94A85E9CD98403F15550B7
+          logger.warn(
+            `Unable to find message for event. tx=${tx.hash} messageIdx=${log.msg_index}`,
+          );
+          continue;
+        }
+        for (let i = 0; i < log.events.length; i++) {
+          appendEvent(msg, log.events[i], log);
+        }
       }
+    } else if (tx.tx?.events) {
+      // Comet38
+      for (const txEvent of tx.tx.events) {
+        let msg: CosmosMessage;
+        try {
+          const eventMsgIndex = txEvent.attributes.find(
+            (attr) => attrToString(attr.key) === 'msg_index',
+          )?.value;
+
+          // Event doesn't have a message
+          if (eventMsgIndex === undefined) {
+            continue;
+          }
+
+          const msgNumber = parseInt(attrToString(eventMsgIndex), 10);
+          msg = wrapCosmosMsg(block, tx, msgNumber, registry);
+        } catch (e) {
+          logger.warn(`Unable to find message for event. tx=${tx.hash}`);
+          continue;
+        }
+
+        // TODO does a log still exist in Comet38?
+        appendEvent(msg, txEvent, { events: [], log: '', msg_index: -1 });
+      }
+    } else {
+      // For some tests that have invalid data
     }
   }
 
