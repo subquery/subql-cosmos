@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Changed
 - Update cosmos and subql dependencies (#270)
+- Update to latest `@subql/node-core` (#272)
 
 ### Added
 - Detection of Cosmos SDK version to use correct client type (#270)
