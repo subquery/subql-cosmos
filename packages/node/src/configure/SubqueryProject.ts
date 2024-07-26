@@ -6,7 +6,6 @@ import fs from 'fs';
 import os from 'os';
 import { sep } from 'path';
 import { isMainThread } from 'worker_threads';
-import { Injectable } from '@nestjs/common';
 import { validateSemver } from '@subql/common';
 import {
   CosmosProjectNetworkConfig,
@@ -17,13 +16,12 @@ import {
 } from '@subql/common-cosmos';
 import {
   CronFilter,
-  insertBlockFiltersCronSchedules,
-  ISubqueryProject,
   loadProjectTemplates,
   updateDataSourcesV1_0_0,
   WorkerHost,
+  BaseSubqueryProject,
 } from '@subql/node-core';
-import { ParentProject, Reader, RunnerSpecs } from '@subql/types-core';
+import { Reader } from '@subql/types-core';
 import {
   CosmosDatasource,
   CustomDatasourceTemplate,
@@ -32,10 +30,11 @@ import {
   CosmosBlockFilter,
 } from '@subql/types-cosmos';
 import { buildSchemaFromString } from '@subql/utils';
-import { GraphQLSchema } from 'graphql';
 import { processNetworkConfig } from '../utils/project';
 
 const { version: packageVersion } = require('../../package.json');
+
+export type CosmosProjectDs = CosmosDatasource;
 
 export type CosmosProjectDsTemplate =
   | RuntimeDatasourceTemplate
@@ -50,70 +49,33 @@ const NOT_SUPPORT = (name: string) => {
 // This is the runtime type after we have mapped genesisHash to chainId and endpoint/dict have been provided when dealing with deployments
 type NetworkConfig = CosmosProjectNetworkConfig & { chainId: string };
 
-@Injectable()
-export class SubqueryProject implements ISubqueryProject {
-  #dataSources: CosmosDatasource[];
+export type SubqueryProject = BaseSubqueryProject<
+  CosmosProjectDs,
+  CosmosProjectDsTemplate,
+  NetworkConfig
+>;
 
-  constructor(
-    readonly id: string,
-    readonly root: string,
-    readonly network: NetworkConfig,
-    dataSources: CosmosDatasource[],
-    readonly schema: GraphQLSchema,
-    readonly templates: CosmosProjectDsTemplate[],
-    readonly runner?: RunnerSpecs,
-    readonly parent?: ParentProject,
-    readonly tempDir?: string,
-  ) {
-    this.#dataSources = dataSources;
-  }
+export async function createSubQueryProject(
+  path: string,
+  rawManifest: unknown,
+  reader: Reader,
+  root: string, // If project local then directory otherwise temp directory
+  networkOverrides?: Partial<NetworkConfig>,
+): Promise<SubqueryProject> {
+  const project = await BaseSubqueryProject.create<SubqueryProject>({
+    parseManifest: (raw) => parseCosmosProjectManifest(raw).asV1_0_0,
+    path,
+    rawManifest,
+    reader,
+    root,
+    nodeSemver: packageVersion,
+    blockHandlerKind: CosmosHandlerKind.Block,
+    networkOverrides,
+    isRuntimeCosmosDs,
+    isCustomCosmosDs,
+  });
 
-  get dataSources(): CosmosDatasource[] {
-    return this.#dataSources;
-  }
-
-  async applyCronTimestamps(
-    getTimestamp: (height: number) => Promise<Date>,
-  ): Promise<void> {
-    this.#dataSources = await insertBlockFiltersCronSchedules(
-      this.dataSources,
-      getTimestamp,
-      isRuntimeCosmosDs,
-      CosmosHandlerKind.Block,
-    );
-  }
-
-  static async create(
-    path: string,
-    rawManifest: unknown,
-    reader: Reader,
-    root: string,
-    networkOverrides?: Partial<CosmosProjectNetworkConfig>,
-  ): Promise<SubqueryProject> {
-    // rawManifest and reader can be reused here.
-    // It has been pre-fetched and used for rebase manifest runner options with args
-    // in order to generate correct configs.
-
-    // But we still need reader here, because path can be remote or local
-    // and the `loadProjectManifest(projectPath)` only support local mode
-    if (rawManifest === undefined) {
-      throw new Error(`Get manifest from project path ${path} failed`);
-    }
-
-    const manifest = parseCosmosProjectManifest(rawManifest);
-
-    if (!manifest.isV1_0_0) {
-      NOT_SUPPORT('<1.0.0');
-    }
-
-    return loadProjectFromManifestBase(
-      manifest.asV1_0_0,
-      reader,
-      path,
-      root,
-      networkOverrides,
-    );
-  }
+  return project;
 }
 
 type SUPPORT_MANIFEST = ProjectManifestV1_0_0Impl;

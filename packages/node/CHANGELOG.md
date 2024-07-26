@@ -7,7 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Changed
 - Update cosmos and subql dependencies (#270)
-- Update to latest `@subql/node-core` (#272)
+- Use Subquery Project code from node core 
+- Breaking change: Update to latest `@subql/node-core`, require indexing environment timezone set to UTC (#272)
 
 ### Fixed
 - Fix testing service missing inject nodeConfig 
