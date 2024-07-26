@@ -27,13 +27,11 @@ describe('Creating dynamic ds', () => {
   let project: SubqueryProject;
 
   beforeEach(async () => {
-    project = new SubqueryProject(
-      '',
-      '',
-      null,
-      [],
-      null,
-      [
+    project = {
+      id: '',
+      root: '',
+      dataSources: [],
+      templates: [
         {
           name: 'cosmos',
           kind: CosmosDatasourceKind.Runtime,
@@ -77,10 +75,7 @@ describe('Creating dynamic ds', () => {
           },
         },
       ],
-      null,
-      null,
-      null,
-    );
+    } as unknown as SubqueryProject;
     dynamiDsService = new DynamicDsService(null, project);
 
     await dynamiDsService.init(getMetadata());
