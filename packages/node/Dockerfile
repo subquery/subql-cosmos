@@ -40,7 +40,7 @@ RUN mkdir -p .monitor && \
 
 # Make the user not ROOT
 USER 1000
-ENV TZ utc
+ENV TZ=utc
 
 # Set Entry point and command
 ENTRYPOINT ["/sbin/tini", "--", "/usr/local/lib/node_modules/@subql/node-cosmos/bin/run"]
