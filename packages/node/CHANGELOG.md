@@ -5,13 +5,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [4.0.0] - 2024-07-29
 ### Changed
 - Update cosmos and subql dependencies (#270)
-- Use Subquery Project code from node core 
+- Use Subquery Project code from node core
 - Breaking change: Update to latest `@subql/node-core`, require indexing environment timezone set to UTC (#272)
 
 ### Fixed
-- Fix testing service missing inject nodeConfig 
+- Fix testing service not injecting NodeConfig
+- Bump `@subql/node-core` with fixes for data consitstency issue (#274)
+- Docker images not having TZ set to UTC (#274)
 
 ### Added
 - Detection of Cosmos SDK version to use correct client type (#270)
@@ -432,7 +436,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Init release
 
-[Unreleased]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/3.12.1...HEAD
+[Unreleased]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/4.0.0...HEAD
+[4.0.0]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/3.12.1...node-cosmos/4.0.0
 [3.12.1]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/3.12.0...node-cosmos/3.12.1
 [3.12.0]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/3.11.2...node-cosmos/3.12.0
 [3.11.2]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/3.11.1...node-cosmos/3.11.2
