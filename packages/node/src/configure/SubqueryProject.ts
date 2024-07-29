@@ -20,6 +20,7 @@ import {
   CosmosHandlerKind,
   CosmosBlockFilter,
 } from '@subql/types-cosmos';
+import { processNetworkConfig } from '../utils/project';
 
 const { version: packageVersion } = require('../../package.json');
 
@@ -58,6 +59,10 @@ export async function createSubQueryProject(
     isCustomDs,
   });
 
+  (project.network as any) = await processNetworkConfig(
+    project.network,
+    reader,
+  );
   project.tempDir = getTempDir();
 
   return project;

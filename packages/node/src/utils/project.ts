@@ -29,13 +29,6 @@ export async function processNetworkConfig(
   network: any,
   reader: Reader,
 ): Promise<CosmosProjectNetConfig> {
-  if (network.chainId && network.genesisHash) {
-    throw new Error('Please only provide one of chainId and genesisHash');
-  } else if (network.genesisHash && !network.chainId) {
-    network.chainId = network.genesisHash;
-  }
-  delete network.genesisHash;
-
   const chaintypes = new Map<string, CosmosChainType>() as Map<
     string,
     CosmosChainType
