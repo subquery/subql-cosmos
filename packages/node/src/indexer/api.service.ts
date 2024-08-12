@@ -88,11 +88,12 @@ export class ApiService
 
     this.registry = await this.buildRegistry();
 
-    await this.createConnections(network, (endpoint) =>
+    await this.createConnections(network, (endpoint, config) =>
       CosmosClientConnection.create(
         endpoint,
         this.fetchBlocksBatches,
         this.registry,
+        config,
       ),
     );
 

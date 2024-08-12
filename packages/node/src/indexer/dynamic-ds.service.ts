@@ -74,11 +74,11 @@ export class DynamicDsService extends BaseDynamicDsService<
         };
         await this.dsProcessorService.validateCustomDs([dsObj]);
       } else if (isRuntimeCosmosDs(dsObj)) {
-        validateType(
-          DataSourceArgs,
-          params.args,
-          'Dynamic ds args are invalid',
-        );
+        const { args } = params;
+        if (!args) {
+          throw new Error('Expected args to be defined');
+        }
+        validateType(DataSourceArgs, args, 'Dynamic ds args are invalid');
 
         dsObj.mapping.handlers = dsObj.mapping.handlers.map((handler) => {
           switch (handler.kind) {
@@ -87,7 +87,7 @@ export class DynamicDsService extends BaseDynamicDsService<
                 handler.filter,
                 'Dynamic datasources must have some predfined filter',
               );
-              if (params.args.values) {
+              if (args.values) {
                 if (!handler.filter.messageFilter) {
                   throw new Error(
                     'Cannot set values on handler without predefined messageFilter type',
@@ -95,13 +95,13 @@ export class DynamicDsService extends BaseDynamicDsService<
                 }
                 handler.filter.messageFilter.values = {
                   ...handler.filter.messageFilter.values,
-                  ...(params.args.values as Record<string, string>),
+                  ...(args.values as Record<string, string>),
                 };
               }
-              if (params.args.attributes) {
+              if (args.attributes) {
                 handler.filter.attributes = {
                   ...handler.filter.attributes,
-                  ...(params.args.attributes as Record<string, string>),
+                  ...(args.attributes as Record<string, string>),
                 };
               }
               return handler;
@@ -110,7 +110,7 @@ export class DynamicDsService extends BaseDynamicDsService<
                 handler.filter,
                 'Dynamic datasources must have some predfined filter',
               );
-              if (params.args.values) {
+              if (args.values) {
                 if (!handler.filter) {
                   throw new Error(
                     'Cannot set values on handler without predefined messageFilter type',
@@ -118,7 +118,7 @@ export class DynamicDsService extends BaseDynamicDsService<
                 }
                 handler.filter.values = {
                   ...handler.filter.values,
-                  ...(params.args.values as Record<string, string>),
+                  ...(args.values as Record<string, string>),
                 };
               }
               return handler;
@@ -137,7 +137,7 @@ export class DynamicDsService extends BaseDynamicDsService<
       }
 
       return dsObj;
-    } catch (e) {
+    } catch (e: any) {
       throw new Error(`Unable to create dynamic datasource.\n ${e.message}`);
     }
   }

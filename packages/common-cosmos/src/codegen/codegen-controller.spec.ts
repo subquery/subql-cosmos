@@ -45,7 +45,7 @@ describe('Codegen cosmos', () => {
             messages: ['MsgSwapAmountInRoute'],
           },
         },
-      ];
+      ] as any;
       expect(prepareProtobufRenderProps(mockChainTypes, PROJECT_PATH)).toStrictEqual([
         {
           messageNames: ['MsgSwapExactAmountIn'],

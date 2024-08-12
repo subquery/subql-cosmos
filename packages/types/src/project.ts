@@ -78,6 +78,13 @@ export type CosmosRuntimeHandlerInputMap = {
   [CosmosHandlerKind.Event]: CosmosEvent;
 };
 
+type CosmosRuntimeFilterMap = {
+  [CosmosHandlerKind.Block]: CosmosBlockFilter;
+  [CosmosHandlerKind.Transaction]: CosmosTxFilter;
+  [CosmosHandlerKind.Message]: CosmosMessageFilter;
+  [CosmosHandlerKind.Event]: CosmosEventFilter;
+};
+
 /**
  * Represents a Cosmos subquery network configuration, which is based on the CommonSubqueryNetworkConfig template.
  * @type {IProjectNetworkConfig}
@@ -363,8 +370,16 @@ export type SecondLayerHandlerProcessor<
   E,
   DS extends CosmosCustomDatasource = CosmosCustomDatasource
 > =
-  | SecondLayerHandlerProcessor_0_0_0<CosmosRuntimeHandlerInputMap, K, F, E, DS, CosmWasmClient>
-  | (SecondLayerHandlerProcessor_1_0_0<CosmosRuntimeHandlerInputMap, K, F, E, DS, CosmWasmClient> & {
+  | SecondLayerHandlerProcessor_0_0_0<K, CosmosRuntimeHandlerInputMap, CosmosRuntimeFilterMap, F, E, DS, CosmWasmClient>
+  | (SecondLayerHandlerProcessor_1_0_0<
+      K,
+      CosmosRuntimeHandlerInputMap,
+      CosmosRuntimeFilterMap,
+      F,
+      E,
+      DS,
+      CosmWasmClient
+    > & {
       // Overwrite the function to include registry
       filterProcessor: (params: {
         filter: F | undefined;

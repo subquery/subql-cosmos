@@ -11,6 +11,7 @@ import {
   CosmosRuntimeDatasource,
   CustomDatasourceTemplate,
   RuntimeDatasourceTemplate,
+  SecondLayerHandlerProcessorArray,
 } from '@subql/types-cosmos';
 import {ValidationArguments, ValidatorConstraint, ValidatorConstraintInterface} from 'class-validator';
 import {gte} from 'semver';
@@ -30,25 +31,25 @@ export function isRuntimeCosmosDs(
 type DefaultFilter = Record<string, unknown>;
 
 export function isBlockHandlerProcessor<E>(
-  hp: SecondLayerHandlerProcessor<CosmosHandlerKind, DefaultFilter, unknown>
+  hp: SecondLayerHandlerProcessorArray<CosmosHandlerKind, DefaultFilter, unknown>
 ): hp is SecondLayerHandlerProcessor<CosmosHandlerKind.Block, DefaultFilter, E> {
   return hp.baseHandlerKind === CosmosHandlerKind.Block;
 }
 
 export function isTransactionHandlerProcessor<E>(
-  hp: SecondLayerHandlerProcessor<CosmosHandlerKind, DefaultFilter, unknown>
+  hp: SecondLayerHandlerProcessorArray<CosmosHandlerKind, DefaultFilter, unknown>
 ): hp is SecondLayerHandlerProcessor<CosmosHandlerKind.Transaction, DefaultFilter, E> {
   return hp.baseHandlerKind === CosmosHandlerKind.Transaction;
 }
 
 export function isMessageHandlerProcessor<E>(
-  hp: SecondLayerHandlerProcessor<CosmosHandlerKind, DefaultFilter, unknown>
+  hp: SecondLayerHandlerProcessorArray<CosmosHandlerKind, DefaultFilter, unknown>
 ): hp is SecondLayerHandlerProcessor<CosmosHandlerKind.Message, DefaultFilter, E> {
   return hp.baseHandlerKind === CosmosHandlerKind.Message;
 }
 
 export function isEventHandlerProcessor<E>(
-  hp: SecondLayerHandlerProcessor<CosmosHandlerKind, DefaultFilter, unknown>
+  hp: SecondLayerHandlerProcessorArray<CosmosHandlerKind, DefaultFilter, unknown>
 ): hp is SecondLayerHandlerProcessor<CosmosHandlerKind.Event, DefaultFilter, E> {
   return hp.baseHandlerKind === CosmosHandlerKind.Event;
 }

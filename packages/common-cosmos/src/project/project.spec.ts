@@ -51,6 +51,6 @@ describe('project.yaml', () => {
   it('Ensure chaintypes existence on manifest deployment', () => {
     const cosmosManifest = loadFromJsonOrYaml(path.join(projectsDir, './protoTest1', 'project.yaml')) as any;
     const manifest = parseCosmosProjectManifest(cosmosManifest);
-    expect(manifest.asImpl.network.chaintypes.size).toBeGreaterThan(0);
+    expect(manifest.asImpl.network.chaintypes?.size).toBeGreaterThan(0);
   });
 });

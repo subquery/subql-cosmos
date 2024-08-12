@@ -134,7 +134,7 @@ export class KyveApi {
         if (isStale) {
           await KyveApi.unlinkFile(bundlePath, `Removed stale bundle: ${file}`);
         }
-      } catch (e) {
+      } catch (e: any) {
         logger.error(e, 'Error clearing stale files');
         if (e.code !== 'ENOENT') throw e;
       }
@@ -269,7 +269,7 @@ export class KyveApi {
 
   private async getBundleFromCache(
     height: number,
-  ): Promise<BundleDetails> | undefined {
+  ): Promise<BundleDetails | undefined> {
     const bundles = await this.getResolvedBundleDetails();
     return bundles.find(
       (b) =>
@@ -301,7 +301,7 @@ export class KyveApi {
     while (limit > 0) {
       try {
         return await this.readFromFile(bundleFilePath);
-      } catch (e) {
+      } catch (e: any) {
         if (e.code === 'EACCES') {
           await delay(POLL_TIMER);
           limit--;
@@ -367,7 +367,7 @@ export class KyveApi {
       await fs.promises.chmod(bundleFilePath, 0o444);
 
       logger.debug(`Bundle ${bundle.id} ready`);
-    } catch (e) {
+    } catch (e: any) {
       if (!['EEXIST', 'EACCES'].includes(e.code)) {
         await KyveApi.unlinkFile(bundleFilePath);
       }
@@ -384,7 +384,7 @@ export class KyveApi {
       if (loggerMsg) {
         logger.debug(loggerMsg);
       }
-    } catch (e) {
+    } catch (e: any) {
       // If file does not exist, no need to remove
       if (e.code !== 'ENOENT') throw e;
     }
@@ -585,7 +585,7 @@ export class KyveApi {
         return formatBlockUtil(
           new LazyBlockContent(blockInfo, blockResults, registry),
         );
-      } catch (e) {
+      } catch (e: any) {
         logger.error(
           e,
           `Failed to fetch and prepare block ${blockInfo.block.header.height}`,

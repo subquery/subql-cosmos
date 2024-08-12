@@ -22,7 +22,6 @@ import {
   CosmosMessageHandler,
   CustomModule,
   CosmosTxFilter,
-  SubqlCosmosProcessorOptions,
 } from '@subql/types-cosmos';
 import {plainToClass, Transform, Type} from 'class-transformer';
 import {
@@ -56,7 +55,7 @@ export class TxFilter implements CosmosTxFilter {
 
 export class MessageFilter extends TxFilter implements CosmosMessageFilter {
   @IsString()
-  type: string;
+  type!: string;
   @IsOptional()
   @IsObject()
   values?: {[key: string]: string};
@@ -68,7 +67,7 @@ export class MessageFilter extends TxFilter implements CosmosMessageFilter {
 
 export class EventFilter implements CosmosEventFilter {
   @IsString()
-  type: string;
+  type!: string;
   @IsOptional()
   @Type(() => MessageFilter)
   messageFilter?: CosmosMessageFilter;
@@ -79,9 +78,9 @@ export class EventFilter implements CosmosEventFilter {
 
 export class BlockHandler implements CosmosBlockHandler {
   @IsEnum(CosmosHandlerKind, {groups: [CosmosHandlerKind.Block]})
-  kind: CosmosHandlerKind.Block;
+  kind!: CosmosHandlerKind.Block;
   @IsString()
-  handler: string;
+  handler!: string;
   @IsOptional()
   @Type(() => BlockFilter)
   filter?: CosmosBlockFilter;
@@ -89,16 +88,16 @@ export class BlockHandler implements CosmosBlockHandler {
 
 export class TransactionHandler implements CosmosTransactionHandler {
   @IsEnum(CosmosHandlerKind, {groups: [CosmosHandlerKind.Transaction]})
-  kind: CosmosHandlerKind.Transaction;
+  kind!: CosmosHandlerKind.Transaction;
   @IsString()
-  handler: string;
+  handler!: string;
 }
 
 export class MessageHandler implements CosmosMessageHandler {
   @IsEnum(CosmosHandlerKind, {groups: [CosmosHandlerKind.Message]})
-  kind: CosmosHandlerKind.Message;
+  kind!: CosmosHandlerKind.Message;
   @IsString()
-  handler: string;
+  handler!: string;
   @IsOptional()
   @ValidateNested()
   @Type(() => MessageFilter)
@@ -111,16 +110,16 @@ export class EventHandler implements CosmosEventHandler {
   @Type(() => EventFilter)
   filter?: CosmosEventFilter;
   @IsEnum(CosmosHandlerKind, {groups: [CosmosHandlerKind.Event]})
-  kind: CosmosHandlerKind.Event;
+  kind!: CosmosHandlerKind.Event;
   @IsString()
-  handler: string;
+  handler!: string;
 }
 
 export class CustomHandler implements CosmosCustomHandler {
   @IsString()
-  kind: string;
+  kind!: string;
   @IsString()
-  handler: string;
+  handler!: string;
   @IsObject()
   @IsOptional()
   filter?: Record<string, unknown>;
@@ -146,18 +145,18 @@ export class RuntimeMapping implements CosmosMapping {
   })
   @IsArray()
   @ValidateNested()
-  handlers: CosmosHandler[];
+  handlers!: CosmosHandler[];
   @IsString()
-  file: string;
+  file!: string;
 }
 
 export class CustomMapping implements CosmosMapping<CosmosCustomHandler> {
   @IsArray()
   @Type(() => CustomHandler)
   @ValidateNested()
-  handlers: CosmosCustomHandler[];
+  handlers!: CosmosCustomHandler[];
   @IsString()
-  file: string;
+  file!: string;
 }
 
 export class CosmosProcessorOptions implements CosmosProcessorOptions {
@@ -171,10 +170,10 @@ export class CosmosRuntimeDataSourceBase<M extends CosmosMapping<CosmosRuntimeHa
   implements CosmosRuntimeDatasource<M>
 {
   @IsEnum(CosmosDatasourceKind, {groups: [CosmosDatasourceKind.Runtime]})
-  kind: CosmosDatasourceKind.Runtime;
+  kind!: CosmosDatasourceKind.Runtime;
   @Type(() => RuntimeMapping)
   @ValidateNested()
-  mapping: M;
+  mapping!: M;
   @IsOptional()
   @Validate(FileReferenceImp)
   assets?: Map<string, FileReference>;
@@ -186,15 +185,15 @@ export class CosmosRuntimeDataSourceBase<M extends CosmosMapping<CosmosRuntimeHa
 
 export class CosmosFileReferenceImpl implements FileReference {
   @IsString()
-  file: string;
+  file!: string;
 }
 
 export class CosmosCustomModuleImpl implements CustomModule {
   @IsString()
-  file: string;
+  file!: string;
   @IsArray()
   @Type(() => String)
-  messages: string[];
+  messages!: string[];
 }
 
 export class CosmosCustomDataSourceBase<
@@ -206,14 +205,14 @@ export class CosmosCustomDataSourceBase<
   implements CosmosCustomDatasource<K, M, O>
 {
   @IsString()
-  kind: K;
+  kind!: K;
   @Type(() => CustomMapping)
   @ValidateNested()
-  mapping: M;
+  mapping!: M;
   @Type(() => CosmosFileReferenceImpl)
   @ValidateNested({each: true})
-  assets: Map<string, CustomDataSourceAsset>;
+  assets!: Map<string, CustomDataSourceAsset>;
   @Type(() => ProcessorImpl)
   @IsObject()
-  processor: Processor<O>;
+  processor!: Processor<O>;
 }

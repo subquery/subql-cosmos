@@ -117,6 +117,7 @@ export function prepareSortedAssets(
   datasources
     .filter((d) => !!d?.assets && isRuntimeCosmosDs(d))
     .forEach((d) => {
+      if (!d.assets) return;
       Object.entries(d.assets).map(([name, value]) => {
         const filePath = path.join(projectPath, value.file);
         if (!fs.existsSync(filePath)) {
@@ -168,7 +169,7 @@ export async function generateCosmwasm(
         );
       })
     );
-  } catch (e) {
+  } catch (e: any) {
     console.error(
       `! Unable to generate from provided cosmwasm interface. ${e.message}\n` +
         'Please check the path of your abi path in the project.yaml'
@@ -183,32 +184,34 @@ export function prepareProtobufRenderProps(
   if (!chaintypes) {
     return [];
   }
-  return chaintypes.filter(Boolean).flatMap((chaintype) => {
-    return Object.entries(chaintype)
-      .map(([key, value]) => {
-        const filePath = path.join(projectPath, value.file);
-        if (!fs.existsSync(filePath)) {
-          throw new Error(`Error: chainType ${key}, file ${value.file} does not exist`);
-        }
-        if (!isProtoPath(value.file, projectPath)) {
-          console.error(
-            `Codegen will not apply for this file: ${value.file} Please ensure it is under the ./proto directory if you want to run codegen on it`
-          );
-        }
+  return chaintypes
+    .filter((v) => v !== undefined)
+    .flatMap((chaintype) => {
+      return Object.entries(chaintype)
+        .map(([key, value]) => {
+          const filePath = path.join(projectPath, value.file);
+          if (!fs.existsSync(filePath)) {
+            throw new Error(`Error: chainType ${key}, file ${value.file} does not exist`);
+          }
+          if (!isProtoPath(value.file, projectPath)) {
+            console.error(
+              `Codegen will not apply for this file: ${value.file} Please ensure it is under the ./proto directory if you want to run codegen on it`
+            );
+          }
 
-        // We only need to generate for RPC messages that are always prefixed with Msg
-        const messages = value.messages.filter((m: string) => m.indexOf('Msg') === 0);
-        if (!messages.length) return;
+          // We only need to generate for RPC messages that are always prefixed with Msg
+          const messages = value.messages.filter((m: string) => m.indexOf('Msg') === 0);
+          if (!messages.length) return;
 
-        return {
-          messageNames: messages,
-          namespace: pathToNamespace(value.file),
-          name: pathToName(value.file),
-          path: processProtoFilePath(value.file),
-        };
-      })
-      .filter(Boolean);
-  });
+          return {
+            messageNames: messages,
+            namespace: pathToNamespace(value.file),
+            name: pathToName(value.file),
+            path: processProtoFilePath(value.file),
+          };
+        })
+        .filter((v) => v !== undefined);
+    });
 }
 
 /**
@@ -244,7 +247,7 @@ export async function generateProto(
   renderTemplate: (templatePath: string, outputPath: string, templateData: Data) => Promise<void>,
   upperFirst: (string?: string) => string
 ): Promise<void> {
-  let tmpPath: string;
+  let tmpPath = '';
   try {
     tmpPath = await tempProtoDir(projectPath);
     const protobufRenderProps = prepareProtobufRenderProps(chaintypes, projectPath);
@@ -274,7 +277,9 @@ export async function generateProto(
     console.log('ERRROR', e);
     throw new Error(`Failed to generate from protobufs. ${e.message}, ${errorMessage}`);
   } finally {
-    fs.rmSync(tmpPath, {recursive: true, force: true});
+    if (tmpPath !== '') {
+      fs.rmSync(tmpPath, {recursive: true, force: true});
+    }
   }
 }
 
@@ -302,9 +307,10 @@ export async function projectCodegen(
   await generateCosmwasm(datasources, projectPath, prepareDirPath, upperFirst, renderTemplate);
 }
 
-function getChaintypes(manifest: ProjectManifestV1_0_0[]): Map<string, CustomModule>[] {
+function getChaintypes(manifest: ProjectManifestV1_0_0[]): CosmosChainTypeDataType[] {
   return manifest
     .filter((m) => validateCosmosManifest(m))
     .map((m) => (m as CosmosProjectManifestV1_0_0).network.chaintypes)
-    .filter((value) => value && Object.keys(value).length !== 0);
+    .filter((value) => value !== undefined)
+    .filter((value) => Object.keys(value).length !== 0);
 }
