@@ -53,7 +53,7 @@ export async function processNetworkConfig(
 export async function loadNetworkChainType(
   reader: Reader,
   file: string,
-): Promise<[string, protobuf.Root]> {
+): Promise<[string | undefined, protobuf.Root]> {
   const proto = await reader.getFile(file);
 
   if (!proto) throw new Error(`Unable to load chain type from ${file}`);

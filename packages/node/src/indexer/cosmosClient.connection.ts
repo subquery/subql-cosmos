@@ -18,6 +18,7 @@ import {
   exitWithError,
 } from '@subql/node-core';
 import { getLogger } from '@subql/node-core/dist';
+import { IEndpointConfig } from '@subql/types-core';
 import { CosmosClient, CosmosSafeClient } from './api.service';
 import { HttpClient, WebsocketClient } from './rpc-clients';
 import { BlockContent } from './types';
@@ -86,11 +87,13 @@ export class CosmosClientConnection
     endpoint: string,
     fetchBlocksBatches: FetchFunc,
     registry: Registry,
+    config: IEndpointConfig,
   ): Promise<CosmosClientConnection> {
     const httpEndpoint: HttpEndpoint = {
       url: endpoint,
       headers: {
         'User-Agent': `SubQuery-Node ${packageVersion}`,
+        ...config.headers,
       },
     };
 

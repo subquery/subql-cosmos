@@ -38,7 +38,7 @@ type DictionaryServicePrivate = DictionaryV1 & {
 const nodeConfig = new NodeConfig({
   subquery: 'asdf',
   subqueryName: 'asdf',
-  networkEndpoint: ['https://rpc-juno.itastakers.com/'],
+  networkEndpoint: { 'https://rpc-juno.itastakers.com/': {} },
   dictionaryTimeout: 10,
 });
 

@@ -59,7 +59,7 @@ export class CosmosProjectNetworkDeployment {
   @IsString()
   @IsNotEmpty()
   @Transform(({value}: TransformFnParams) => value.trim())
-  chainId: string;
+  chainId!: string;
   @IsOptional()
   @IsArray()
   bypassBlocks?: (number | string)[];
@@ -78,33 +78,33 @@ export class CosmosProjectNetwork extends CommonProjectNetworkV1_0_0<CosmosChain
 
 export class RuntimeDatasourceTemplateImpl extends CosmosRuntimeDataSourceImpl implements RuntimeDatasourceTemplate {
   @IsString()
-  name: string;
+  name!: string;
 }
 
 export class CustomDatasourceTemplateImpl extends CosmosCustomDataSourceImpl implements CustomDatasourceTemplate {
   @IsString()
-  name: string;
+  name!: string;
 }
 
 export class CosmosRunnerSpecsImpl implements RunnerSpecs {
   @IsObject()
   @ValidateNested()
   @Type(() => CosmosRunnerNodeImpl)
-  node: NodeSpec;
+  node!: NodeSpec;
   @IsObject()
   @ValidateNested()
   @Type(() => RunnerQueryBaseModel)
-  query: QuerySpec;
+  query!: QuerySpec;
 }
 
 export class DeploymentV1_0_0 extends BaseDeploymentV1_0_0 {
   @ValidateNested()
   @Type(() => CosmosProjectNetworkDeployment)
-  network: CosmosProjectNetworkDeployment;
+  network!: CosmosProjectNetworkDeployment;
   @IsObject()
   @ValidateNested()
   @Type(() => CosmosRunnerSpecsImpl)
-  runner: RunnerSpecs;
+  runner!: RunnerSpecs;
   @IsArray()
   @ValidateNested()
   @Type(() => CosmosCustomDataSourceImpl, {
@@ -114,7 +114,7 @@ export class DeploymentV1_0_0 extends BaseDeploymentV1_0_0 {
     },
     keepDiscriminatorProperty: true,
   })
-  dataSources: (CosmosRuntimeDatasource | CosmosCustomDatasource)[];
+  dataSources!: (CosmosRuntimeDatasource | CosmosCustomDatasource)[];
   @IsOptional()
   @IsArray()
   @ValidateNested()
@@ -139,16 +139,16 @@ export class ProjectManifestV1_0_0Impl
   @Equals('1.0.0')
   specVersion = '1.0.0';
   @IsString()
-  name: string;
+  name!: string;
   @IsString()
-  version: string;
+  version!: string;
   @IsObject()
   @ValidateNested()
   @Type(() => CosmosProjectNetwork)
-  network: CosmosProjectNetwork;
+  network!: CosmosProjectNetwork;
   @ValidateNested()
   @Type(() => FileType)
-  schema: FileType;
+  schema!: FileType;
   @IsArray()
   @ValidateNested()
   @Type(() => CosmosCustomDataSourceImpl, {
@@ -158,7 +158,7 @@ export class ProjectManifestV1_0_0Impl
     },
     keepDiscriminatorProperty: true,
   })
-  dataSources: (CosmosRuntimeDatasource | CosmosCustomDatasource)[];
+  dataSources!: (CosmosRuntimeDatasource | CosmosCustomDatasource)[];
   @IsOptional()
   @IsArray()
   @ValidateNested()
@@ -173,7 +173,7 @@ export class ProjectManifestV1_0_0Impl
   @IsObject()
   @ValidateNested()
   @Type(() => CosmosRunnerSpecsImpl)
-  runner: RunnerSpecs;
+  runner!: RunnerSpecs;
 
   @IsOptional()
   @IsObject()
