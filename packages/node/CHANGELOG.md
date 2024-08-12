@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.1.0] - 2024-08-12
+### Added
+- Support for endpoint configs (#278)
+
 ## [4.0.1] - 2024-07-30
 ### Fixed
 - Chain types not loading correctly (#275)
@@ -440,7 +444,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Init release
 
-[Unreleased]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/4.0.1...HEAD
+[Unreleased]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/4.1.0...HEAD
+[4.1.0]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/4.0.1...node-cosmos/4.1.0
 [4.0.1]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/4.0.0...node-cosmos/4.0.1
 [4.0.0]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/3.12.1...node-cosmos/4.0.0
 [3.12.1]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/3.12.0...node-cosmos/3.12.1
