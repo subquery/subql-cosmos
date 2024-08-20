@@ -262,16 +262,30 @@ export function wrapTx(
   block: CosmosBlock,
   txResults: TxData[],
 ): CosmosTransaction[] {
-  return txResults.map((tx, idx) => ({
-    idx,
-    block: block,
-    tx,
-    hash: toHex(sha256(block.block.txs[idx])).toUpperCase(),
-    get decodedTx() {
-      delete (this as any).decodedTx;
-      return ((this.decodedTx as any) = decodeTxRaw(block.block.txs[idx]));
-    },
-  }));
+  return (
+    txResults
+      .map((tx, idx) => ({
+        idx,
+        block: block,
+        tx,
+        hash: toHex(sha256(block.block.txs[idx])).toUpperCase(),
+        get decodedTx() {
+          delete (this as any).decodedTx;
+          try {
+            return ((this.decodedTx as any) = decodeTxRaw(
+              block.block.txs[idx],
+            ));
+          } catch (e) {
+            throw new Error(
+              `Failed to decode transaction idx="${idx}" at height="${block.block.header.height}"`,
+              { cause: e },
+            );
+          }
+        },
+      }))
+      // Somtimes there might be other data types in the transactions, ExtendedCommitInfo, we filter them out here so that `decodedTx` doesn't fail
+      .filter((tx) => tx.tx.log !== 'tx parse error')
+  );
 }
 
 export function wrapCosmosMsg(

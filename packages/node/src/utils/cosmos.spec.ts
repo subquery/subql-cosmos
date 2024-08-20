@@ -21,7 +21,12 @@ import {
 import { fromInt } from 'long';
 import { CosmosClient } from '../indexer/api.service';
 import { BlockContent } from '../indexer/types';
-import { fetchBlocksBatches, filterMessageData, wrapEvent } from './cosmos';
+import {
+  fetchBlocksBatches,
+  filterMessageData,
+  filterMessages,
+  wrapEvent,
+} from './cosmos';
 
 const ENDPOINT = 'https://rpc.mainnet.archway.io';
 
@@ -399,5 +404,23 @@ describe('Cosmos 0.50 support', () => {
     expect(event.event.attributes.length).toEqual(3);
 
     expect(event.log.events.length).toEqual(0);
+  });
+
+  // block.tx when block.block.tx cannot be decoded
+  // {
+  //    code: 2,
+  //    codespace: 'sdk',
+  //    log: 'tx parse error',
+  //    data: undefined,
+  //    events: [],
+  //    gasWanted: 0n,
+  //    gasUsed: 0n
+  //  }
+
+  it('doesnt throw when a block contains ExtendedCommitInfo in the transactions', async () => {
+    const [firstBlock] = await fetchBlocksBatches(api, [13_379_322]); // https://www.mintscan.io/neutron/block/13379322
+    const block = firstBlock.block;
+
+    expect(block.messages.length).toEqual(4);
   });
 });
