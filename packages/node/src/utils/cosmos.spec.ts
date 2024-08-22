@@ -9,6 +9,7 @@ import {
   CosmosBlock,
   CosmosTransaction,
   CosmosMessage,
+  CosmosEventFilter,
 } from '@subql/types-cosmos';
 import {
   MsgClearAdmin,
@@ -21,7 +22,12 @@ import {
 import { fromInt } from 'long';
 import { CosmosClient } from '../indexer/api.service';
 import { BlockContent } from '../indexer/types';
-import { fetchBlocksBatches, filterMessageData, wrapEvent } from './cosmos';
+import {
+  fetchBlocksBatches,
+  filterEvents,
+  filterMessageData,
+  wrapEvent,
+} from './cosmos';
 
 const ENDPOINT = 'https://rpc.mainnet.archway.io';
 
@@ -399,5 +405,61 @@ describe('Cosmos 0.50 support', () => {
     expect(event.event.attributes.length).toEqual(3);
 
     expect(event.log.events.length).toEqual(0);
+  });
+});
+
+describe('Cosmos bigint support', () => {
+  const TEST_BIGINT_BLOCKNUMBER = 17838575;
+  const TEST_BIGINT_SUCC: CosmosEventFilter = {
+    type: 'transfer',
+    messageFilter: {
+      type: '/ibc.applications.transfer.v1.MsgTransfer',
+      values: {
+        timeoutTimestamp: '1723738770000000000',
+      },
+    },
+  };
+
+  const TEST_BIGINT_FAIL: CosmosEventFilter = {
+    type: 'transfer',
+    messageFilter: {
+      type: '/ibc.applications.transfer.v1.MsgTransfer',
+      values: {
+        timeoutTimestamp: '2723738770000000000',
+      },
+    },
+  };
+  let api: CosmosClient;
+  let client: CometClient;
+  let block: BlockContent;
+
+  beforeAll(async () => {
+    // chainId: fetchhub-4
+    // endpoint: https://rpc-fetchhub.fetch.ai
+    client = await connectComet('https://rpc-fetchhub.fetch.ai');
+    const wasmTypes: ReadonlyArray<[string, GeneratedType]> = [
+      ['/cosmwasm.wasm.v1.MsgClearAdmin', MsgClearAdmin],
+      ['/cosmwasm.wasm.v1.MsgExecuteContract', MsgExecuteContract],
+      ['/cosmwasm.wasm.v1.MsgMigrateContract', MsgMigrateContract],
+      ['/cosmwasm.wasm.v1.MsgStoreCode', MsgStoreCode],
+      ['/cosmwasm.wasm.v1.MsgInstantiateContract', MsgInstantiateContract],
+      ['/cosmwasm.wasm.v1.MsgUpdateAdmin', MsgUpdateAdmin],
+    ];
+
+    const registry = new Registry([...defaultRegistryTypes, ...wasmTypes]);
+    api = new CosmosClient(client, registry);
+
+    const [firstBlock] = await fetchBlocksBatches(api, [
+      TEST_BIGINT_BLOCKNUMBER,
+    ]);
+    block = firstBlock.block;
+  });
+
+  it('bigint field check', () => {
+    const succEvents = filterEvents(block.events, TEST_BIGINT_SUCC);
+    const failEvents = filterEvents(block.events, TEST_BIGINT_FAIL);
+
+    expect(succEvents.length).toEqual(1);
+    expect(failEvents.length).toEqual(0);
   });
 });
