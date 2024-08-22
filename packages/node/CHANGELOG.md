@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Change
+- Support bigint filter
+
 ## [4.1.0] - 2024-08-12
 ### Added
 - Support for endpoint configs (#278)
