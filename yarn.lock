@@ -6380,7 +6380,7 @@ __metadata:
     "@protobufs/google": ^0.0.10
     "@protobufs/ibc": ^0.1.0
     "@protobufs/tendermint": ^0.0.10
-    "@subql/common": ^5.1.0
+    "@subql/common": ^5.1.1
     "@subql/types-cosmos": "workspace:*"
     "@subql/x-cosmology-telescope": ^1.4.14
     "@types/bn.js": 4.11.6
@@ -6403,9 +6403,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@subql/common@npm:5.1.0, @subql/common@npm:^5.1.0":
-  version: 5.1.0
-  resolution: "@subql/common@npm:5.1.0"
+"@subql/common@npm:5.1.1, @subql/common@npm:^5.1.1":
+  version: 5.1.1
+  resolution: "@subql/common@npm:5.1.1"
   dependencies:
     "@subql/types-core": 1.1.1
     axios: ^0.28.0
@@ -6415,21 +6415,21 @@ __metadata:
     reflect-metadata: ^0.1.14
     semver: ^7.6.3
     update-notifier: ^5.1.0
-  checksum: 6b568f1c43ffe16991038393c2f9305dd502467f897b858f76e5be119dd6ae5b294624b1bec2d58d87a3ecbc8097927dda2fc87f8c96eecdb94101234dfcd2f9
+  checksum: 7e8eeb5bb0242c178df8f68d38f078799d896837bd260804abcdf44eaa8b2ea1f28823d611d3b1a271e5216d0fc1b4a764a417ad9ac83b5c061e9761cc838ffc
   languageName: node
   linkType: hard
 
-"@subql/node-core@npm:^14.1.1":
-  version: 14.1.1
-  resolution: "@subql/node-core@npm:14.1.1"
+"@subql/node-core@npm:^14.1.2":
+  version: 14.1.2
+  resolution: "@subql/node-core@npm:14.1.2"
   dependencies:
     "@apollo/client": ^3.11.2
     "@nestjs/common": ^9.4.0
     "@nestjs/event-emitter": ^2.0.0
     "@nestjs/schedule": ^3.0.1
-    "@subql/common": 5.1.0
+    "@subql/common": 5.1.1
     "@subql/testing": 2.2.1
-    "@subql/types": 3.11.1
+    "@subql/types": 3.11.2
     "@subql/utils": 2.14.0
     "@willsoto/nestjs-prometheus": ^5.4.0
     async-mutex: ^0.5.0
@@ -6447,7 +6447,7 @@ __metadata:
     toposort-class: ^1.0.1
     vm2: ^3.9.19
     yargs: ^16.2.0
-  checksum: 82b831b01f3e12623835ebf8b1b999daf8d086911226dd21ad0db6438d1534993247de7af1aa1cc0ea391f4676dda3c16c747623d5f9cdcbc03992500d5bc5df
+  checksum: 6d56fcf203f9d0a54aafd519ed1ba526b23aa798850f2dfc984ded8f5fed4cc17d778f8ba6684e823236da5b2356dad4e6c75ba767101febeeeb2ced80e86c8b
   languageName: node
   linkType: hard
 
@@ -6467,8 +6467,9 @@ __metadata:
     "@nestjs/schedule": ^3.0.1
     "@nestjs/schematics": ^9.2.0
     "@nestjs/testing": ^9.4.0
+    "@subql/common": ^5.1.1
     "@subql/common-cosmos": "workspace:*"
-    "@subql/node-core": ^14.1.1
+    "@subql/node-core": ^14.1.2
     "@subql/types-cosmos": "workspace:*"
     "@types/express": ^4.17.13
     "@types/jest": ^27.4.0
@@ -6526,14 +6527,14 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@subql/types@npm:3.11.1":
-  version: 3.11.1
-  resolution: "@subql/types@npm:3.11.1"
+"@subql/types@npm:3.11.2":
+  version: 3.11.2
+  resolution: "@subql/types@npm:3.11.2"
   dependencies:
     "@subql/types-core": 1.1.1
   peerDependencies:
     "@polkadot/api": ^12
-  checksum: 35c9f2bd86dcddc0d5541f85b0332470da2c4f4cf8d3e60b7962c6746b5cf272bbeb0f2242b659c5bf4101702ac85087bed75c1dfd67084674367d0d0469af7d
+  checksum: ef8e9f6bd73e9071ec267cb90259472d9ecb595d02bf52e44e4f93e90016ed0a897f09f6c8496455368b7ecb42a9a5aac7fc715ac5df5697936e8c1c1956e13f
   languageName: node
   linkType: hard
 
