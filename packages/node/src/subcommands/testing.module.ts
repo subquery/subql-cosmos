@@ -18,9 +18,7 @@ import {
   SandboxService,
 } from '@subql/node-core';
 import { ConfigureModule } from '../configure/configure.module';
-import { SubqueryProject } from '../configure/SubqueryProject';
 import { ApiService } from '../indexer/api.service';
-import { CosmosClientConnection } from '../indexer/cosmosClient.connection';
 import { DsProcessorService } from '../indexer/ds-processor.service';
 import { DynamicDsService } from '../indexer/dynamic-ds.service';
 import { IndexerManager } from '../indexer/indexer.manager';
@@ -47,21 +45,7 @@ import { UnfinalizedBlocksService } from '../indexer/unfinalizedBlocks.service';
     },
     {
       provide: ApiService,
-      useFactory: async (
-        project: SubqueryProject,
-        connectionPoolService: ConnectionPoolService<CosmosClientConnection>,
-        eventEmitter: EventEmitter2,
-        nodeConfig: NodeConfig,
-      ) => {
-        const apiService = new ApiService(
-          project,
-          connectionPoolService,
-          eventEmitter,
-          nodeConfig,
-        );
-        await apiService.init();
-        return apiService;
-      },
+      useFactory: ApiService.create.bind(ApiService),
       inject: [
         'ISubqueryProject',
         ConnectionPoolService,
@@ -73,7 +57,7 @@ import { UnfinalizedBlocksService } from '../indexer/unfinalizedBlocks.service';
     TestRunner,
     {
       provide: 'IApi',
-      useClass: ApiService,
+      useExisting: ApiService,
     },
     {
       provide: 'IIndexerManager',

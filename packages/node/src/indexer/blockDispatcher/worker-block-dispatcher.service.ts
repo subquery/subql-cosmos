@@ -94,7 +94,7 @@ export class WorkerBlockDispatcherService
     height: number,
   ): Promise<void> {
     // const start = new Date();
-    await worker.fetchBlock(height, null);
+    await worker.fetchBlock(height, 0 /* Value is not used with cosmos*/);
     // const end = new Date();
 
     // const waitTime = end.getTime() - start.getTime();

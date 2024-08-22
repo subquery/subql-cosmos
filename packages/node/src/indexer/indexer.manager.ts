@@ -1,7 +1,7 @@
 // Copyright 2020-2024 SubQuery Pte Ltd authors & contributors
 // SPDX-License-Identifier: GPL-3.0
 
-import { Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import {
   isBlockHandlerProcessor,
   isTransactionHandlerProcessor,
@@ -111,7 +111,7 @@ export class IndexerManager extends BaseIndexerManager<
   ): Promise<void> {
     await this.indexBlockContent(blockContent, dataSources, getVM);
 
-    for (const evt of blockContent.beginBlockEvents) {
+    for (const evt of blockContent.beginBlockEvents ?? []) {
       await this.indexEvent(evt, dataSources, getVM);
     }
 
@@ -132,7 +132,7 @@ export class IndexerManager extends BaseIndexerManager<
       }
     }
 
-    for (const evt of blockContent.endBlockEvents) {
+    for (const evt of blockContent.endBlockEvents ?? []) {
       await this.indexEvent(evt, dataSources, getVM);
     }
   }

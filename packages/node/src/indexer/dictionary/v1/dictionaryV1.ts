@@ -1,6 +1,7 @@
 // Copyright 2020-2024 SubQuery Pte Ltd authors & contributors
 // SPDX-License-Identifier: GPL-3.0
 
+import assert from 'assert';
 import { Inject, Injectable } from '@nestjs/common';
 import {
   CosmosDataSource,
@@ -11,26 +12,24 @@ import { NodeConfig, DictionaryV1 as BaseDictionaryV1 } from '@subql/node-core';
 import {
   DictionaryQueryEntry,
   DictionaryQueryCondition,
-  DsProcessor,
 } from '@subql/types-core';
 import {
   CosmosBlockFilter,
   CosmosCustomHandler,
   CosmosDatasource,
   CosmosEventFilter,
-  CosmosEventHandler,
   CosmosHandler,
   CosmosHandlerFilter,
   CosmosHandlerKind,
   CosmosMessageFilter,
-  CosmosMessageHandler,
   CosmosRuntimeHandler,
 } from '@subql/types-cosmos';
 import { setWith, sortBy, uniqBy } from 'lodash';
 import { SubqueryProject } from '../../../configure/SubqueryProject';
 import { isBaseHandler, isCustomHandler } from '../../../utils/project';
+import { DsProcessorService } from '../../ds-processor.service';
 
-type GetDsProcessor = (ds: CosmosDatasource) => DsProcessor<CosmosDatasource>;
+type GetDsProcessor = DsProcessorService['getDsProcessor'];
 
 export function eventFilterToQueryEntry(
   filter: CosmosEventFilter,
@@ -64,7 +63,7 @@ function getBaseHandlerKind(
   ds: CosmosDataSource,
   handler: CosmosHandler,
   getDsProcessor: GetDsProcessor,
-): CosmosHandlerKind {
+): CosmosHandlerKind | undefined {
   if (isRuntimeCosmosDs(ds) && isBaseHandler(handler)) {
     return (handler as CosmosRuntimeHandler).kind;
   } else if (isCustomCosmosDs(ds) && isCustomHandler(handler)) {
@@ -105,12 +104,14 @@ function buildDictionaryQueryEntries(
     const plugin = isCustomCosmosDs(ds) ? getDsProcessor(ds) : undefined;
     for (const handler of ds.mapping.handlers) {
       const baseHandlerKind = getBaseHandlerKind(ds, handler, getDsProcessor);
-      let filterList: CosmosHandlerFilter[];
+      let filterList: CosmosHandlerFilter[] = [];
       if (isCustomCosmosDs(ds)) {
+        assert(plugin, 'plugin should be defined');
         const processor = plugin.handlerProcessors[handler.kind];
-        if (processor.dictionaryQuery) {
+        const filter = (handler as CosmosCustomHandler).filter;
+        if (processor.dictionaryQuery && filter) {
           const queryEntry = processor.dictionaryQuery(
-            (handler as CosmosCustomHandler).filter,
+            filter,
             ds,
           ) as DictionaryQueryEntry;
           if (queryEntry) {
@@ -123,13 +124,11 @@ function buildDictionaryQueryEntries(
           handler.kind,
           getDsProcessor,
         );
-      } else {
-        filterList = [
-          (handler as CosmosEventHandler | CosmosMessageHandler).filter,
-        ];
+      } else if (handler.filter) {
+        filterList = [handler.filter as CosmosHandlerFilter];
       }
       // Filter out any undefined
-      filterList = filterList.filter(Boolean);
+      filterList = filterList.filter((f) => !f);
       if (!filterList.length) return [];
       switch (baseHandlerKind) {
         case CosmosHandlerKind.Block:
@@ -188,8 +187,7 @@ export function messageFilterToQueryEntry(
     const nested = {};
 
     // convert nested filters from `msg.swap.input_token` to { msg: { swap: { input_token: 'Token2' } } }
-    Object.keys(filter.values).map((key) => {
-      const value = filter.values[key];
+    Object.entries(filter.values).map((key, value) => {
       setWith(nested, key, value);
     });
 
@@ -211,7 +209,7 @@ export class DictionaryV1 extends BaseDictionaryV1<CosmosDatasource> {
     @Inject('ISubqueryProject') protected project: SubqueryProject,
     nodeConfig: NodeConfig,
     private getDsProcessor: GetDsProcessor,
-    dictionaryUrl?: string,
+    dictionaryUrl: string,
   ) {
     super(dictionaryUrl, project.network.chainId, nodeConfig, [
       'lastProcessedHeight',

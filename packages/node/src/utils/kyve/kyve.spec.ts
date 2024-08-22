@@ -523,8 +523,8 @@ describe('KyveApi', () => {
       kyveLazyBlockContent = new LazyBlockContent(bi, br, registry);
     });
     it('wrapTransaction', () => {
-      expect(kyveLazyBlockContent.transactions[0].tx.data.length).toBe(
-        rpcLazyBlockContent.transactions[0].tx.data.length,
+      expect(kyveLazyBlockContent.transactions[0].tx.data!.length).toBe(
+        rpcLazyBlockContent.transactions[0].tx.data!.length,
       );
       expect(kyveLazyBlockContent.transactions[0].tx.events.length).toBe(
         rpcLazyBlockContent.transactions[0].tx.events.length,

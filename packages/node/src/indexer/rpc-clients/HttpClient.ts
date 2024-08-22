@@ -28,13 +28,14 @@ export async function httpRequest(
 
 export class HttpClient implements RpcClient {
   protected readonly url: string;
-  protected readonly headers: Record<string, string> | undefined;
+  protected readonly headers: Record<string, string>;
   connection: AxiosInstance;
 
   constructor(endpoint: string | HttpEndpoint) {
     if (typeof endpoint === 'string') {
       // accept host.name:port and assume http protocol
       this.url = hasProtocol(endpoint) ? endpoint : `http://${endpoint}`;
+      this.headers = {};
     } else {
       this.url = endpoint.url;
       this.headers = endpoint.headers;
@@ -43,8 +44,9 @@ export class HttpClient implements RpcClient {
     const { searchParams } = new URL(this.url);
 
     // Support OnFinality api keys
-    if (searchParams.get('apikey')) {
-      this.headers.apikey = searchParams.get('apikey');
+    const apiKey = searchParams.get('apikey');
+    if (apiKey) {
+      this.headers.apikey = apiKey;
       this.url = this.url.slice(0, this.url.indexOf('?apikey'));
     }
 

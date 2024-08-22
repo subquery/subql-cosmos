@@ -5,7 +5,6 @@
     "tsBuildInfoFile": "dist/.tsbuildinfo",
     "rootDir": "src",
     "outDir": "./dist"
-    // "strict": true,
   },
   "references": [{ "path": "../common-cosmos" }, { "path": "../types" }],
   "include": ["src/**/*"]

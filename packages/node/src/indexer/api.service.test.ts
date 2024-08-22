@@ -38,7 +38,7 @@ function testCosmosProject(
     schema: new GraphQLSchema({}),
     templates: [],
     tempDir: fileCacheDir,
-  } as SubqueryProject;
+  } as unknown as SubqueryProject;
 }
 
 jest.setTimeout(200000);
@@ -67,7 +67,16 @@ describe('ApiService', () => {
           useFactory: () => ({}),
         },
         EventEmitter2,
-        ApiService,
+        {
+          provide: ApiService,
+          useFactory: ApiService.create.bind(ApiService),
+          inject: [
+            'ISubqueryProject',
+            ConnectionPoolService,
+            EventEmitter2,
+            NodeConfig,
+          ],
+        },
         NodeConfig,
       ],
       imports: [EventEmitterModule.forRoot()],
@@ -79,7 +88,6 @@ describe('ApiService', () => {
       'https://api-us-1.kyve.network';
     (apiService as any).nodeConfig._config.kyveStorageUrl =
       'https://arweave.net';
-    await apiService.init();
   };
 
   const ENDPOINT = 'https://rpc-juno.itastakers.com/';

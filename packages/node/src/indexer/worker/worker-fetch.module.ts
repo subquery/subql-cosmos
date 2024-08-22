@@ -10,9 +10,7 @@ import {
   NodeConfig,
   WorkerUnfinalizedBlocksService,
 } from '@subql/node-core';
-import { SubqueryProject } from '../../configure/SubqueryProject';
 import { ApiService } from '../api.service';
-import { CosmosClientConnection } from '../cosmosClient.connection';
 import { DsProcessorService } from '../ds-processor.service';
 import { DynamicDsService } from '../dynamic-ds.service';
 import { IndexerManager } from '../indexer.manager';
@@ -26,21 +24,7 @@ import { WorkerService } from './worker.service';
     IndexerManager,
     {
       provide: ApiService,
-      useFactory: async (
-        project: SubqueryProject,
-        connectionPoolService: ConnectionPoolService<CosmosClientConnection>,
-        eventEmitter: EventEmitter2,
-        nodeConfig: NodeConfig,
-      ) => {
-        const apiService = new ApiService(
-          project,
-          connectionPoolService,
-          eventEmitter,
-          nodeConfig,
-        );
-        await apiService.init();
-        return apiService;
-      },
+      useFactory: ApiService.create.bind(ApiService),
       inject: [
         'ISubqueryProject',
         ConnectionPoolService,
