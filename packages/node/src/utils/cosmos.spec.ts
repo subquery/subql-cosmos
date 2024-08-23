@@ -9,6 +9,7 @@ import {
   CosmosBlock,
   CosmosTransaction,
   CosmosMessage,
+  CosmosEventFilter,
 } from '@subql/types-cosmos';
 import {
   MsgClearAdmin,
@@ -23,8 +24,8 @@ import { CosmosClient } from '../indexer/api.service';
 import { BlockContent } from '../indexer/types';
 import {
   fetchBlocksBatches,
+  filterEvents,
   filterMessageData,
-  filterMessages,
   wrapEvent,
 } from './cosmos';
 
@@ -422,5 +423,61 @@ describe('Cosmos 0.50 support', () => {
     const block = firstBlock.block;
 
     expect(block.messages.length).toEqual(4);
+  });
+});
+
+describe('Cosmos bigint support', () => {
+  const TEST_BIGINT_BLOCKNUMBER = 17838575;
+  const TEST_BIGINT_SUCC: CosmosEventFilter = {
+    type: 'transfer',
+    messageFilter: {
+      type: '/ibc.applications.transfer.v1.MsgTransfer',
+      values: {
+        timeoutTimestamp: '1723738770000000000',
+      },
+    },
+  };
+
+  const TEST_BIGINT_FAIL: CosmosEventFilter = {
+    type: 'transfer',
+    messageFilter: {
+      type: '/ibc.applications.transfer.v1.MsgTransfer',
+      values: {
+        timeoutTimestamp: '2723738770000000000',
+      },
+    },
+  };
+  let api: CosmosClient;
+  let client: CometClient;
+  let block: BlockContent;
+
+  beforeAll(async () => {
+    // chainId: fetchhub-4
+    // endpoint: https://rpc-fetchhub.fetch.ai
+    client = await connectComet('https://rpc-fetchhub.fetch.ai');
+    const wasmTypes: ReadonlyArray<[string, GeneratedType]> = [
+      ['/cosmwasm.wasm.v1.MsgClearAdmin', MsgClearAdmin],
+      ['/cosmwasm.wasm.v1.MsgExecuteContract', MsgExecuteContract],
+      ['/cosmwasm.wasm.v1.MsgMigrateContract', MsgMigrateContract],
+      ['/cosmwasm.wasm.v1.MsgStoreCode', MsgStoreCode],
+      ['/cosmwasm.wasm.v1.MsgInstantiateContract', MsgInstantiateContract],
+      ['/cosmwasm.wasm.v1.MsgUpdateAdmin', MsgUpdateAdmin],
+    ];
+
+    const registry = new Registry([...defaultRegistryTypes, ...wasmTypes]);
+    api = new CosmosClient(client, registry);
+
+    const [firstBlock] = await fetchBlocksBatches(api, [
+      TEST_BIGINT_BLOCKNUMBER,
+    ]);
+    block = firstBlock.block;
+  });
+
+  it('bigint field check', () => {
+    const succEvents = filterEvents(block.events, TEST_BIGINT_SUCC);
+    const failEvents = filterEvents(block.events, TEST_BIGINT_FAIL);
+
+    expect(succEvents.length).toEqual(1);
+    expect(failEvents.length).toEqual(0);
   });
 });

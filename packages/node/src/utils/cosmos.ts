@@ -132,6 +132,15 @@ export function filterMessageData(
             ? decodedMsgData.toNumber()
             : decodedMsgData.toString();
       }
+
+      if (typeof decodedMsgData === 'bigint') {
+        if (BigInt(filter.values[key]) === decodedMsgData) {
+          continue;
+        } else {
+          return false;
+        }
+      }
+
       if (filter.values[key] !== decodedMsgData) {
         return false;
       }
