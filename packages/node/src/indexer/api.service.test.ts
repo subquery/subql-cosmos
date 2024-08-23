@@ -64,7 +64,14 @@ describe('ApiService', () => {
         },
         {
           provide: NodeConfig,
-          useFactory: () => ({}),
+          useFactory: () =>
+            new NodeConfig(
+              {
+                kyveEndpoint: 'https://api-us-1.kyve.network',
+                kyveStorageUrl: 'https://arweave.net',
+              } as any,
+              true,
+            ),
         },
         EventEmitter2,
         {
@@ -77,17 +84,12 @@ describe('ApiService', () => {
             NodeConfig,
           ],
         },
-        NodeConfig,
       ],
       imports: [EventEmitterModule.forRoot()],
     }).compile();
     app = module.createNestApplication();
     await app.init();
     apiService = app.get(ApiService);
-    (apiService as any).nodeConfig._config.kyveEndpoint =
-      'https://api-us-1.kyve.network';
-    (apiService as any).nodeConfig._config.kyveStorageUrl =
-      'https://arweave.net';
   };
 
   const ENDPOINT = 'https://rpc-juno.itastakers.com/';
@@ -97,6 +99,7 @@ describe('ApiService', () => {
     beforeAll(async () => {
       tmpPath = await makeTempDir();
     });
+
     it('Falls back on rpc if kyve fails', async () => {
       const endpoint = 'https://rpc.mainnet.archway.io:443';
       const chainId = 'archway-1';
