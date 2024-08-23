@@ -23,7 +23,8 @@
       "@subql/types-cosmos": ["packages/types/src"],
       "@subql/types-cosmos/*": ["packages/types/src/*"]
     },
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "strict": true
   },
   "references": [
     {"path": "packages/common-cosmos"},

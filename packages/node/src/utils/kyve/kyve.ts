@@ -100,14 +100,15 @@ export class KyveApi {
 
     for (const p of poolsResponse.pools) {
       try {
+        assert(p.data, 'Pool data is missing');
         const config = JSON.parse(p.data.config);
         if (config.network === chainId) {
           return p.id; // Return the matching pool ID
         }
       } catch (error) {
-        throw new Error(
-          `Error parsing JSON for pool with id ${p.id}: ${error}`,
-        );
+        throw new Error(`Error parsing JSON for pool with id ${p.id}`, {
+          cause: error,
+        });
       }
     }
 
@@ -429,9 +430,9 @@ export class KyveApi {
       files
         .filter((file) => KyveApi.isBundleFile(file, this.poolId))
         .map((file) => {
-          const id = parseDecimal(
-            file.match(BUNDLE_FILE_ID_REG(this.poolId))[1],
-          );
+          const m = file.match(BUNDLE_FILE_ID_REG(this.poolId));
+          assert(m, `No matching bundle files for pool ${this.poolId}`);
+          const id = parseDecimal(m[1]);
           return this.getBundleById(id);
         }),
     );
@@ -447,6 +448,8 @@ export class KyveApi {
     }
 
     const currentBundle = await this.getBundleFromCache(height);
+    if (!currentBundle) return [];
+
     const bundles = await Promise.all(Object.values(cachedBundles));
 
     return bundles.filter((b) => {
@@ -485,6 +488,10 @@ export class KyveApi {
   ): Promise<[BlockResponse, BlockResultsResponse]> {
     const blocks = await this.updateCurrentBundleAndDetails(height);
     const blockData = this.findBlockByHeight(height, blocks);
+    if (!blockData) {
+      throw new Error(`Unable to find block ${height}`);
+    }
+
     return [
       this.decodeBlock(blockData.value.block),
       this.injectLogs(this.decodeBlockResult(blockData.value.block_results)),

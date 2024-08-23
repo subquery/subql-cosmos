@@ -5,8 +5,7 @@
     "noImplicitAny": true,
     "tsBuildInfoFile": "dist/.tsbuildinfo",
     "rootDir": "src",
-    "outDir": "dist",
-    "strict": true
+    "outDir": "dist"
   },
   "include": ["src/**/*"]
 }

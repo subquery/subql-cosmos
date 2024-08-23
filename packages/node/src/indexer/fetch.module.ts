@@ -13,6 +13,7 @@ import {
   IProjectUpgradeService,
   InMemoryCacheService,
   MonitorService,
+  ConnectionPoolService,
 } from '@subql/node-core';
 import { SubqueryProject } from '../configure/SubqueryProject';
 import { ApiService } from './api.service';
@@ -32,7 +33,16 @@ import { UnfinalizedBlocksService } from './unfinalizedBlocks.service';
 @Module({
   imports: [CoreModule],
   providers: [
-    ApiService,
+    {
+      provide: ApiService,
+      useFactory: ApiService.create.bind(ApiService),
+      inject: [
+        'ISubqueryProject',
+        ConnectionPoolService,
+        EventEmitter2,
+        NodeConfig,
+      ],
+    },
     IndexerManager,
     {
       provide: 'IBlockDispatcher',

@@ -67,19 +67,19 @@ export class CosmosClientConnection
       IBlock<BlockContent>[]
     >
 {
-  private cometClient: CometClient;
-  private registry: Registry;
   readonly networkMeta: NetworkMetadataPayload;
 
   private constructor(
     public unsafeApi: CosmosClient,
     private fetchBlocksBatches: FetchFunc,
     chainId: string,
+    private cometClient: CometClient,
+    private registry: Registry,
   ) {
     this.networkMeta = {
       chain: chainId,
-      specName: undefined,
-      genesisHash: undefined,
+      specName: undefined as any,
+      genesisHash: undefined as any, // Cant always get the genesis hash because of pruning
     };
   }
 
@@ -115,9 +115,9 @@ export class CosmosClientConnection
       api,
       fetchBlocksBatches,
       await api.getChainId(),
+      cometClient,
+      registry,
     );
-    connection.cometClient = cometClient;
-    connection.setRegistry(registry);
 
     logger.info(`connected to ${endpoint}`);
 
@@ -126,10 +126,6 @@ export class CosmosClientConnection
 
   safeApi(height: number): CosmosSafeClient {
     return new CosmosSafeClient(this.cometClient, height);
-  }
-
-  private setRegistry(registry: Registry): void {
-    this.registry = registry;
   }
 
   // eslint-disable-next-line @typescript-eslint/require-await

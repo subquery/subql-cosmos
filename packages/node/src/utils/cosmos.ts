@@ -56,7 +56,7 @@ export function decodeMsg<T = unknown>(
       decodedMsg.msg = JSON.parse(new TextDecoder().decode(decodedMsg.msg));
     }
     return decodedMsg;
-  } catch (e) {
+  } catch (e: any) {
     logger.error(e, 'Failed to decode message');
     throw e;
   }
@@ -201,10 +201,10 @@ export function filterEvent(
   }
 
   for (const filterKey in filter.attributes) {
+    const fValue = filter.attributes[filterKey];
     if (
       !event.event.attributes.find(
-        ({ key, value }) =>
-          key === filterKey && value === filter.attributes[filterKey],
+        ({ key, value }) => key === filterKey && value === fValue,
       )
     ) {
       return false;
@@ -339,14 +339,14 @@ export function wrapBlockBeginAndEndEvents(
 ): CosmosEvent[] {
   return events.map(
     (event) =>
-      <CosmosEvent>{
+      ({
         idx: idxOffset++,
         event: fromTendermintEvent(event),
         block: block,
         msg: null,
         tx: null,
         log: null,
-      },
+      } as unknown as CosmosEvent),
   );
 }
 
@@ -477,7 +477,7 @@ export async function fetchBlocksBatches(
       return formatBlockUtil(
         new LazyBlockContent(blockInfo, blockResults, api.registry),
       );
-    } catch (e) {
+    } catch (e: any) {
       logger.error(
         e,
         `Failed to fetch and prepare block ${blockInfo.block.header.height}`,
@@ -488,12 +488,12 @@ export async function fetchBlocksBatches(
 }
 
 export class LazyBlockContent implements BlockContent {
-  private _wrappedBlock: CosmosBlock;
-  private _wrappedTransaction: CosmosTransaction[];
-  private _wrappedMessage: CosmosMessage[];
-  private _wrappedEvent: CosmosEvent[];
-  private _wrappedBeginBlockEvents: CosmosEvent[];
-  private _wrappedEndBlockEvents: CosmosEvent[];
+  private _wrappedBlock?: CosmosBlock;
+  private _wrappedTransaction?: CosmosTransaction[];
+  private _wrappedMessage?: CosmosMessage[];
+  private _wrappedEvent?: CosmosEvent[];
+  private _wrappedBeginBlockEvents?: CosmosEvent[];
+  private _wrappedEndBlockEvents?: CosmosEvent[];
   private _eventIdx = 0; //To maintain a valid count over begin block events, tx events and end block events
 
   constructor(
@@ -502,7 +502,7 @@ export class LazyBlockContent implements BlockContent {
     private _registry: Registry,
   ) {}
 
-  get block() {
+  get block(): CosmosBlock {
     if (!this._wrappedBlock) {
       this._wrappedBlock = wrapBlock(this._blockInfo, [
         ...this._results.results,
@@ -511,14 +511,14 @@ export class LazyBlockContent implements BlockContent {
     return this._wrappedBlock;
   }
 
-  get transactions() {
+  get transactions(): CosmosTransaction[] {
     if (!this._wrappedTransaction) {
       this._wrappedTransaction = wrapTx(this.block, [...this._results.results]);
     }
     return this._wrappedTransaction;
   }
 
-  get messages() {
+  get messages(): CosmosMessage[] {
     if (!this._wrappedMessage) {
       this._wrappedMessage = wrapMsg(
         this.block,
@@ -529,7 +529,7 @@ export class LazyBlockContent implements BlockContent {
     return this._wrappedMessage;
   }
 
-  get events() {
+  get events(): CosmosEvent[] {
     if (!this._wrappedEvent) {
       this._wrappedEvent = wrapEvent(
         this.block,
@@ -542,7 +542,7 @@ export class LazyBlockContent implements BlockContent {
     return this._wrappedEvent;
   }
 
-  get beginBlockEvents() {
+  get beginBlockEvents(): CosmosEvent[] {
     if (!this._wrappedBeginBlockEvents) {
       this._wrappedBeginBlockEvents = wrapBlockBeginAndEndEvents(
         this.block,
@@ -555,7 +555,7 @@ export class LazyBlockContent implements BlockContent {
     return this._wrappedBeginBlockEvents;
   }
 
-  get endBlockEvents() {
+  get endBlockEvents(): CosmosEvent[] {
     if (!this._wrappedEndBlockEvents) {
       this._wrappedEndBlockEvents = wrapBlockBeginAndEndEvents(
         this.block,

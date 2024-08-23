@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Fixed
 - Filter out transactions that can't be decoded (#280)
+### Changed
+- Enable strict ts setting (#282)
+- Update deps (#282)
 
 ### Change
 - Support bigint filter

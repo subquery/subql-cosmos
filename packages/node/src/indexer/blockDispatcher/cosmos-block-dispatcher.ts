@@ -5,5 +5,7 @@ import { IBlockDispatcher } from '@subql/node-core';
 import { BlockContent } from '../types';
 
 export interface ICosmosBlockDispatcher extends IBlockDispatcher<BlockContent> {
-  init(onDynamicDsCreated: (height: number) => Promise<void>): Promise<void>;
+  init(
+    onDynamicDsCreated: (height: number) => void | Promise<void>,
+  ): Promise<void>;
 }

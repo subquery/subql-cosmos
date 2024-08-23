@@ -76,7 +76,7 @@ describe('Creating dynamic ds', () => {
         },
       ],
     } as unknown as SubqueryProject;
-    dynamiDsService = new DynamicDsService(null, project);
+    dynamiDsService = new DynamicDsService(null as any, project);
 
     await dynamiDsService.init(getMetadata());
   });

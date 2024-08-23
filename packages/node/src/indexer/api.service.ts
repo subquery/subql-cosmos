@@ -1,13 +1,14 @@
 // Copyright 2020-2024 SubQuery Pte Ltd authors & contributors
 // SPDX-License-Identifier: GPL-3.0
 
+import assert from 'assert';
 import { CosmWasmClient, IndexedTx } from '@cosmjs/cosmwasm-stargate';
 import { toHex } from '@cosmjs/encoding';
 import { Uint53 } from '@cosmjs/math';
 import { GeneratedType, Registry } from '@cosmjs/proto-signing';
 import { Block, defaultRegistryTypes, SearchTxQuery } from '@cosmjs/stargate';
 import { CometClient, toRfc3339WithNanoseconds } from '@cosmjs/tendermint-rpc';
-import { Inject, Injectable, OnApplicationShutdown } from '@nestjs/common';
+import { Injectable, OnApplicationShutdown } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { CosmosProjectNetConfig } from '@subql/common-cosmos';
 import {
@@ -43,23 +44,19 @@ export class ApiService
   extends BaseApiService<CosmosClient, CosmosSafeClient, IBlock<BlockContent>[]>
   implements OnApplicationShutdown
 {
-  private fetchBlocksBatches = CosmosUtil.fetchBlocksBatches;
-  private nodeConfig: CosmosNodeConfig;
-  private kyveApi?: KyveApi;
-  registry: Registry;
-
-  constructor(
-    @Inject('ISubqueryProject') private project: SubqueryProject,
+  private constructor(
     connectionPoolService: ConnectionPoolService<CosmosClientConnection>,
     eventEmitter: EventEmitter2,
-    nodeConfig: NodeConfig,
+    public registry: Registry,
+    private kyveApi?: KyveApi,
   ) {
     super(connectionPoolService, eventEmitter);
-    this.nodeConfig = new CosmosNodeConfig(nodeConfig);
   }
 
-  private async buildRegistry(): Promise<Registry> {
-    const chaintypes = await this.getChainType(this.project.network);
+  private static async buildRegistry(
+    network: Partial<CosmosProjectNetConfig>,
+  ): Promise<Registry> {
+    const chaintypes = await this.getChainType(network);
 
     const wasmTypes: ReadonlyArray<[string, GeneratedType]> = [
       ['/cosmwasm.wasm.v1.MsgClearAdmin', MsgClearAdmin],
@@ -83,32 +80,33 @@ export class ApiService
     await this.connectionPoolService.onApplicationShutdown();
   }
 
-  async init(): Promise<ApiService> {
-    const { network } = this.project;
+  static async create(
+    project: SubqueryProject,
+    connectionPoolService: ConnectionPoolService<CosmosClientConnection>,
+    eventEmitter: EventEmitter2,
+    nodeConfig: NodeConfig,
+  ): Promise<ApiService> {
+    const { network } = project;
+    const cosmosNodeConfig = new CosmosNodeConfig(nodeConfig);
 
-    this.registry = await this.buildRegistry();
+    const registry = await this.buildRegistry(network);
 
-    await this.createConnections(network, (endpoint, config) =>
-      CosmosClientConnection.create(
-        endpoint,
-        this.fetchBlocksBatches,
-        this.registry,
-        config,
-      ),
-    );
+    let kyveApi: KyveApi | undefined;
 
     if (
-      this.nodeConfig.kyveEndpoint &&
-      this.nodeConfig.kyveEndpoint !== 'false'
+      cosmosNodeConfig.kyveEndpoint &&
+      cosmosNodeConfig.kyveEndpoint !== 'false'
     ) {
       try {
-        this.kyveApi = await KyveApi.create(
+        // TODO test
+        assert(project.tempDir, 'Expected temp dir to exist for using Kyve');
+        kyveApi = await KyveApi.create(
           network.chainId,
-          this.nodeConfig.kyveEndpoint,
-          this.nodeConfig.kyveStorageUrl,
-          this.nodeConfig.kyveChainId,
-          this.project.tempDir,
-          KYVE_BUFFER_RANGE * this.nodeConfig.batchSize,
+          cosmosNodeConfig.kyveEndpoint,
+          cosmosNodeConfig.kyveStorageUrl,
+          cosmosNodeConfig.kyveChainId,
+          project.tempDir,
+          KYVE_BUFFER_RANGE * nodeConfig.batchSize,
         );
       } catch (e) {
         logger.warn(`Kyve Api is not connected. ${e}`);
@@ -117,7 +115,23 @@ export class ApiService
       logger.info(`Kyve not connected`);
     }
 
-    return this;
+    const apiService = new ApiService(
+      connectionPoolService,
+      eventEmitter,
+      registry,
+      kyveApi,
+    );
+
+    await apiService.createConnections(network, (endpoint, config) =>
+      CosmosClientConnection.create(
+        endpoint,
+        CosmosUtil.fetchBlocksBatches,
+        registry,
+        config,
+      ),
+    );
+
+    return apiService;
   }
 
   // Overrides the super function because of the kyve integration
@@ -129,7 +143,7 @@ export class ApiService
       if (this.kyveApi) {
         try {
           return await this.kyveApi.fetchBlocksBatches(this.registry, heights);
-        } catch (e) {
+        } catch (e: any) {
           logger.warn(
             e,
             `Failed to fetch blocks: ${JSON.stringify(
@@ -154,7 +168,7 @@ export class ApiService
   }
 
   // eslint-disable-next-line @typescript-eslint/require-await
-  async getChainType(
+  private static async getChainType(
     network: Partial<CosmosProjectNetConfig>,
   ): Promise<Record<string, GeneratedType>> {
     if (!network.chaintypes) {
