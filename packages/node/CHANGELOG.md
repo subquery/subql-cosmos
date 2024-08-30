@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- Bump node-core, fix cron filter issue (#284)
+
 ## [4.1.1] - 2024-08-23
 ### Fixed
 - Filter out transactions that can't be decoded (#280)
