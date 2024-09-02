@@ -10,9 +10,7 @@ import { JsonRpcSuccessResponse } from '@cosmjs/json-rpc';
 import { Registry } from '@cosmjs/proto-signing';
 import { logs } from '@cosmjs/stargate';
 import { Responses } from '@cosmjs/tendermint-rpc/build/tendermint37/adaptor'; // adaptor is not exported
-import KyveSDK, { KyveLCDClientType } from '@kyvejs/sdk';
-import { SupportedChains } from '@kyvejs/sdk/src/constants'; // Currently these types are not exported
-import { QueryPoolsResponse } from '@kyvejs/types/lcd/kyve/query/v1beta1/pools';
+import KyveSDK, { KyveLCDClientType, constants } from '@kyvejs/sdk';
 import { delay, getLogger, IBlock, timeout } from '@subql/node-core';
 import { TxData } from '@subql/types-cosmos';
 import axios, { AxiosResponse } from 'axios';
@@ -65,7 +63,7 @@ export class KyveApi {
     chainId: string, // chainId for indexing chain
     endpoint: string,
     storageUrl: string,
-    kyveChainId: SupportedChains,
+    kyveChainId: constants.SupportedChains,
     tmpCacheDir: string,
     removeBuffer: number, // The buffer before a bundle file is removed from disc
   ): Promise<KyveApi> {
@@ -95,8 +93,7 @@ export class KyveApi {
     chainId: string,
     lcdClient: KyveLCDClientType,
   ): Promise<string> {
-    const poolsResponse =
-      (await lcdClient.kyve.query.v1beta1.pools()) as unknown as QueryPoolsResponse;
+    const poolsResponse = await lcdClient.kyve.query.v1beta1.pools();
 
     for (const p of poolsResponse.pools) {
       try {
@@ -176,7 +173,7 @@ export class KyveApi {
   private async getBundleById(bundleId: number): Promise<BundleDetails> {
     return (this.cachedBundleDetails[bundleId] ??= (() => {
       // logger.debug(`getBundleId ${bundleId}`);
-      return this.lcdClient.kyve.query.v1beta1.finalizedBundle({
+      return this.lcdClient.kyve.v1.bundles.finalizedBundle({
         pool_id: this.poolId,
         id: bundleId.toString(),
       }) as Promise<BundleDetails>;
@@ -190,9 +187,10 @@ export class KyveApi {
   private async getLatestBundleId(): Promise<number> {
     return parseDecimal(
       (
-        await this.lcdClient.kyve.query.v1beta1.finalizedBundles({
+        await this.lcdClient.kyve.v1.bundles.finalizedBundles({
           pool_id: this.poolId,
-          index: '1',
+          // Bad types and index takes perference over pagination to it cant be set
+          index: undefined as unknown as string,
           pagination: {
             reverse: true,
             limit: '1',
