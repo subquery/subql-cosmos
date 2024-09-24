@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.5.3] - 2024-09-25
+### Changed
+- Enable strict TS setting (#282)
+
 ## [3.5.2] - 2024-08-12
 ### Changed
 - Update dependencies and enable strict TS setting (#278)
@@ -128,7 +132,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix chainTypes not being in deployments
 
 ## [0.0.5] - 2022-06-15
-[Unreleased]: https://github.com/subquery/subql-cosmos/compare/types-cosmos/3.5.2...HEAD
+[Unreleased]: https://github.com/subquery/subql-cosmos/compare/types-cosmos/3.5.3...HEAD
+[3.5.3]: https://github.com/subquery/subql-cosmos/compare/types-cosmos/3.5.2...types-cosmos/3.5.3
 [3.5.2]: https://github.com/subquery/subql-cosmos/compare/types-cosmos/3.5.1...types-cosmos/3.5.2
 [3.5.1]: https://github.com/subquery/subql-cosmos/compare/types-cosmos/3.5.0...types-cosmos/3.5.1
 [3.5.0]: https://github.com/subquery/subql-cosmos/compare/types-cosmos/3.4.0...types-cosmos/3.5.0
