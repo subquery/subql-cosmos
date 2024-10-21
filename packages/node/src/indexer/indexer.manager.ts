@@ -135,6 +135,10 @@ export class IndexerManager extends BaseIndexerManager<
     for (const evt of blockContent.endBlockEvents ?? []) {
       await this.indexEvent(evt, dataSources, getVM);
     }
+
+    for (const evt of blockContent.finalizeBlockEvents ?? []) {
+      await this.indexEvent(evt, dataSources, getVM);
+    }
   }
 
   private async indexBlockContent(

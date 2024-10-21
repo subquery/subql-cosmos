@@ -380,11 +380,10 @@ describe('Cosmos 0.50 support', () => {
     expect(status.nodeInfo.version).toMatch('0.38.');
   });
 
-  // TODO requires these changes https://github.com/cosmos/cosmjs/compare/main...bryanchriswhite:cosmjs:main
   it('correctly has finalized block events instead of being/end block events', () => {
-    // Its not yet defined if cosmjs will split finalizedBlockEvents to these to fields or define finalizedBlockEvents
-    expect(block.beginBlockEvents).toBeDefined();
-    expect(block.endBlockEvents).toBeDefined();
+    expect(block.beginBlockEvents?.length).toEqual(0);
+    expect(block.endBlockEvents?.length).toEqual(0);
+    expect(block.finalizeBlockEvents?.length).toBeGreaterThan(0);
   });
 
   it('correctly parses events', () => {

@@ -198,7 +198,9 @@ export class CosmosClient extends CosmWasmClient {
     private readonly _cometClient: CometClient,
     public registry: Registry,
   ) {
-    super(_cometClient);
+    // Types have diverged with our fork of tendermint-rpc
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    super(_cometClient as any);
   }
 
   // eslint-disable-next-line @typescript-eslint/require-await
@@ -245,7 +247,9 @@ export class CosmosSafeClient
   height: number;
 
   constructor(cometClient: CometClient, height: number) {
-    super(cometClient);
+    // Types have diverged with our fork of tendermint-rpc
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    super(cometClient as any);
     this.height = height;
   }
 
