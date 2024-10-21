@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Bump `@subql/types-core` dependency (#292)
+
 ## [3.5.3] - 2024-09-25
 ### Changed
 - Enable strict TS setting (#282)

@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Changed
 - Use tendermint-rpc fork to allow support for finalizeBlockEvents (#291)
+- Bump `@subql/common` and `@subql/node-core` dependency (#292)
 
 ## [4.1.2] - 2024-09-25
 ### Fixed
