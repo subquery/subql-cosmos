@@ -16,7 +16,6 @@ import {
   Header,
   StoreCacheService,
 } from '@subql/node-core';
-import { SubqueryProject } from '../configure/SubqueryProject';
 import * as CosmosUtil from '../utils/cosmos';
 import { cosmosBlockToHeader } from '../utils/cosmos';
 import { ApiService, CosmosClient } from './api.service';
@@ -39,7 +38,6 @@ export class FetchService extends BaseFetchService<
     private apiService: ApiService,
     nodeConfig: NodeConfig,
     @Inject('IProjectService') projectService: ProjectService,
-    @Inject('ISubqueryProject') project: SubqueryProject,
     @Inject('IBlockDispatcher')
     blockDispatcher: ICosmosBlockDispatcher,
     dictionaryService: DictionaryService,
@@ -51,7 +49,6 @@ export class FetchService extends BaseFetchService<
     super(
       nodeConfig,
       projectService,
-      project.network,
       blockDispatcher,
       dictionaryService,
       eventEmitter,
