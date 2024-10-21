@@ -19,6 +19,6 @@
     "@cosmjs/cosmwasm-stargate": "^0.32.4",
     "@cosmjs/proto-signing": "^0.32.4",
     "@cosmjs/stargate": "^0.32.4",
-    "@subql/types-core": "^1.1.1"
+    "@subql/types-core": "^2.0.0"
   }
 }
