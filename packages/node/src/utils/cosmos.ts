@@ -8,7 +8,13 @@ import { toHex } from '@cosmjs/encoding';
 import { DecodeObject, decodeTxRaw, Registry } from '@cosmjs/proto-signing';
 import { fromTendermintEvent } from '@cosmjs/stargate';
 import { Log, parseRawLog } from '@cosmjs/stargate/build/logs';
-import { toRfc3339WithNanoseconds } from '@cosmjs/tendermint-rpc';
+import {
+  toRfc3339WithNanoseconds,
+  tendermint34,
+  tendermint37,
+  comet38,
+} from '@cosmjs/tendermint-rpc';
+
 import {
   IBlock,
   getLogger,
@@ -494,6 +500,7 @@ export class LazyBlockContent implements BlockContent {
   private _wrappedEvent?: CosmosEvent[];
   private _wrappedBeginBlockEvents?: CosmosEvent[];
   private _wrappedEndBlockEvents?: CosmosEvent[];
+  private _wrappedFinalizedBlockEvents?: CosmosEvent[];
   private _eventIdx = 0; //To maintain a valid count over begin block events, tx events and end block events
 
   constructor(
@@ -543,10 +550,17 @@ export class LazyBlockContent implements BlockContent {
   }
 
   get beginBlockEvents(): CosmosEvent[] {
+    const results = this._results as
+      | tendermint34.BlockResultsResponse
+      | tendermint37.BlockResultsResponse;
+    if (!results.beginBlockEvents?.length) {
+      return [];
+    }
+
     if (!this._wrappedBeginBlockEvents) {
       this._wrappedBeginBlockEvents = wrapBlockBeginAndEndEvents(
         this.block,
-        [...this._results.beginBlockEvents],
+        [...results.beginBlockEvents],
         this._eventIdx,
       );
       this._eventIdx += this._wrappedBeginBlockEvents.length;
@@ -556,16 +570,41 @@ export class LazyBlockContent implements BlockContent {
   }
 
   get endBlockEvents(): CosmosEvent[] {
+    const results = this._results as
+      | tendermint34.BlockResultsResponse
+      | tendermint37.BlockResultsResponse;
+    if (!results.endBlockEvents?.length) {
+      return [];
+    }
+
     if (!this._wrappedEndBlockEvents) {
       this._wrappedEndBlockEvents = wrapBlockBeginAndEndEvents(
         this.block,
-        [...this._results.endBlockEvents],
+        [...results.endBlockEvents],
         this._eventIdx,
       );
       this._eventIdx += this._wrappedEndBlockEvents.length;
     }
 
     return this._wrappedEndBlockEvents;
+  }
+
+  get finalizeBlockEvents(): CosmosEvent[] {
+    const results = this._results as comet38.BlockResultsResponse;
+    if (!results.finalizeBlockEvents?.length) {
+      return [];
+    }
+
+    if (!this._wrappedFinalizedBlockEvents) {
+      this._wrappedFinalizedBlockEvents = wrapBlockBeginAndEndEvents(
+        this.block,
+        [...results.finalizeBlockEvents],
+        this._eventIdx,
+      );
+      this._eventIdx += this._wrappedFinalizedBlockEvents.length;
+    }
+
+    return this._wrappedFinalizedBlockEvents;
   }
 }
 
