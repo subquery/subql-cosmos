@@ -6,6 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.0.0] - 2024-10-23
 ### Changed
 - Bump `@subql/types-core` dependency (#292)
 
@@ -135,7 +136,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix chainTypes not being in deployments
 
 ## [0.0.5] - 2022-06-15
-[Unreleased]: https://github.com/subquery/subql-cosmos/compare/types-cosmos/3.5.3...HEAD
+[Unreleased]: https://github.com/subquery/subql-cosmos/compare/types-cosmos/4.0.0...HEAD
+[4.0.0]: https://github.com/subquery/subql-cosmos/compare/types-cosmos/3.5.3...types-cosmos/4.0.0
 [3.5.3]: https://github.com/subquery/subql-cosmos/compare/types-cosmos/3.5.2...types-cosmos/3.5.3
 [3.5.2]: https://github.com/subquery/subql-cosmos/compare/types-cosmos/3.5.1...types-cosmos/3.5.2
 [3.5.1]: https://github.com/subquery/subql-cosmos/compare/types-cosmos/3.5.0...types-cosmos/3.5.1

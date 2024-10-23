@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.1.4] - 2024-10-23
+### Changed
+- Bump `@subql/common` dependency
+
 ## [4.1.3] - 2024-10-22
 ### Changed
 - Use tendermint-rpc fork to allow support for finalizeBlockEvents (#291)
@@ -463,7 +467,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Init release
 
-[Unreleased]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/4.1.3...HEAD
+[Unreleased]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/4.1.4...HEAD
+[4.1.4]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/4.1.3...node-cosmos/4.1.4
 [4.1.3]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/4.1.2...node-cosmos/4.1.3
 [4.1.2]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/4.1.1...node-cosmos/4.1.2
 [4.1.1]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/4.1.0...node-cosmos/4.1.1
