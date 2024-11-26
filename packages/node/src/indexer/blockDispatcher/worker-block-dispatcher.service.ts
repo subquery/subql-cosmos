@@ -9,7 +9,7 @@ import {
   NodeConfig,
   StoreService,
   PoiSyncService,
-  StoreCacheService,
+  IStoreModelProvider,
   IProjectService,
   WorkerBlockDispatcher,
   ConnectionPoolStateManager,
@@ -24,6 +24,7 @@ import { DynamicDsService } from '../dynamic-ds.service';
 import { BlockContent } from '../types';
 import { UnfinalizedBlocksService } from '../unfinalizedBlocks.service';
 import { IIndexerWorker } from '../worker/worker';
+import { FetchBlockResponse } from '../worker/worker.service';
 
 type IndexerWorker = IIndexerWorker & {
   terminate: () => Promise<number>;
@@ -43,7 +44,7 @@ export class WorkerBlockDispatcherService
     projectUpgadeService: IProjectUpgradeService,
     cacheService: InMemoryCacheService,
     storeService: StoreService,
-    storeCacheService: StoreCacheService,
+    storeModelProvider: IStoreModelProvider,
     poiSyncService: PoiSyncService,
     @Inject('ISubqueryProject') project: SubqueryProject,
     dynamicDsService: DynamicDsService,
@@ -57,7 +58,7 @@ export class WorkerBlockDispatcherService
       projectService,
       projectUpgadeService,
       storeService,
-      storeCacheService,
+      storeModelProvider,
       poiSyncService,
       project,
       () =>
@@ -92,9 +93,9 @@ export class WorkerBlockDispatcherService
   protected async fetchBlock(
     worker: IndexerWorker,
     height: number,
-  ): Promise<void> {
+  ): Promise<FetchBlockResponse> {
     // const start = new Date();
-    await worker.fetchBlock(height, 0 /* Value is not used with cosmos*/);
+    return worker.fetchBlock(height, 0 /* Value is not used with cosmos*/);
     // const end = new Date();
 
     // const waitTime = end.getTime() - start.getTime();

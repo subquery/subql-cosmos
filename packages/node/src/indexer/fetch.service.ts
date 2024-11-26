@@ -14,7 +14,7 @@ import {
   BaseFetchService,
   getModulos,
   Header,
-  StoreCacheService,
+  IStoreModelProvider,
 } from '@subql/node-core';
 import * as CosmosUtil from '../utils/cosmos';
 import { cosmosBlockToHeader } from '../utils/cosmos';
@@ -44,7 +44,7 @@ export class FetchService extends BaseFetchService<
     unfinalizedBlocksService: UnfinalizedBlocksService,
     eventEmitter: EventEmitter2,
     schedulerRegistry: SchedulerRegistry,
-    storeCacheService: StoreCacheService,
+    storeModelProvider: IStoreModelProvider,
   ) {
     super(
       nodeConfig,
@@ -54,7 +54,7 @@ export class FetchService extends BaseFetchService<
       eventEmitter,
       schedulerRegistry,
       unfinalizedBlocksService,
-      storeCacheService,
+      storeModelProvider,
     );
   }
 

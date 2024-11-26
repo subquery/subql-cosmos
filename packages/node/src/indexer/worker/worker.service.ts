@@ -11,15 +11,15 @@ import {
   BaseWorkerService,
   IProjectUpgradeService,
   IBlock,
+  Header,
 } from '@subql/node-core';
 import { CosmosDatasource } from '@subql/types-cosmos';
+import { cosmosBlockToHeader } from '../../utils/cosmos';
 import { ApiService } from '../api.service';
 import { IndexerManager } from '../indexer.manager';
 import { BlockContent } from '../types';
 
-export type FetchBlockResponse = {
-  parentHash: string | undefined;
-};
+export type FetchBlockResponse = Header;
 
 export type WorkerStatusResponse = {
   threadId: number;
@@ -58,9 +58,7 @@ export class WorkerService extends BaseWorkerService<
   }
 
   protected toBlockResponse(block: BlockContent): FetchBlockResponse {
-    return {
-      parentHash: block.block.header.lastBlockId?.hash.toString(),
-    };
+    return cosmosBlockToHeader(block.block.header.height);
   }
 
   protected async processFetchedBlock(
