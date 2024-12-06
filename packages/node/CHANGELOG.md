@@ -6,6 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.2.1] - 2024-12-06
 ### Fixed
 - Missing API dependency when using reindex
 
@@ -475,7 +476,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Init release
 
-[Unreleased]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/4.2.0...HEAD
+[Unreleased]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/4.2.1...HEAD
+[4.2.1]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/4.2.0...node-cosmos/4.2.1
 [4.2.0]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/4.1.4...node-cosmos/4.2.0
 [4.1.4]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/4.1.3...node-cosmos/4.1.4
 [4.1.3]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/4.1.2...node-cosmos/4.1.3
