@@ -17,7 +17,7 @@ import { CosmosDatasource } from '@subql/types-cosmos';
 import { cosmosBlockToHeader } from '../../utils/cosmos';
 import { ApiService } from '../api.service';
 import { IndexerManager } from '../indexer.manager';
-import { BlockContent } from '../types';
+import { BlockContent, getBlockSize } from '../types';
 
 export type FetchBlockResponse = Header;
 
@@ -66,5 +66,9 @@ export class WorkerService extends BaseWorkerService<
     dataSources: CosmosDatasource[],
   ): Promise<ProcessBlockResponse> {
     return this.indexerManager.indexBlock(block, dataSources);
+  }
+
+  getBlockSize(block: IBlock<BlockContent>): number {
+    return getBlockSize(block.block);
   }
 }
