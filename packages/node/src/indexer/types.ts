@@ -36,3 +36,14 @@ export interface BlockContent {
 }
 
 export type BestBlocks = Record<number, string>;
+
+export function getBlockSize(block: BlockContent): number {
+  return (
+    block.messages.length +
+    block.transactions.length +
+    block.events.length +
+    (block.beginBlockEvents?.length ?? 0) +
+    (block.endBlockEvents?.length ?? 0) +
+    (block.finalizeBlockEvents?.length ?? 0)
+  );
+}
