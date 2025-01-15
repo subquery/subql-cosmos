@@ -124,6 +124,7 @@ export class DynamicDsService extends BaseDynamicDsService<
               return handler;
             case CosmosHandlerKind.Transaction:
             case CosmosHandlerKind.Block:
+            case CosmosHandlerKind.PostIndex:
             default:
               return handler;
           }

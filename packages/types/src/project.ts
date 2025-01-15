@@ -69,6 +69,10 @@ export enum CosmosHandlerKind {
    * Handler for Cosmos events.
    */
   Event = 'cosmos/EventHandler',
+  /**
+   * Post-processing functions
+   */
+  PostIndex = 'cosmos/PostIndexHandler',
 }
 
 export type CosmosRuntimeHandlerInputMap = {
@@ -76,6 +80,7 @@ export type CosmosRuntimeHandlerInputMap = {
   [CosmosHandlerKind.Transaction]: CosmosTransaction;
   [CosmosHandlerKind.Message]: CosmosMessage;
   [CosmosHandlerKind.Event]: CosmosEvent;
+  [CosmosHandlerKind.PostIndex]: CosmosBlock;
 };
 
 type CosmosRuntimeFilterMap = {
@@ -83,6 +88,7 @@ type CosmosRuntimeFilterMap = {
   [CosmosHandlerKind.Transaction]: CosmosTxFilter;
   [CosmosHandlerKind.Message]: CosmosMessageFilter;
   [CosmosHandlerKind.Event]: CosmosEventFilter;
+  [CosmosHandlerKind.PostIndex]: CosmosBlockFilter;
 };
 
 /**
@@ -199,6 +205,12 @@ export type CosmosMessageHandler = CosmosCustomHandler<CosmosHandlerKind.Message
 export type CosmosEventHandler = CosmosCustomHandler<CosmosHandlerKind.Event, CosmosEventFilter>;
 
 /**
+ * Represents a handler for Cosmos post-index blocks.
+ * @type {CosmosCustomHandler<CosmosHandlerKind.PostIndex, CosmosBlockFilter>}
+ */
+export type CosmosPostIndexBlockHandler = CosmosCustomHandler<CosmosHandlerKind.PostIndex, CosmosBlockFilter>;
+
+/**
  * Represents a generic custom handler for Cosmos.
  * @interface
  * @template K - The kind of the handler (default: string).
@@ -208,7 +220,7 @@ export interface CosmosCustomHandler<K extends string = string, F = Record<strin
   /**
    * The kind of handler. For `cosmos/Runtime` datasources this is either `Block`, `Transaction`, `Message` or `Event` kinds.
    * The value of this will determine the filter options as well as the data provided to your handler function
-   * @type {CosmosHandlerKind.Block | CosmosHandlerKind.Transaction | CosmosHandlerKind.Message | CosmosHandlerKind.Event | string }
+   * @type {CosmosHandlerKind.Block | CosmosHandlerKind.Transaction | CosmosHandlerKind.Message | CosmosHandlerKind.Event | CosmosHandlerKind.PostIndex | string }
    * @example
    * kind: CosmosHandlerKind.Block // Defined with an enum, this is used for runtime datasources
    * @example
@@ -231,7 +243,8 @@ export type CosmosRuntimeHandler =
   | CosmosBlockHandler
   | CosmosTransactionHandler
   | CosmosMessageHandler
-  | CosmosEventHandler;
+  | CosmosEventHandler
+  | CosmosPostIndexBlockHandler;
 
 export type CosmosHandler = CosmosRuntimeHandler | CosmosCustomHandler;
 
@@ -398,7 +411,8 @@ export type SecondLayerHandlerProcessorArray<
   | SecondLayerHandlerProcessor<CosmosHandlerKind.Block, F, T, DS>
   | SecondLayerHandlerProcessor<CosmosHandlerKind.Transaction, F, T, DS>
   | SecondLayerHandlerProcessor<CosmosHandlerKind.Message, F, T, DS>
-  | SecondLayerHandlerProcessor<CosmosHandlerKind.Event, F, T, DS>;
+  | SecondLayerHandlerProcessor<CosmosHandlerKind.Event, F, T, DS>
+  | SecondLayerHandlerProcessor<CosmosHandlerKind.PostIndex, F, T, DS>;
 
 export type CosmosDatasourceProcessor<
   K extends string,

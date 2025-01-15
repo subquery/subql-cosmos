@@ -22,6 +22,7 @@ import {
   CosmosMessageHandler,
   CustomModule,
   CosmosTxFilter,
+  CosmosPostIndexBlockHandler,
 } from '@subql/types-cosmos';
 import {plainToClass, Transform, Type} from 'class-transformer';
 import {
@@ -115,6 +116,16 @@ export class EventHandler implements CosmosEventHandler {
   handler!: string;
 }
 
+export class PostIndexHandler implements CosmosPostIndexBlockHandler {
+  @IsEnum(CosmosHandlerKind, {groups: [CosmosHandlerKind.PostIndex]})
+  kind!: CosmosHandlerKind.PostIndex;
+  @IsString()
+  handler!: string;
+  @IsOptional()
+  @Type(() => BlockFilter)
+  filter?: CosmosBlockFilter;
+}
+
 export class CustomHandler implements CosmosCustomHandler {
   @IsString()
   kind!: string;
@@ -138,6 +149,8 @@ export class RuntimeMapping implements CosmosMapping {
           return plainToClass(TransactionHandler, handler);
         case CosmosHandlerKind.Block:
           return plainToClass(BlockHandler, handler);
+        case CosmosHandlerKind.PostIndex:
+          return plainToClass(PostIndexHandler, handler);
         default:
           throw new Error(`handler ${(handler as any).kind} not supported`);
       }

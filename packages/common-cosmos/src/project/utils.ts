@@ -54,6 +54,12 @@ export function isEventHandlerProcessor<E>(
   return hp.baseHandlerKind === CosmosHandlerKind.Event;
 }
 
+export function isPostIndexHandlerProcessor<E>(
+  hp: SecondLayerHandlerProcessorArray<CosmosHandlerKind, DefaultFilter, unknown>
+): hp is SecondLayerHandlerProcessor<CosmosHandlerKind.PostIndex, DefaultFilter, E> {
+  return hp.baseHandlerKind === CosmosHandlerKind.PostIndex;
+}
+
 export function isCosmosTemplates(
   templatesData: any,
   specVersion: string

@@ -132,6 +132,7 @@ function buildDictionaryQueryEntries(
       if (!filterList.length) return [];
       switch (baseHandlerKind) {
         case CosmosHandlerKind.Block:
+        case CosmosHandlerKind.PostIndex:
           for (const filter of filterList as CosmosBlockFilter[]) {
             if (filter.modulo === undefined) {
               return [];

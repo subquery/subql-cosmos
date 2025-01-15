@@ -4,6 +4,7 @@
 import { Injectable } from '@nestjs/common';
 import {
   isBlockHandlerProcessor,
+  isPostIndexHandlerProcessor,
   isTransactionHandlerProcessor,
   isMessageHandlerProcessor,
   isEventHandlerProcessor,
@@ -111,22 +112,49 @@ export class IndexerManager extends BaseIndexerManager<
   ): Promise<void> {
     await this.indexBlockContent(blockContent, dataSources, getVM);
 
+    const msgsTxMap = {};
+    const evntsTxMap = {};
+
+    blockContent.messages.forEach((msg) => {
+      if (!msgsTxMap[msg.tx.hash]) msgsTxMap[msg.tx.hash] = [];
+      msgsTxMap[msg.tx.hash].push(msg);
+    });
+
+    blockContent.events.forEach((event) => {
+      const key = `${event.tx?.hash}`;
+      if (!evntsTxMap[key]) {
+        evntsTxMap[key] = { msg: [], nonMsg: [] };
+      }
+      // if we get any number, is a right value.
+      if (typeof event.msg?.idx === 'number') evntsTxMap[key].msg.push(event);
+      else evntsTxMap[key].nonMsg.push(event);
+    });
+
     for (const evt of blockContent.beginBlockEvents ?? []) {
       await this.indexEvent(evt, dataSources, getVM);
     }
 
     for (const tx of blockContent.transactions) {
       await this.indexTransaction(tx, dataSources, getVM);
-      const msgs = blockContent.messages.filter(
-        (msg) => msg.tx.hash === tx.hash,
-      );
+      // not efficient at all because for every transaction it iterates over the whole list of messages again.
+      // const msgs = blockContent.messages.filter(
+      //   (msg) => msg.tx.hash === tx.hash,
+      // );
+      const msgs = msgsTxMap[tx.hash] ?? [];
       for (const msg of msgs) {
         await this.indexMessage(msg, dataSources, getVM);
-        const events = blockContent.events.filter(
-          (event) => event.tx.hash === tx.hash && event.msg?.idx === msg.idx,
-        );
+        // Not efficient at all because for every transaction it iterates over the whole list of events again.
+        // Also, miss the non-msg related events.
+        // const events = blockContent.events.filter(
+        //   (event) => event.tx.hash === tx.hash && event.msg?.idx === msg.idx,
+        // );
+        const eventMap = evntsTxMap[tx.hash] ?? { msg: [], nonMsg: [] };
 
-        for (const evt of events) {
+        for (const evt of eventMap.msg) {
+          await this.indexEvent(evt, dataSources, getVM);
+        }
+
+        for (const evt of eventMap.nonMsg) {
           await this.indexEvent(evt, dataSources, getVM);
         }
       }
@@ -139,6 +167,8 @@ export class IndexerManager extends BaseIndexerManager<
     for (const evt of blockContent.finalizeBlockEvents ?? []) {
       await this.indexEvent(evt, dataSources, getVM);
     }
+
+    await this.postIndexHook(blockContent, dataSources, getVM);
   }
 
   private async indexBlockContent(
@@ -181,6 +211,16 @@ export class IndexerManager extends BaseIndexerManager<
     }
   }
 
+  private async postIndexHook(
+    block: BlockContent,
+    dataSources: CosmosDatasource[],
+    getVM: (d: CosmosDatasource) => Promise<IndexerSandbox>,
+  ): Promise<void> {
+    for (const ds of dataSources) {
+      await this.indexData(CosmosHandlerKind.PostIndex, block.block, ds, getVM);
+    }
+  }
+
   protected async prepareFilteredData<T = any>(
     kind: CosmosHandlerKind,
     data: T,
@@ -216,6 +256,7 @@ type ProcessorTypeMap = {
   [CosmosHandlerKind.Event]: typeof isEventHandlerProcessor;
   [CosmosHandlerKind.Transaction]: typeof isTransactionHandlerProcessor;
   [CosmosHandlerKind.Message]: typeof isMessageHandlerProcessor;
+  [CosmosHandlerKind.PostIndex]: typeof isPostIndexHandlerProcessor;
 };
 
 const ProcessorTypeMap = {
@@ -223,6 +264,7 @@ const ProcessorTypeMap = {
   [CosmosHandlerKind.Event]: isEventHandlerProcessor,
   [CosmosHandlerKind.Transaction]: isTransactionHandlerProcessor,
   [CosmosHandlerKind.Message]: isMessageHandlerProcessor,
+  [CosmosHandlerKind.PostIndex]: isPostIndexHandlerProcessor,
 };
 
 const FilterTypeMap = {
@@ -230,4 +272,5 @@ const FilterTypeMap = {
   [CosmosHandlerKind.Transaction]: CosmosUtil.filterTx,
   [CosmosHandlerKind.Event]: CosmosUtil.filterEvent,
   [CosmosHandlerKind.Message]: CosmosUtil.filterMessageData,
+  [CosmosHandlerKind.PostIndex]: CosmosUtil.filterBlock,
 };
