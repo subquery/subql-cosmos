@@ -70,9 +70,22 @@ export enum CosmosHandlerKind {
    */
   Event = 'cosmos/EventHandler',
   /**
-   * Post-processing functions
+   * Post-processing functions. This will always be called after all handlers have been called.
    */
   PostIndex = 'cosmos/PostIndexHandler',
+  // Batch handlers
+  /**
+   * Handler for Multiple Cosmos transactions at once.
+   */
+  BatchTransaction = 'cosmos/BatchTransactionHandler',
+  /**
+   * Handler for Multiple Cosmos messages.
+   */
+  BatchMessage = 'cosmos/BatchMessageHandler',
+  /**
+   * Handler for Multiple Cosmos events.
+   */
+  BatchEvent = 'cosmos/BatchEventHandler',
 }
 
 export type CosmosRuntimeHandlerInputMap = {
@@ -81,6 +94,10 @@ export type CosmosRuntimeHandlerInputMap = {
   [CosmosHandlerKind.Message]: CosmosMessage;
   [CosmosHandlerKind.Event]: CosmosEvent;
   [CosmosHandlerKind.PostIndex]: CosmosBlock;
+  // Batch handlers
+  [CosmosHandlerKind.BatchTransaction]: CosmosTransaction[];
+  [CosmosHandlerKind.BatchMessage]: CosmosMessage[];
+  [CosmosHandlerKind.BatchEvent]: CosmosEvent[];
 };
 
 type CosmosRuntimeFilterMap = {
@@ -89,6 +106,10 @@ type CosmosRuntimeFilterMap = {
   [CosmosHandlerKind.Message]: CosmosMessageFilter;
   [CosmosHandlerKind.Event]: CosmosEventFilter;
   [CosmosHandlerKind.PostIndex]: CosmosBlockFilter;
+  // Batch handlers
+  [CosmosHandlerKind.BatchTransaction]: CosmosTxFilter;
+  [CosmosHandlerKind.BatchMessage]: CosmosMessageFilter;
+  [CosmosHandlerKind.BatchEvent]: CosmosEventFilter;
 };
 
 /**
@@ -203,12 +224,27 @@ export type CosmosMessageHandler = CosmosCustomHandler<CosmosHandlerKind.Message
  * @type {CosmosCustomHandler<CosmosHandlerKind.Event, CosmosEventFilter>}
  */
 export type CosmosEventHandler = CosmosCustomHandler<CosmosHandlerKind.Event, CosmosEventFilter>;
-
 /**
  * Represents a handler for Cosmos post-index blocks.
  * @type {CosmosCustomHandler<CosmosHandlerKind.PostIndex, CosmosBlockFilter>}
  */
 export type CosmosPostIndexBlockHandler = CosmosCustomHandler<CosmosHandlerKind.PostIndex, CosmosBlockFilter>;
+// Batch handlers
+/**
+ * Represents a handler for Multiple Cosmos transactions.
+ * @type {CosmosCustomHandler<CosmosHandlerKind.BatchTransaction, CosmosTxFilter>}
+ */
+export type BatchCosmosTransactionHandler = CosmosCustomHandler<CosmosHandlerKind.BatchTransaction, CosmosTxFilter>;
+/**
+ * Represents a handler for Multiple Cosmos messages.
+ * @type {CosmosCustomHandler<CosmosHandlerKind.BatchMessage, CosmosMessageFilter>}
+ */
+export type BatchCosmosMessageHandler = CosmosCustomHandler<CosmosHandlerKind.BatchMessage, CosmosMessageFilter>;
+/**
+ * Represents a handler for Multiple Cosmos events.
+ * @type {CosmosCustomHandler<CosmosHandlerKind.BatchEvent, CosmosEventFilter>}
+ */
+export type BatchCosmosEventHandler = CosmosCustomHandler<CosmosHandlerKind.BatchEvent, CosmosEventFilter>;
 
 /**
  * Represents a generic custom handler for Cosmos.
@@ -220,7 +256,7 @@ export interface CosmosCustomHandler<K extends string = string, F = Record<strin
   /**
    * The kind of handler. For `cosmos/Runtime` datasources this is either `Block`, `Transaction`, `Message` or `Event` kinds.
    * The value of this will determine the filter options as well as the data provided to your handler function
-   * @type {CosmosHandlerKind.Block | CosmosHandlerKind.Transaction | CosmosHandlerKind.Message | CosmosHandlerKind.Event | CosmosHandlerKind.PostIndex | string }
+   * @type {CosmosHandlerKind.Block | CosmosHandlerKind.Transaction | CosmosHandlerKind.Message | CosmosHandlerKind.Event | CosmosHandlerKind.PostIndex | CosmosHandlerKind.BatchTransaction | CosmosHandlerKind.BatchMessage | CosmosHandlerKind.BatchEvent | string }
    * @example
    * kind: CosmosHandlerKind.Block // Defined with an enum, this is used for runtime datasources
    * @example
@@ -237,14 +273,17 @@ export interface CosmosCustomHandler<K extends string = string, F = Record<strin
 
 /**
  * Represents a runtime handler for Cosmos, which can be a block handler, transaction handler, message handler, or event handler.
- * @type {CosmosBlockHandler | CosmosTransactionHandler | CosmosMessageHandler | CosmosEventHandler}
+ * @type {CosmosBlockHandler | CosmosTransactionHandler | CosmosMessageHandler | CosmosEventHandler | BatchCosmosTransactionHandler | BatchCosmosMessageHandler | BatchCosmosEventHandler}
  */
 export type CosmosRuntimeHandler =
   | CosmosBlockHandler
   | CosmosTransactionHandler
   | CosmosMessageHandler
   | CosmosEventHandler
-  | CosmosPostIndexBlockHandler;
+  | CosmosPostIndexBlockHandler
+  | BatchCosmosTransactionHandler
+  | BatchCosmosMessageHandler
+  | BatchCosmosEventHandler;
 
 export type CosmosHandler = CosmosRuntimeHandler | CosmosCustomHandler;
 
@@ -412,7 +451,10 @@ export type SecondLayerHandlerProcessorArray<
   | SecondLayerHandlerProcessor<CosmosHandlerKind.Transaction, F, T, DS>
   | SecondLayerHandlerProcessor<CosmosHandlerKind.Message, F, T, DS>
   | SecondLayerHandlerProcessor<CosmosHandlerKind.Event, F, T, DS>
-  | SecondLayerHandlerProcessor<CosmosHandlerKind.PostIndex, F, T, DS>;
+  | SecondLayerHandlerProcessor<CosmosHandlerKind.PostIndex, F, T, DS>
+  | SecondLayerHandlerProcessor<CosmosHandlerKind.BatchTransaction, F, T, DS>
+  | SecondLayerHandlerProcessor<CosmosHandlerKind.BatchMessage, F, T, DS>
+  | SecondLayerHandlerProcessor<CosmosHandlerKind.BatchEvent, F, T, DS>;
 
 export type CosmosDatasourceProcessor<
   K extends string,

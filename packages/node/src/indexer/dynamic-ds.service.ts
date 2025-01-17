@@ -13,8 +13,8 @@ import {
   DynamicDsService as BaseDynamicDsService,
 } from '@subql/node-core';
 import { CosmosDatasource, CosmosHandlerKind } from '@subql/types-cosmos';
-import { plainToClass, ClassConstructor } from 'class-transformer';
-import { validateSync, IsOptional, IsObject } from 'class-validator';
+import { ClassConstructor, plainToClass } from 'class-transformer';
+import { IsObject, IsOptional, validateSync } from 'class-validator';
 import { SubqueryProject } from '../configure/SubqueryProject';
 import { DsProcessorService } from './ds-processor.service';
 
@@ -83,6 +83,7 @@ export class DynamicDsService extends BaseDynamicDsService<
         dsObj.mapping.handlers = dsObj.mapping.handlers.map((handler) => {
           switch (handler.kind) {
             case CosmosHandlerKind.Event:
+            case CosmosHandlerKind.BatchEvent:
               assert(
                 handler.filter,
                 'Dynamic datasources must have some predfined filter',
@@ -106,6 +107,7 @@ export class DynamicDsService extends BaseDynamicDsService<
               }
               return handler;
             case CosmosHandlerKind.Message:
+            case CosmosHandlerKind.BatchMessage:
               assert(
                 handler.filter,
                 'Dynamic datasources must have some predfined filter',
@@ -123,6 +125,7 @@ export class DynamicDsService extends BaseDynamicDsService<
               }
               return handler;
             case CosmosHandlerKind.Transaction:
+            case CosmosHandlerKind.BatchTransaction:
             case CosmosHandlerKind.Block:
             case CosmosHandlerKind.PostIndex:
             default:

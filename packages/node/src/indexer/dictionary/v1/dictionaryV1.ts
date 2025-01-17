@@ -94,6 +94,8 @@ function getBaseHandlerFilters<T extends CosmosHandlerFilter>(
   }
 }
 
+// Adding batches move complexity over 22 and the eslint rule is 20
+// eslint-disable-next-line complexity
 function buildDictionaryQueryEntries(
   dataSources: CosmosDatasource[],
   getDsProcessor: GetDsProcessor,
@@ -139,7 +141,8 @@ function buildDictionaryQueryEntries(
             }
           }
           break;
-        case CosmosHandlerKind.Message: {
+        case CosmosHandlerKind.Message:
+        case CosmosHandlerKind.BatchMessage:
           for (const filter of filterList as CosmosMessageFilter[]) {
             if (filter.type !== undefined) {
               queryEntries.push(messageFilterToQueryEntry(filter));
@@ -148,8 +151,8 @@ function buildDictionaryQueryEntries(
             }
           }
           break;
-        }
-        case CosmosHandlerKind.Event: {
+        case CosmosHandlerKind.Event:
+        case CosmosHandlerKind.BatchEvent:
           for (const filter of filterList as CosmosEventFilter[]) {
             if (filter.type !== undefined) {
               queryEntries.push(eventFilterToQueryEntry(filter));
@@ -158,7 +161,6 @@ function buildDictionaryQueryEntries(
             }
           }
           break;
-        }
         default:
       }
     }

@@ -9,31 +9,31 @@ import { DecodeObject, decodeTxRaw, Registry } from '@cosmjs/proto-signing';
 import { fromTendermintEvent } from '@cosmjs/stargate';
 import { Log, parseRawLog } from '@cosmjs/stargate/build/logs';
 import {
-  toRfc3339WithNanoseconds,
+  comet38,
   tendermint34,
   tendermint37,
-  comet38,
+  toRfc3339WithNanoseconds,
 } from '@cosmjs/tendermint-rpc';
 
 import {
-  IBlock,
+  filterBlockTimestamp,
   getLogger,
   Header,
-  filterBlockTimestamp,
+  IBlock,
 } from '@subql/node-core';
 import {
+  CosmosBlock,
+  CosmosBlockFilter,
+  CosmosEvent,
+  CosmosEventFilter,
+  CosmosEventKind,
+  CosmosMessage,
+  CosmosMessageFilter,
+  CosmosTransaction,
+  CosmosTxFilter,
+  Header as CosmosHeader,
   TxData,
   TxEvent,
-  Header as CosmosHeader,
-  CosmosEventFilter,
-  CosmosMessageFilter,
-  CosmosBlock,
-  CosmosEvent,
-  CosmosTransaction,
-  CosmosMessage,
-  CosmosBlockFilter,
-  CosmosTxFilter,
-  CosmosEventKind,
 } from '@subql/types-cosmos';
 import { isObjectLike } from 'lodash';
 import { isLong } from 'long';
@@ -108,6 +108,13 @@ export function filterTx(
   return true;
 }
 
+export function filterBatchTxs(
+  data: CosmosTransaction[],
+  filter?: CosmosTxFilter,
+): boolean {
+  return data.every((tx) => filterTx(tx, filter));
+}
+
 export function filterMessageData(
   data: CosmosMessage,
   filter?: CosmosMessageFilter,
@@ -167,6 +174,13 @@ export function filterMessageData(
   return true;
 }
 
+export function filterBatchMessages(
+  data: CosmosMessage[],
+  filter?: CosmosMessageFilter,
+): boolean {
+  return data.every((msg) => filterMessageData(msg, filter));
+}
+
 export function filterMessages(
   messages: CosmosMessage[],
   filterOrFilters?: CosmosMessageFilter | CosmosMessageFilter[] | undefined,
@@ -219,6 +233,13 @@ export function filterEvent(
   }
 
   return true;
+}
+
+export function filterBatchEvents(
+  data: CosmosEvent[],
+  filter?: CosmosEventFilter,
+): boolean {
+  return data.every((event) => filterEvent(event, filter));
 }
 
 export function filterEvents(

@@ -3,32 +3,36 @@
 
 import { Injectable } from '@nestjs/common';
 import {
-  isBlockHandlerProcessor,
-  isPostIndexHandlerProcessor,
-  isTransactionHandlerProcessor,
-  isMessageHandlerProcessor,
-  isEventHandlerProcessor,
-  isCustomCosmosDs,
-  isRuntimeCosmosDs,
   CosmosHandlerKind,
   CosmosRuntimeHandlerInputMap,
+  isBatchEventHandlerProcessor,
+  isBatchMessageHandlerProcessor,
+  isBatchTransactionHandlerProcessor,
+  isBlockHandlerProcessor,
+  isCustomCosmosDs,
+  isEventHandlerProcessor,
+  isMessageHandlerProcessor,
+  isPostIndexHandlerProcessor,
+  isRuntimeCosmosDs,
+  isTransactionHandlerProcessor,
 } from '@subql/common-cosmos';
 import {
-  NodeConfig,
-  profiler,
-  IndexerSandbox,
-  ProcessBlockResponse,
   BaseIndexerManager,
   IBlock,
+  IndexerSandbox,
+  NodeConfig,
+  ProcessBlockResponse,
+  profiler,
   SandboxService,
 } from '@subql/node-core';
 import {
   CosmosBlock,
-  CosmosEvent,
-  CosmosMessage,
-  CosmosTransaction,
   CosmosCustomDatasource,
   CosmosDatasource,
+  CosmosEvent,
+  CosmosEventKind,
+  CosmosMessage,
+  CosmosTransaction,
 } from '@subql/types-cosmos';
 import * as CosmosUtil from '../utils/cosmos';
 import {
@@ -130,9 +134,22 @@ export class IndexerManager extends BaseIndexerManager<
       else evntsTxMap[key].nonMsg.push(event);
     });
 
+    await this.indexBatchEvents(
+      blockContent.beginBlockEvents ?? [],
+      dataSources,
+      getVM,
+    );
+
     for (const evt of blockContent.beginBlockEvents ?? []) {
       await this.indexEvent(evt, dataSources, getVM);
     }
+
+    // this will pass all the finalizeBlockEvents at once to all the datasource handlers of kind CosmosHandlerKind.BatchTransaction
+    await this.indexBatchTransactions(
+      blockContent.transactions,
+      dataSources,
+      getVM,
+    );
 
     for (const tx of blockContent.transactions) {
       await this.indexTransaction(tx, dataSources, getVM);
@@ -160,9 +177,42 @@ export class IndexerManager extends BaseIndexerManager<
       }
     }
 
+    // this will pass all the messages at once to all the datasource handlers of kind CosmosHandlerKind.BatchMessages
+    await this.indexBatchMessages(blockContent.messages, dataSources, getVM);
+
+    // this will pass all the message events at once to all the datasource handlers of kind CosmosHandlerKind.BatchEvent
+    await this.indexBatchEvents(
+      blockContent.events.filter((evt) => evt.kind === CosmosEventKind.Message),
+      dataSources,
+      getVM,
+    );
+
+    // this will pass all the transaction events at once to all the datasource handlers of kind CosmosHandlerKind.BatchEvent
+    await this.indexBatchEvents(
+      blockContent.events.filter(
+        (evt) => evt.kind === CosmosEventKind.Transaction,
+      ),
+      dataSources,
+      getVM,
+    );
+
+    // this will pass all the endBlockEvents at once to all the datasource handlers of kind CosmosHandlerKind.BatchEvent
+    await this.indexBatchEvents(
+      blockContent.endBlockEvents ?? [],
+      dataSources,
+      getVM,
+    );
+
     for (const evt of blockContent.endBlockEvents ?? []) {
       await this.indexEvent(evt, dataSources, getVM);
     }
+
+    // this will pass all the finalizeBlockEvents at once to all the datasource handlers of kind CosmosHandlerKind.BatchEvent
+    await this.indexBatchEvents(
+      blockContent.finalizeBlockEvents ?? [],
+      dataSources,
+      getVM,
+    );
 
     for (const evt of blockContent.finalizeBlockEvents ?? []) {
       await this.indexEvent(evt, dataSources, getVM);
@@ -191,6 +241,21 @@ export class IndexerManager extends BaseIndexerManager<
     }
   }
 
+  private async indexBatchTransactions(
+    txs: CosmosTransaction[],
+    dataSources: CosmosDatasource[],
+    getVM: (d: CosmosDatasource) => Promise<IndexerSandbox>,
+  ): Promise<void> {
+    for (const ds of dataSources) {
+      await this.indexBatchData(
+        CosmosHandlerKind.BatchTransaction,
+        txs,
+        ds,
+        getVM,
+      );
+    }
+  }
+
   private async indexMessage(
     message: CosmosMessage,
     dataSources: CosmosDatasource[],
@@ -201,6 +266,21 @@ export class IndexerManager extends BaseIndexerManager<
     }
   }
 
+  private async indexBatchMessages(
+    messages: CosmosMessage[],
+    dataSources: CosmosDatasource[],
+    getVM: (d: CosmosDatasource) => Promise<IndexerSandbox>,
+  ): Promise<void> {
+    for (const ds of dataSources) {
+      await this.indexBatchData(
+        CosmosHandlerKind.BatchMessage,
+        messages,
+        ds,
+        getVM,
+      );
+    }
+  }
+
   private async indexEvent(
     event: CosmosEvent,
     dataSources: CosmosDatasource[],
@@ -208,6 +288,21 @@ export class IndexerManager extends BaseIndexerManager<
   ): Promise<void> {
     for (const ds of dataSources) {
       await this.indexData(CosmosHandlerKind.Event, event, ds, getVM);
+    }
+  }
+
+  private async indexBatchEvents(
+    events: CosmosEvent[],
+    dataSources: CosmosDatasource[],
+    getVM: (d: CosmosDatasource) => Promise<IndexerSandbox>,
+  ): Promise<void> {
+    for (const ds of dataSources) {
+      await this.indexBatchData(
+        CosmosHandlerKind.BatchEvent,
+        events,
+        ds,
+        getVM,
+      );
     }
   }
 
@@ -239,14 +334,29 @@ export class IndexerManager extends BaseIndexerManager<
         return !!CosmosUtil.filterBlock(data as CosmosBlock, baseFilter);
       case CosmosHandlerKind.Transaction:
         return !!CosmosUtil.filterTx(data as CosmosTransaction, baseFilter);
+      case CosmosHandlerKind.BatchTransaction:
+        return !!CosmosUtil.filterBatchTxs(
+          data as CosmosTransaction[],
+          baseFilter,
+        );
       case CosmosHandlerKind.Message:
         return !!CosmosUtil.filterMessages([data as CosmosMessage], baseFilter)
           .length;
+      case CosmosHandlerKind.BatchMessage:
+        return !!CosmosUtil.filterBatchMessages(
+          data as CosmosMessage[],
+          baseFilter,
+        );
       case CosmosHandlerKind.Event:
         return !!CosmosUtil.filterEvents([data as CosmosEvent], baseFilter)
           .length;
+      case CosmosHandlerKind.BatchEvent:
+        return !!CosmosUtil.filterBatchEvents(
+          data as CosmosEvent[],
+          baseFilter,
+        );
       default:
-        throw new Error('Unsuported handler kind');
+        throw new Error('Unsupported handler kind');
     }
   }
 }
@@ -257,6 +367,10 @@ type ProcessorTypeMap = {
   [CosmosHandlerKind.Transaction]: typeof isTransactionHandlerProcessor;
   [CosmosHandlerKind.Message]: typeof isMessageHandlerProcessor;
   [CosmosHandlerKind.PostIndex]: typeof isPostIndexHandlerProcessor;
+  // Batch handlers
+  [CosmosHandlerKind.BatchTransaction]: typeof isBatchTransactionHandlerProcessor;
+  [CosmosHandlerKind.BatchEvent]: typeof isBatchEventHandlerProcessor;
+  [CosmosHandlerKind.BatchMessage]: typeof isBatchMessageHandlerProcessor;
 };
 
 const ProcessorTypeMap = {
@@ -265,6 +379,10 @@ const ProcessorTypeMap = {
   [CosmosHandlerKind.Transaction]: isTransactionHandlerProcessor,
   [CosmosHandlerKind.Message]: isMessageHandlerProcessor,
   [CosmosHandlerKind.PostIndex]: isPostIndexHandlerProcessor,
+  // Batch handlers
+  [CosmosHandlerKind.BatchEvent]: isBatchEventHandlerProcessor,
+  [CosmosHandlerKind.BatchTransaction]: isBatchTransactionHandlerProcessor,
+  [CosmosHandlerKind.BatchMessage]: isBatchMessageHandlerProcessor,
 };
 
 const FilterTypeMap = {
@@ -273,4 +391,8 @@ const FilterTypeMap = {
   [CosmosHandlerKind.Event]: CosmosUtil.filterEvent,
   [CosmosHandlerKind.Message]: CosmosUtil.filterMessageData,
   [CosmosHandlerKind.PostIndex]: CosmosUtil.filterBlock,
+  // Batch handlers
+  [CosmosHandlerKind.BatchTransaction]: CosmosUtil.filterTx,
+  [CosmosHandlerKind.BatchEvent]: CosmosUtil.filterEvent,
+  [CosmosHandlerKind.BatchMessage]: CosmosUtil.filterMessageData,
 };

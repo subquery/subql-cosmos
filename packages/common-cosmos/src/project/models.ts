@@ -23,6 +23,9 @@ import {
   CustomModule,
   CosmosTxFilter,
   CosmosPostIndexBlockHandler,
+  BatchCosmosTransactionHandler,
+  BatchCosmosMessageHandler,
+  BatchCosmosEventHandler,
 } from '@subql/types-cosmos';
 import {plainToClass, Transform, Type} from 'class-transformer';
 import {
@@ -116,6 +119,35 @@ export class EventHandler implements CosmosEventHandler {
   handler!: string;
 }
 
+export class BatchTransactionHandler implements BatchCosmosTransactionHandler {
+  @IsEnum(CosmosHandlerKind, {groups: [CosmosHandlerKind.BatchTransaction]})
+  kind!: CosmosHandlerKind.BatchTransaction;
+  @IsString()
+  handler!: string;
+}
+
+export class BatchMessageHandler implements BatchCosmosMessageHandler {
+  @IsEnum(CosmosHandlerKind, {groups: [CosmosHandlerKind.BatchMessage]})
+  kind!: CosmosHandlerKind.BatchMessage;
+  @IsString()
+  handler!: string;
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => MessageFilter)
+  filter?: CosmosMessageFilter;
+}
+
+export class BatchEventHandler implements BatchCosmosEventHandler {
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => EventFilter)
+  filter?: CosmosEventFilter;
+  @IsEnum(CosmosHandlerKind, {groups: [CosmosHandlerKind.BatchEvent]})
+  kind!: CosmosHandlerKind.BatchEvent;
+  @IsString()
+  handler!: string;
+}
+
 export class PostIndexHandler implements CosmosPostIndexBlockHandler {
   @IsEnum(CosmosHandlerKind, {groups: [CosmosHandlerKind.PostIndex]})
   kind!: CosmosHandlerKind.PostIndex;
@@ -151,6 +183,12 @@ export class RuntimeMapping implements CosmosMapping {
           return plainToClass(BlockHandler, handler);
         case CosmosHandlerKind.PostIndex:
           return plainToClass(PostIndexHandler, handler);
+        case CosmosHandlerKind.BatchTransaction:
+          return plainToClass(BatchTransactionHandler, handler);
+        case CosmosHandlerKind.BatchEvent:
+          return plainToClass(BatchEventHandler, handler);
+        case CosmosHandlerKind.BatchMessage:
+          return plainToClass(BatchMessageHandler, handler);
         default:
           throw new Error(`handler ${(handler as any).kind} not supported`);
       }

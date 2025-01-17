@@ -60,6 +60,24 @@ export function isPostIndexHandlerProcessor<E>(
   return hp.baseHandlerKind === CosmosHandlerKind.PostIndex;
 }
 
+export function isBatchEventHandlerProcessor<E>(
+  hp: SecondLayerHandlerProcessorArray<CosmosHandlerKind, DefaultFilter, unknown>
+): hp is SecondLayerHandlerProcessor<CosmosHandlerKind.BatchEvent, DefaultFilter, E> {
+  return hp.baseHandlerKind === CosmosHandlerKind.BatchEvent;
+}
+
+export function isBatchTransactionHandlerProcessor<E>(
+  hp: SecondLayerHandlerProcessorArray<CosmosHandlerKind, DefaultFilter, unknown>
+): hp is SecondLayerHandlerProcessor<CosmosHandlerKind.BatchTransaction, DefaultFilter, E> {
+  return hp.baseHandlerKind === CosmosHandlerKind.BatchTransaction;
+}
+
+export function isBatchMessageHandlerProcessor<E>(
+  hp: SecondLayerHandlerProcessorArray<CosmosHandlerKind, DefaultFilter, unknown>
+): hp is SecondLayerHandlerProcessor<CosmosHandlerKind.BatchMessage, DefaultFilter, E> {
+  return hp.baseHandlerKind === CosmosHandlerKind.BatchMessage;
+}
+
 export function isCosmosTemplates(
   templatesData: any,
   specVersion: string

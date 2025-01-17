@@ -121,11 +121,11 @@ describe('CosmosUtils', () => {
       expect(event.idx).toEqual(17);
 
       expect(event.msg).toBeDefined();
-      expect(event.msg.msg.typeUrl).toEqual(
+      expect(event.msg?.msg.typeUrl).toEqual(
         '/cosmwasm.wasm.v1.MsgExecuteContract',
       );
 
-      expect(event.msg.tx.hash).toEqual(event.tx.hash);
+      expect(event.msg?.tx.hash).toEqual(event.tx?.hash);
 
       expect(event.event).toBeDefined();
       expect(event.event.type).toEqual(
@@ -393,11 +393,11 @@ describe('Cosmos 0.50 support', () => {
     expect(event.idx).toEqual(0);
 
     expect(event.msg).toBeDefined();
-    expect(event.msg.msg.typeUrl).toEqual(
+    expect(event.msg?.msg.typeUrl).toEqual(
       '/ibc.core.client.v1.MsgUpdateClient',
     );
 
-    expect(event.msg.tx.hash).toEqual(event.tx.hash);
+    expect(event.msg?.tx.hash).toEqual(event.tx?.hash);
 
     expect(event.event).toBeDefined();
     expect(event.event.type).toEqual('message');
