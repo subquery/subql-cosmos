@@ -29,6 +29,7 @@ import {
   CosmosMessageFilter,
   CosmosBlock,
   CosmosEvent,
+  CosmosEventKind,
   CosmosTransaction,
   CosmosMessage,
   CosmosBlockFilter,
@@ -342,6 +343,7 @@ export function wrapBlockBeginAndEndEvents(
   block: CosmosBlock,
   events: TxEvent[],
   idxOffset: number,
+  kind: CosmosEventKind,
 ): CosmosEvent[] {
   return events.map(
     (event) =>
@@ -352,6 +354,7 @@ export function wrapBlockBeginAndEndEvents(
         msg: null,
         tx: null,
         log: null,
+        kind,
       } as unknown as CosmosEvent),
   );
 }
@@ -371,7 +374,12 @@ export function wrapEvent(
 ): CosmosEvent[] {
   const events: CosmosEvent[] = [];
   for (const tx of txs) {
-    const appendEvent = (msg: CosmosMessage, event: TxEvent, log: Log) => {
+    const appendEvent = (
+      msg: CosmosMessage | undefined,
+      event: TxEvent,
+      log: Log,
+      kind: CosmosEventKind,
+    ) => {
       events.push({
         idx: idxOffset++,
         block,
@@ -379,6 +387,7 @@ export function wrapEvent(
         msg,
         event,
         log,
+        kind,
       });
     };
 
@@ -410,32 +419,30 @@ export function wrapEvent(
           continue;
         }
         for (let i = 0; i < log.events.length; i++) {
-          appendEvent(msg, log.events[i], log);
+          appendEvent(msg, log.events[i], log, CosmosEventKind.Message);
         }
       }
     } else if (tx.tx?.events) {
       // Comet38
       for (const txEvent of tx.tx.events) {
-        let msg: CosmosMessage;
-        try {
-          const eventMsgIndex = txEvent.attributes.find(
-            (attr) => attrToString(attr.key) === 'msg_index',
-          )?.value;
+        let msg: CosmosMessage | undefined;
+        const eventMsgIndex = txEvent.attributes.find(
+          (attr) => attrToString(attr.key) === 'msg_index',
+        )?.value;
 
-          // Event doesn't have a message
-          if (eventMsgIndex === undefined) {
-            continue;
-          }
-
+        // Event doesn't have a message
+        if (eventMsgIndex !== undefined) {
           const msgNumber = parseInt(attrToString(eventMsgIndex), 10);
           msg = wrapCosmosMsg(block, tx, msgNumber, registry);
-        } catch (e) {
-          logger.warn(`Unable to find message for event. tx=${tx.hash}`);
-          continue;
         }
 
         // TODO does a log still exist in Comet38?
-        appendEvent(msg, txEvent, { events: [], log: '', msg_index: -1 });
+        appendEvent(
+          msg,
+          txEvent,
+          { events: [], log: '', msg_index: -1 },
+          msg ? CosmosEventKind.Message : CosmosEventKind.Transaction,
+        );
       }
     } else {
       // For some tests that have invalid data
@@ -562,6 +569,7 @@ export class LazyBlockContent implements BlockContent {
         this.block,
         [...results.beginBlockEvents],
         this._eventIdx,
+        CosmosEventKind.BeginBlock,
       );
       this._eventIdx += this._wrappedBeginBlockEvents.length;
     }
@@ -582,6 +590,7 @@ export class LazyBlockContent implements BlockContent {
         this.block,
         [...results.endBlockEvents],
         this._eventIdx,
+        CosmosEventKind.EndBlock,
       );
       this._eventIdx += this._wrappedEndBlockEvents.length;
     }
@@ -600,6 +609,7 @@ export class LazyBlockContent implements BlockContent {
         this.block,
         [...results.finalizeBlockEvents],
         this._eventIdx,
+        CosmosEventKind.FinalizeBlock,
       );
       this._eventIdx += this._wrappedFinalizedBlockEvents.length;
     }

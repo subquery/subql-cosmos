@@ -46,13 +46,22 @@ export interface CosmosMessage<T = any> {
   };
 }
 
+export enum CosmosEventKind {
+  BeginBlock = 'begin_block',
+  EndBlock = 'end_block',
+  FinalizeBlock = 'finalize_block',
+  Message = 'message',
+  Transaction = 'transaction',
+}
+
 export interface CosmosEvent {
   idx: number;
   block: CosmosBlock;
   tx: CosmosTransaction;
-  msg: CosmosMessage;
+  msg?: CosmosMessage;
   log: Log;
   event: TxEvent;
+  kind: CosmosEventKind;
 }
 
 export type DynamicDatasourceCreator = (name: string, args: Record<string, unknown>) => Promise<void>;
