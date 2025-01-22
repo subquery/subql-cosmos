@@ -35,7 +35,7 @@ import {
   CosmosBlockFilter,
   CosmosTxFilter,
 } from '@subql/types-cosmos';
-import { isObjectLike } from 'lodash';
+import { isObjectLike, omit } from 'lodash';
 import { isLong } from 'long';
 import { SubqlProjectBlockFilter } from '../configure/SubqueryProject';
 import { CosmosClient } from '../indexer/api.service';
@@ -263,15 +263,6 @@ export async function fetchCosmosBlocksArray(
   return Promise.all(
     blockArray.map(async (height) => getBlockByHeight(height)),
   );
-}
-
-export function wrapBlock(block: BlockResponse, txs: TxData[]): CosmosBlock {
-  return {
-    blockId: block.blockId,
-    block: { id: toHex(block.blockId.hash).toUpperCase(), ...block.block },
-    header: block.block.header,
-    txs: txs,
-  };
 }
 
 export function wrapTx(
@@ -518,9 +509,34 @@ export class LazyBlockContent implements BlockContent {
 
   get block(): CosmosBlock {
     if (!this._wrappedBlock) {
-      this._wrappedBlock = wrapBlock(this._blockInfo, [
-        ...this._results.results,
-      ]);
+      // Need to keep reference to LazyBlockContent for the getter methods
+      // eslint-disable-next-line @typescript-eslint/no-this-alias
+      const self = this;
+
+      this._wrappedBlock = {
+        blockId: this._blockInfo.blockId,
+        block: {
+          id: toHex(this._blockInfo.blockId.hash).toUpperCase(),
+          ...this._blockInfo.block,
+        },
+        header: this._blockInfo.block.header,
+        txs: [...this._results.results],
+
+        get transactions() {
+          return self.transactions;
+        },
+        get messages() {
+          return self.messages;
+        },
+        get events() {
+          return [
+            ...self.beginBlockEvents,
+            ...self.events,
+            ...self.endBlockEvents,
+            ...self.finalizeBlockEvents,
+          ];
+        },
+      } as CosmosBlock;
     }
     return this._wrappedBlock;
   }

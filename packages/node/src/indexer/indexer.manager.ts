@@ -139,15 +139,15 @@ export class IndexerManager extends BaseIndexerManager<
 
       for (const msg of groupedMessages[tx.hash]) {
         await this.indexMessage(msg, dataSources, getVM);
-        if (txEvents) {
+        if (txEvents?.[msg.idx]) {
           for (const evt of txEvents[msg.idx]) {
             await this.indexEvent(evt, dataSources, getVM);
           }
         }
       }
 
-      if (txEvents) {
-        for (const evt of groupedEvents[tx.hash][-1]) {
+      if (txEvents?.[-1]) {
+        for (const evt of txEvents[-1]) {
           await this.indexEvent(evt, dataSources, getVM);
         }
       }
