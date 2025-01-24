@@ -123,7 +123,10 @@ export function filterMessageData(
   if (!filterTx(data.tx, filter)) {
     return false;
   }
-  if (filter.type !== data.msg.typeUrl) {
+  if (filter.type !== '*' && filter.type !== data.msg.typeUrl) {
+    logger.debug(
+      `filtered out message type ${filter.type} != ${data.msg.typeUrl}`,
+    );
     return false;
   }
   if (filter.values) {
