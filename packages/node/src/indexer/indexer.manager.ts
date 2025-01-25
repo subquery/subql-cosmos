@@ -115,18 +115,39 @@ export class IndexerManager extends BaseIndexerManager<
       await this.indexEvent(evt, dataSources, getVM);
     }
 
+    // Group messages so we only iterate once.
+    const groupedMessages = blockContent.messages.reduce((acc, msg) => {
+      acc[msg.tx.hash] ??= [];
+      acc[msg.tx.hash].push(msg);
+      return acc;
+    }, {} as Record<string, CosmosMessage[]>);
+
+    // Group events so we only iterate once.
+    const groupedEvents = blockContent.events.reduce((acc, evt) => {
+      acc[evt.tx.hash] ??= {};
+      // -1 for events that arent associated with a message
+      const idxKey = evt.msg?.idx ?? -1;
+      acc[evt.tx.hash][idxKey] ??= [];
+      acc[evt.tx.hash][idxKey].push(evt);
+      return acc;
+    }, {} as Record<string /* TX hash*/, Record<number /* MSG index or -1 for tx event */, CosmosEvent[]>>);
+
     for (const tx of blockContent.transactions) {
       await this.indexTransaction(tx, dataSources, getVM);
-      const msgs = blockContent.messages.filter(
-        (msg) => msg.tx.hash === tx.hash,
-      );
-      for (const msg of msgs) {
-        await this.indexMessage(msg, dataSources, getVM);
-        const events = blockContent.events.filter(
-          (event) => event.tx.hash === tx.hash && event.msg?.idx === msg.idx,
-        );
 
-        for (const evt of events) {
+      const txEvents = groupedEvents[tx.hash];
+
+      for (const msg of groupedMessages[tx.hash]) {
+        await this.indexMessage(msg, dataSources, getVM);
+        if (txEvents?.[msg.idx]) {
+          for (const evt of txEvents[msg.idx]) {
+            await this.indexEvent(evt, dataSources, getVM);
+          }
+        }
+      }
+
+      if (txEvents?.[-1]) {
+        for (const evt of txEvents[-1]) {
           await this.indexEvent(evt, dataSources, getVM);
         }
       }

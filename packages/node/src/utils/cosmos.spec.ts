@@ -121,11 +121,11 @@ describe('CosmosUtils', () => {
       expect(event.idx).toEqual(17);
 
       expect(event.msg).toBeDefined();
-      expect(event.msg.msg.typeUrl).toEqual(
+      expect(event.msg?.msg.typeUrl).toEqual(
         '/cosmwasm.wasm.v1.MsgExecuteContract',
       );
 
-      expect(event.msg.tx.hash).toEqual(event.tx.hash);
+      expect(event.msg?.tx.hash).toEqual(event.tx.hash);
 
       expect(event.event).toBeDefined();
       expect(event.event.type).toEqual(
@@ -369,7 +369,7 @@ describe('Cosmos 0.50 support', () => {
     const registry = new Registry([...defaultRegistryTypes, ...wasmTypes]);
     api = new CosmosClient(client, registry);
 
-    const [firstBlock] = await fetchBlocksBatches(api, [12_495_419]); // https://www.mintscan.io/neutron/block/12495419
+    const [firstBlock] = await fetchBlocksBatches(api, [19_091_812]); // https://www.mintscan.io/neutron/block/12495419
     block = firstBlock.block;
   });
 
@@ -393,17 +393,34 @@ describe('Cosmos 0.50 support', () => {
     expect(event.idx).toEqual(0);
 
     expect(event.msg).toBeDefined();
-    expect(event.msg.msg.typeUrl).toEqual(
+    expect(event.msg?.msg.typeUrl).toEqual(
       '/ibc.core.client.v1.MsgUpdateClient',
     );
 
-    expect(event.msg.tx.hash).toEqual(event.tx.hash);
+    expect(event.msg?.tx.hash).toEqual(event.tx.hash);
 
     expect(event.event).toBeDefined();
     expect(event.event.type).toEqual('message');
     expect(event.event.attributes.length).toEqual(3);
 
     expect(event.log.events.length).toEqual(0);
+  });
+
+  it('Correctly wraps events not associated to a message', async () => {
+    const [{ block }] = await fetchBlocksBatches(api, [19_091_812]);
+
+    expect(block.events.length).toBe(279);
+
+    expect(block.transactions[0].tx.events.length).toBe(21);
+
+    const txEvents = block.events.filter(
+      (evt) =>
+        evt.tx.hash ===
+        '5F5DC2EECF1D8EDDE07BC0AD4F91A48BEB35E2A0D813BD2D21EA90B85F0BAB95',
+    );
+    expect(txEvents.length).toBe(21);
+    const nonMessageTxs = txEvents.filter((evt) => evt.msg === undefined);
+    expect(nonMessageTxs.length).toBe(16);
   });
 
   // block.tx when block.block.tx cannot be decoded

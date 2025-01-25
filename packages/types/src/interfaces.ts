@@ -22,7 +22,22 @@ export interface CosmosBlock {
   blockId: BlockId;
   block: {id: string} & Block;
   header: Header; // Full header
+  /* The raw transaction data */
   txs: TxData[];
+
+  /**
+   * Decoded transactions, this is the same data as passed to a transaction handler
+   * */
+  transactions: CosmosTransaction[];
+  /**
+   * Decoded messages, this is the same data as passed to a message handler
+   * */
+  messages: CosmosMessage[];
+  /**
+   * Decoded events, this is the same data as passed to a event handler.
+   * This is all events including, beginBlockEvents, endBlockEvents and finalizedBlockEvents
+   * */
+  events: CosmosEvent[];
 }
 
 export interface CosmosTransaction {
@@ -46,13 +61,22 @@ export interface CosmosMessage<T = any> {
   };
 }
 
+export enum CosmosEventKind {
+  BeginBlock = 'begin_block',
+  EndBlock = 'end_block',
+  FinalizeBlock = 'finalize_block',
+  Message = 'message',
+  Transaction = 'transaction',
+}
+
 export interface CosmosEvent {
   idx: number;
   block: CosmosBlock;
   tx: CosmosTransaction;
-  msg: CosmosMessage;
+  msg?: CosmosMessage;
   log: Log;
   event: TxEvent;
+  kind: CosmosEventKind;
 }
 
 export type DynamicDatasourceCreator = (name: string, args: Record<string, unknown>) => Promise<void>;
