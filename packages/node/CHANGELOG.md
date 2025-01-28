@@ -5,8 +5,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [4.4.0] - 2025-01-28
 ### Changed
 - Update block type to allow access to decoded transactions, messages and events (#305)
+- Update `@subql/node-core` with minor bug fixes and improvements
 
 ## [4.3.0] - 2024-12-17
 ### Changed
@@ -482,7 +485,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Init release
 
-[Unreleased]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/4.3.0...HEAD
+[Unreleased]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/4.4.0...HEAD
+[4.4.0]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/4.3.0...node-cosmos/4.4.0
 [4.3.0]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/4.2.1...node-cosmos/4.3.0
 [4.2.1]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/4.2.0...node-cosmos/4.2.1
 [4.2.0]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/4.1.4...node-cosmos/4.2.0
