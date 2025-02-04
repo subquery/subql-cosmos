@@ -5,8 +5,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [5.1.2] - 2025-02-04
 ### Changed
 - Update header year to 2025 (#307)
+- Update `@subql/common`
 
 ## [5.1.1] - 2025-01-28
 ### Changed
@@ -180,7 +183,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix chainTypes not being in deployments
 
 ## [0.0.5] - 2022-06-15
-[Unreleased]: https://github.com/subquery/subql-cosmos/compare/common-cosmos/5.1.1...HEAD
+[Unreleased]: https://github.com/subquery/subql-cosmos/compare/common-cosmos/5.1.2...HEAD
+[5.1.2]: https://github.com/subquery/subql-cosmos/compare/common-cosmos/5.1.1...common-cosmos/5.1.2
 [5.1.1]: https://github.com/subquery/subql-cosmos/compare/common-cosmos/5.1.0...common-cosmos/5.1.1
 [5.1.0]: https://github.com/subquery/subql-cosmos/compare/common-cosmos/5.0.6...common-cosmos/5.1.0
 [5.0.6]: https://github.com/subquery/subql-cosmos/compare/common-cosmos/5.0.5...common-cosmos/5.0.6
