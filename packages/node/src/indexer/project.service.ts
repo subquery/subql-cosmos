@@ -1,4 +1,4 @@
-// Copyright 2020-2024 SubQuery Pte Ltd authors & contributors
+// // Copyright 2020-2025 SubQuery Pte Ltd authors & contributors
 // SPDX-License-Identifier: GPL-3.0
 
 import { isMainThread } from 'node:worker_threads';
@@ -64,6 +64,7 @@ export class ProjectService extends BaseProjectService<
     );
   }
 
+  // eslint-disable-next-line @typescript-eslint/require-await
   @profiler()
   async init(startHeight?: number): Promise<void> {
     return super.init(startHeight);
