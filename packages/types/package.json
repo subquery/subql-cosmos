@@ -19,7 +19,7 @@
     "@cosmjs/cosmwasm-stargate": "^0.32.4",
     "@cosmjs/proto-signing": "^0.32.4",
     "@cosmjs/stargate": "^0.32.4",
-    "@subql/types-core": "^2.0.0"
+    "@subql/types-core": "^2.0.1"
   },
   "stableVersion": "4.0.1-0"
 }
