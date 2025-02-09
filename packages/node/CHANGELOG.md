@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Use forked version of `@cosmjs/stargate` (#310)
 
+### Fixed
+- Error being thrown when stringify new block structure because of circular reference (#311)
+
 ## [4.4.1] - 2025-02-04
 ### Changed
 - Update header year to 2025 (#307)
