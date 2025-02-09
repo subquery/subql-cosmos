@@ -536,6 +536,9 @@ export class LazyBlockContent implements BlockContent {
             ...self.finalizeBlockEvents,
           ];
         },
+        toJSON() {
+          return omit(this, ['transactions', 'messages', 'events']);
+        },
       } as CosmosBlock;
     }
     return this._wrappedBlock;
