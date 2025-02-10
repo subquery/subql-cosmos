@@ -423,6 +423,11 @@ describe('Cosmos 0.50 support', () => {
     expect(nonMessageTxs.length).toBe(16);
   });
 
+  it('Can stringify a block', () => {
+    expect(() => JSON.stringify(block)).not.toThrow();
+    expect(() => JSON.stringify(block.block)).not.toThrow();
+  });
+
   // block.tx when block.block.tx cannot be decoded
   // {
   //    code: 2,
