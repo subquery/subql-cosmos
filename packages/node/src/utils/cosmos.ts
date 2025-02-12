@@ -455,18 +455,19 @@ export function wrapEvent(
  * Cosmos has instant finalization, there is also no rpc method to get a block by hash
  * To get around this we use blockHeights as hashes
  */
-export function cosmosBlockToHeader(blockHeight: number): Header {
+export function cosmosBlockToHeader(header: CosmosHeader): Header {
   return {
-    blockHeight: blockHeight,
-    blockHash: blockHeight.toString(),
-    parentHash: (blockHeight - 1).toString(),
+    blockHeight: header.height,
+    blockHash: header.height.toString(),
+    parentHash: (header.height - 1).toString(),
+    timestamp: getBlockTimestamp(header),
   };
 }
 
 export function formatBlockUtil<B extends BlockContent>(block: B): IBlock<B> {
   return {
     block,
-    getHeader: () => cosmosBlockToHeader(block.block.header.height),
+    getHeader: () => cosmosBlockToHeader(block.block.header),
   };
 }
 

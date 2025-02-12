@@ -35,6 +35,7 @@ export class UnfinalizedBlocksService extends BaseUnfinalizedBlocksService<Block
 
   @mainThreadOnly()
   async getHeaderForHeight(height: number): Promise<Header> {
-    return Promise.resolve(cosmosBlockToHeader(height));
+    const block = await this.apiService.unsafeApi.blockInfo(height);
+    return cosmosBlockToHeader(block.block.header);
   }
 }

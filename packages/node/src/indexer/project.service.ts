@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0
 
 import { isMainThread } from 'node:worker_threads';
-import { toRfc3339WithNanoseconds } from '@cosmjs/tendermint-rpc';
 import { Inject, Injectable } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import {
@@ -17,6 +16,7 @@ import {
 import { CosmosDatasource } from '@subql/types-cosmos';
 import { Sequelize } from '@subql/x-sequelize';
 import { SubqueryProject } from '../configure/SubqueryProject';
+import { getBlockTimestamp } from '../utils/cosmos';
 import { ApiService } from './api.service';
 import { DsProcessorService } from './ds-processor.service';
 import { DynamicDsService } from './dynamic-ds.service';
@@ -72,7 +72,7 @@ export class ProjectService extends BaseProjectService<
 
   protected async getBlockTimestamp(height: number): Promise<Date> {
     const response = await this.apiService.api.blockInfo(height);
-    return new Date(toRfc3339WithNanoseconds(response.block.header.time));
+    return getBlockTimestamp(response.block.header);
   }
 
   protected onProjectChange(project: SubqueryProject): void | Promise<void> {

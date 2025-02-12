@@ -65,7 +65,8 @@ export class FetchService extends BaseFetchService<
   protected async getFinalizedHeader(): Promise<Header> {
     // Cosmos has instant finalization
     const height = await this.api.getHeight();
-    return cosmosBlockToHeader(height);
+    const blockInfo = await this.api.blockInfo(height);
+    return cosmosBlockToHeader(blockInfo.block.header);
   }
 
   protected async getBestHeight(): Promise<number> {

@@ -58,7 +58,7 @@ export class WorkerService extends BaseWorkerService<
   }
 
   protected toBlockResponse(block: BlockContent): FetchBlockResponse {
-    return cosmosBlockToHeader(block.block.header.height);
+    return cosmosBlockToHeader(block.block.header);
   }
 
   protected async processFetchedBlock(
