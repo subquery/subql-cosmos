@@ -386,17 +386,46 @@ export function wrapEvent(
      * Is there a better way of doing this?
      * 34,37 also provide tx.tx.events, but logs don't seem to be recoverable that way.
      * Are logs even of use? They are just a subset of event attributes */
+
+    const processTxEvents = () => {
+      if (tx.tx?.events) {
+        // Comet38
+        for (const txEvent of tx.tx.events) {
+          let msg: CosmosMessage | undefined;
+          const eventMsgIndex = txEvent.attributes.find(
+            (attr) => attrToString(attr.key) === 'msg_index',
+          )?.value;
+
+          // Event doesn't have a message
+          if (eventMsgIndex !== undefined) {
+            const msgNumber = parseInt(attrToString(eventMsgIndex), 10);
+            msg = wrapCosmosMsg(block, tx, msgNumber, registry);
+          }
+
+          // TODO does a log still exist in Comet38?
+          appendEvent(
+            msg,
+            txEvent,
+            { events: [], log: '', msg_index: -1 },
+            msg ? CosmosEventKind.Message : CosmosEventKind.Transaction,
+          );
+        }
+      }
+    };
+
     if (tx.tx?.log) {
       // Tendermint34, Tendermint37
-      let logs: Log[];
+      let logs: Log[] = [];
+
       try {
         logs = parseRawLog(tx.tx.log) as Log[];
       } catch (e) {
+        console.log('TX LOG', tx.tx.log);
         //parsing fails if transaction had failed.
         logger.debug(
           'Failed to parse raw log, most likely a failed transaction',
         );
-        continue;
+        processTxEvents();
       }
       for (const log of logs) {
         let msg: CosmosMessage;
@@ -413,29 +442,8 @@ export function wrapEvent(
           appendEvent(msg, log.events[i], log, CosmosEventKind.Message);
         }
       }
-    } else if (tx.tx?.events) {
-      // Comet38
-      for (const txEvent of tx.tx.events) {
-        let msg: CosmosMessage | undefined;
-        const eventMsgIndex = txEvent.attributes.find(
-          (attr) => attrToString(attr.key) === 'msg_index',
-        )?.value;
-
-        // Event doesn't have a message
-        if (eventMsgIndex !== undefined) {
-          const msgNumber = parseInt(attrToString(eventMsgIndex), 10);
-          msg = wrapCosmosMsg(block, tx, msgNumber, registry);
-        }
-
-        // TODO does a log still exist in Comet38?
-        appendEvent(
-          msg,
-          txEvent,
-          { events: [], log: '', msg_index: -1 },
-          msg ? CosmosEventKind.Message : CosmosEventKind.Transaction,
-        );
-      }
     } else {
+      processTxEvents();
       // For some tests that have invalid data
     }
   }
