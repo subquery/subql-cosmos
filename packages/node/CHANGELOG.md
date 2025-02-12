@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Fixed
 - Logs for failed transactions not being included (#313)
+- Headers not including timestamps (#315)
 
 ## [4.5.0] - 2025-02-10
 ### Changed
