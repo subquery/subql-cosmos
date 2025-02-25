@@ -4,17 +4,15 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import {
-  IBlock,
   NestLogger,
   NodeConfig,
   TestingService as BaseTestingService,
   TestRunner,
+  ProjectService,
 } from '@subql/node-core';
 import { CosmosDatasource } from '@subql/types-cosmos';
 import { SubqueryProject } from '../configure/SubqueryProject';
 import { CosmosClient, CosmosSafeClient } from '../indexer/api.service';
-import { IndexerManager } from '../indexer/indexer.manager';
-import { ProjectService } from '../indexer/project.service';
 import { BlockContent } from '../indexer/types';
 import { TestingModule } from './testing.module';
 
@@ -56,13 +54,5 @@ export class TestingService extends BaseTestingService<
     await projectService.init();
 
     return [testContext.close.bind(testContext), testContext.get(TestRunner)];
-  }
-
-  async indexBlock(
-    block: IBlock<BlockContent>,
-    handler: string,
-    indexerManager: IndexerManager,
-  ): Promise<void> {
-    await indexerManager.indexBlock(block, this.getDsWithHandler(handler));
   }
 }

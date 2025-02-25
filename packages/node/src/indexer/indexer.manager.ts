@@ -1,7 +1,7 @@
 // // Copyright 2020-2025 SubQuery Pte Ltd authors & contributors
 // SPDX-License-Identifier: GPL-3.0
 
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import {
   isBlockHandlerProcessor,
   isTransactionHandlerProcessor,
@@ -20,6 +20,9 @@ import {
   BaseIndexerManager,
   IBlock,
   SandboxService,
+  DsProcessorService,
+  DynamicDsService,
+  UnfinalizedBlocksService,
 } from '@subql/node-core';
 import {
   CosmosBlock,
@@ -29,16 +32,14 @@ import {
   CosmosCustomDatasource,
   CosmosDatasource,
 } from '@subql/types-cosmos';
+import { BlockchainService } from '../blockchain.service';
 import * as CosmosUtil from '../utils/cosmos';
 import {
   ApiService as CosmosApiService,
   CosmosClient,
   CosmosSafeClient,
 } from './api.service';
-import { DsProcessorService } from './ds-processor.service';
-import { DynamicDsService } from './dynamic-ds.service';
 import { BlockContent } from './types';
-import { UnfinalizedBlocksService } from './unfinalizedBlocks.service';
 
 @Injectable()
 export class IndexerManager extends BaseIndexerManager<
@@ -56,12 +57,17 @@ export class IndexerManager extends BaseIndexerManager<
   protected isCustomDs = isCustomCosmosDs;
 
   constructor(
-    apiService: CosmosApiService,
+    @Inject('APIService') apiService: CosmosApiService,
     nodeConfig: NodeConfig,
     sandboxService: SandboxService<CosmosSafeClient, CosmosClient>,
-    dsProcessorService: DsProcessorService,
-    dynamicDsService: DynamicDsService,
+    dsProcessorService: DsProcessorService<
+      CosmosDatasource,
+      CosmosCustomDatasource
+    >,
+    dynamicDsService: DynamicDsService<CosmosDatasource>,
+    @Inject('IUnfinalizedBlocksService')
     unfinalizedBlocksService: UnfinalizedBlocksService,
+    @Inject('IBlockchainService') blockchainService: BlockchainService,
   ) {
     super(
       apiService,
@@ -72,6 +78,7 @@ export class IndexerManager extends BaseIndexerManager<
       unfinalizedBlocksService,
       FilterTypeMap,
       ProcessorTypeMap,
+      blockchainService,
     );
   }
 

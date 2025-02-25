@@ -1,6 +1,7 @@
 // // Copyright 2020-2025 SubQuery Pte Ltd authors & contributors
 // SPDX-License-Identifier: GPL-3.0
 
+import path from 'node:path';
 import { Module } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import {
@@ -14,27 +15,28 @@ import {
   InMemoryCacheService,
   MonitorService,
   ConnectionPoolService,
+  ProjectService,
+  DynamicDsService,
+  UnfinalizedBlocksService,
+  FetchService,
+  DsProcessorService,
+  DictionaryService,
+  WorkerBlockDispatcher,
+  BlockDispatcher,
 } from '@subql/node-core';
+import { CosmosDatasource } from '@subql/types-cosmos';
+import { BlockchainService } from '../blockchain.service';
 import { SubqueryProject } from '../configure/SubqueryProject';
 import { ApiService } from './api.service';
-import {
-  BlockDispatcherService,
-  WorkerBlockDispatcherService,
-} from './blockDispatcher';
 import { CosmosClientConnection } from './cosmosClient.connection';
-import { DictionaryService } from './dictionary/dictionary.service';
-import { DsProcessorService } from './ds-processor.service';
-import { DynamicDsService } from './dynamic-ds.service';
-import { FetchService } from './fetch.service';
+import { DictionaryService as CosmosDictionaryService } from './dictionary/dictionary.service';
 import { IndexerManager } from './indexer.manager';
-import { ProjectService } from './project.service';
-import { UnfinalizedBlocksService } from './unfinalizedBlocks.service';
 
 @Module({
   imports: [CoreModule],
   providers: [
     {
-      provide: ApiService,
+      provide: 'APIService',
       useFactory: ApiService.create.bind(ApiService),
       inject: [
         'ISubqueryProject',
@@ -43,46 +45,51 @@ import { UnfinalizedBlocksService } from './unfinalizedBlocks.service';
         NodeConfig,
       ],
     },
+    {
+      provide: 'IBlockchainService',
+      useClass: BlockchainService,
+    },
     IndexerManager,
     {
       provide: 'IBlockDispatcher',
       useFactory: (
         nodeConfig: NodeConfig,
         eventEmitter: EventEmitter2,
-        projectService: ProjectService,
+        projectService: ProjectService<CosmosDatasource>,
         projectUpgradeService: IProjectUpgradeService,
-        apiService: ApiService,
-        indexerManager: IndexerManager,
         cacheService: InMemoryCacheService,
         storeService: StoreService,
         storeModelProvider: IStoreModelProvider,
         poiSyncService: PoiSyncService,
         project: SubqueryProject,
-        dynamicDsService: DynamicDsService,
+        dynamicDsService: DynamicDsService<CosmosDatasource>,
         unfinalizedBlocks: UnfinalizedBlocksService,
         connectionPoolState: ConnectionPoolStateManager<CosmosClientConnection>,
+        blockchainService: BlockchainService,
+        indexerManager: IndexerManager,
         monitorService?: MonitorService,
       ) =>
         nodeConfig.workers
-          ? new WorkerBlockDispatcherService(
+          ? new WorkerBlockDispatcher(
               nodeConfig,
               eventEmitter,
               projectService,
               projectUpgradeService,
-              cacheService,
               storeService,
               storeModelProvider,
+              cacheService,
               poiSyncService,
-              project,
               dynamicDsService,
               unfinalizedBlocks,
               connectionPoolState,
+              project,
+              blockchainService,
+              path.resolve(__dirname, '../../dist/indexer/worker/worker.js'),
+              [],
               monitorService,
             )
-          : new BlockDispatcherService(
-              apiService,
+          : new BlockDispatcher(
               nodeConfig,
-              indexerManager,
               eventEmitter,
               projectService,
               projectUpgradeService,
@@ -90,34 +97,42 @@ import { UnfinalizedBlocksService } from './unfinalizedBlocks.service';
               storeModelProvider,
               poiSyncService,
               project,
+              blockchainService,
+              indexerManager,
             ),
       inject: [
         NodeConfig,
         EventEmitter2,
         'IProjectService',
         'IProjectUpgradeService',
-        ApiService,
-        IndexerManager,
         InMemoryCacheService,
         StoreService,
         'IStoreModelProvider',
         PoiSyncService,
         'ISubqueryProject',
         DynamicDsService,
-        UnfinalizedBlocksService,
+        'IUnfinalizedBlocksService',
         ConnectionPoolStateManager,
+        'IBlockchainService',
+        IndexerManager,
         MonitorService,
       ],
     },
     FetchService,
-    DictionaryService,
+    {
+      provide: DictionaryService,
+      useClass: CosmosDictionaryService,
+    },
     DsProcessorService,
     DynamicDsService,
     {
       useClass: ProjectService,
       provide: 'IProjectService',
     },
-    UnfinalizedBlocksService,
+    {
+      provide: 'IUnfinalizedBlocksService',
+      useClass: UnfinalizedBlocksService,
+    },
   ],
 })
 export class FetchModule {}

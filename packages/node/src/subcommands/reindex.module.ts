@@ -14,20 +14,21 @@ import {
   NodeConfig,
   ConnectionPoolStateManager,
   ConnectionPoolService,
+  DsProcessorService,
+  DynamicDsService,
+  UnfinalizedBlocksService,
 } from '@subql/node-core';
 import { Sequelize } from '@subql/x-sequelize';
+import { BlockchainService } from '../blockchain.service';
 import { ConfigureModule } from '../configure/configure.module';
 import { ApiService } from '../indexer/api.service';
-import { DsProcessorService } from '../indexer/ds-processor.service';
-import { DynamicDsService } from '../indexer/dynamic-ds.service';
-import { UnfinalizedBlocksService } from '../indexer/unfinalizedBlocks.service';
 
 @Module({
   providers: [
     {
       provide: 'IStoreModelProvider',
       useFactory: storeModelFactory,
-      inject: [NodeConfig, EventEmitter2, SchedulerRegistry, Sequelize],
+      inject: [NodeConfig, EventEmitter2, Sequelize],
     },
     StoreService,
     ReindexService,
@@ -45,7 +46,7 @@ import { UnfinalizedBlocksService } from '../indexer/unfinalizedBlocks.service';
     ConnectionPoolStateManager,
     ConnectionPoolService,
     {
-      provide: ApiService,
+      provide: 'APIService',
       useFactory: ApiService.create.bind(ApiService),
       inject: [
         'ISubqueryProject',
@@ -53,6 +54,10 @@ import { UnfinalizedBlocksService } from '../indexer/unfinalizedBlocks.service';
         EventEmitter2,
         NodeConfig,
       ],
+    },
+    {
+      provide: 'IBlockchainService',
+      useClass: BlockchainService,
     },
     SchedulerRegistry,
   ],
