@@ -18,16 +18,14 @@ import {
 } from '@subql/node-core';
 import {
   CosmosCustomDatasource,
-  CosmosCustomHandler,
   CosmosDatasource,
   CosmosHandlerKind,
-  CosmosMapping,
 } from '@subql/types-cosmos';
 import { plainToClass, ClassConstructor } from 'class-transformer';
 import { validateSync, IsOptional, IsObject } from 'class-validator';
 import { SubqueryProject } from './configure/SubqueryProject';
 import { ApiService, CosmosSafeClient } from './indexer/api.service';
-import { BlockContent } from './indexer/types';
+import { BlockContent, getBlockSize } from './indexer/types';
 import { IIndexerWorker } from './indexer/worker/worker';
 import {
   cosmosBlockToHeader,
@@ -81,8 +79,8 @@ export class BlockchainService
     return worker.fetchBlock(blockNum, 0);
   }
 
-  getBlockSize(block: IBlock): number {
-    throw new Error('Method not implemented.');
+  getBlockSize(block: IBlock<BlockContent>): number {
+    return getBlockSize(block.block);
   }
 
   async getFinalizedHeader(): Promise<Header> {
