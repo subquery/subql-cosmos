@@ -28,7 +28,7 @@
     "@nestjs/core": "^11.0.10",
     "@nestjs/event-emitter": "^2.0.0",
     "@nestjs/platform-express": "^11.0.10",
-    "@nestjs/schedule": "^3.0.1",
+    "@nestjs/schedule": "^5.0.1",
     "@subql/common": "^5.4.0",
     "@subql/common-cosmos": "workspace:*",
     "@subql/node-core": "^17.0.0",
