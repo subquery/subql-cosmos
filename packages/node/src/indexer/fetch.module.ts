@@ -87,10 +87,10 @@ import { IndexerManager } from './indexer.manager';
               path.resolve(__dirname, '../../dist/indexer/worker/worker.js'),
               [],
               monitorService,
-              // {
-              //   // Needed for kyve
-              //   tempDir: project.tempDir,
-              // }
+              {
+                // Needed for kyve
+                tempDir: project.tempDir,
+              },
             )
           : new BlockDispatcher(
               nodeConfig,
