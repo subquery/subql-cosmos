@@ -3,43 +3,43 @@ on:
   workflow_dispatch:
     inputs:
       cpus:
-        description: 'docker cpus '
+        description: "docker cpus "
         default: 2
         require: true
       memory:
-        description: 'docker memory'
-        default: '4g'
+        description: "docker memory"
+        default: "4g"
         require: true
       benchmark-time:
-        description: 'Benchmark time(h/m/s)'
+        description: "Benchmark time(h/m/s)"
         default: 30m
         require: true
       indexerVersion:
-        description: 'indexer version'
-        default: 'latest'
+        description: "indexer version"
+        default: "latest"
         require: true
       deployment:
-        description: 'Deployment'
-        default: 'QmUiVCsuBKrPetipdQBDBPLZFqm87gzyRPQsYEfzzS3jzt' #Archway starter project
+        description: "Deployment"
+        default: "QmUiVCsuBKrPetipdQBDBPLZFqm87gzyRPQsYEfzzS3jzt" #Archway starter project
         require: false
       network-endpoint:
-        description: 'Network endpoint'
-        default: 'https://rpc.mainnet.archway.io:443'
+        description: "Network endpoint"
+        default: "https://rpc.mainnet.archway.io:443"
         require: true
       use-network-api-key:
-        description: 'Use api endpoint key'
+        description: "Use api endpoint key"
         default: false
         required: true
       batch-size:
-        description: 'batch-size'
+        description: "batch-size"
         default: 30
         require: false
       workers:
-        description: 'workers'
+        description: "workers"
         default: 4
         require: false
       others:
-        description: 'Other flags'
+        description: "Other flags"
         require: false
 
 jobs:
@@ -48,7 +48,7 @@ jobs:
     # Containers must run in Linux based operating systems
     runs-on: ubuntu-latest
     # Docker Hub image that `container-job` executes in
-    container: node:18
+    container: node:lts-alpine
     services:
       # Label used to access the service container
       postgres:
@@ -70,7 +70,6 @@ jobs:
           fetch-depth: 100
           token: ${{ secrets.REPO_TOKEN }}
 
-
       - name: Prepare Network Endpoint
         id: prepare-network-endpoint
         run: |
@@ -82,12 +81,12 @@ jobs:
           echo "::set-output name=network-endpoint::${NETWORK_ENDPOINT}"
           echo "::add-mask::${NETWORK_ENDPOINT}"
           # Store the prepared NETWORK_ENDPOINT in an environment variable
-          echo "NETWORK_ENDPOINT=${NETWORK_ENDPOINT}" >> $GITHUB_ENV 
+          echo "NETWORK_ENDPOINT=${NETWORK_ENDPOINT}" >> $GITHUB_ENV
 
       - name: Install Docker inside the container
         run: |
           apt-get update
-          apt-get install -y docker.io  
+          apt-get install -y docker.io
 
       - name: Install PostgreSQL client
         run: |
@@ -176,7 +175,6 @@ jobs:
           name: benchmark-${{steps.current-time.outputs.formattedTime}}-${{steps.query_meta.outputs.indexer_version}}
           path: output/benchmark/
 
-
       - name: Post to a Slack channel
         id: slack
         uses: slackapi/slack-github-action@v1.24.0
@@ -184,7 +182,7 @@ jobs:
           # Slack channel id, channel name, or user id to post message.
           # See also: https://api.slack.com/methods/chat.postMessage#channels
           # channel for sq-benchmark
-          channel-id: 'C05JF51F1MJ'
+          channel-id: "C05JF51F1MJ"
           # For posting a rich message using Block Kit
           payload: |
             {
@@ -201,4 +199,3 @@ jobs:
             }
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
-

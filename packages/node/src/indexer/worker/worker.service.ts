@@ -37,7 +37,7 @@ export class WorkerService extends BaseWorkerService<
   CosmosDatasource
 > {
   constructor(
-    private apiService: ApiService,
+    @Inject('APIService') private apiService: ApiService,
     private indexerManager: IndexerManager,
     @Inject('IProjectService')
     projectService: IProjectService<CosmosDatasource>,

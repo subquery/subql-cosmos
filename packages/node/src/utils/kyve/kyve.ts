@@ -325,7 +325,7 @@ export class KyveApi {
     try {
       await timeout(
         new Promise<void>((resolve, reject) => {
-          writeStream.on('open', resolve);
+          writeStream.on('open', () => resolve());
           writeStream.on('error', reject);
         }),
         WRITER_TIMEOUT,

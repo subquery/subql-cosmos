@@ -1,32 +1,29 @@
 // // Copyright 2020-2025 SubQuery Pte Ltd authors & contributors
 // SPDX-License-Identifier: GPL-3.0
 
-import { CacheMetadataModel } from '@subql/node-core';
-import { CosmosDatasourceKind, CosmosHandlerKind } from '@subql/types-cosmos';
-import { SubqueryProject } from '../configure/SubqueryProject';
-import { DynamicDsService } from './dynamic-ds.service';
-
-function getMetadata(): CacheMetadataModel {
-  let dynamicDs: any[] = [];
-
-  const metadata = {
-    set: (key: string, data: any[]) => {
-      dynamicDs = data;
-    },
-    setNewDynamicDatasource: (newDs: any) => {
-      dynamicDs.push(newDs);
-    },
-    find: (key: string) => Promise.resolve(dynamicDs),
-  };
-
-  return metadata as CacheMetadataModel;
-}
+import {
+  CosmosCustomDatasource,
+  CosmosDatasource,
+  CosmosDatasourceKind,
+  CosmosHandlerKind,
+} from '@subql/types-cosmos';
+import { cloneDeep, omit } from 'lodash';
+import { BlockchainService } from './blockchain.service';
+import { SubqueryProject } from './configure/SubqueryProject';
 
 describe('Creating dynamic ds', () => {
-  let dynamiDsService: DynamicDsService;
+  let blockchainService: BlockchainService;
   let project: SubqueryProject;
 
-  beforeEach(async () => {
+  const getTemplate = (
+    name: string,
+  ): CosmosDatasource | CosmosCustomDatasource => {
+    return cloneDeep(
+      omit(project.templates.find((t) => t.name === name)!, 'name'),
+    )! as any;
+  };
+
+  beforeEach(() => {
     project = {
       id: '',
       root: '',
@@ -76,46 +73,54 @@ describe('Creating dynamic ds', () => {
         },
       ],
     } as unknown as SubqueryProject;
-    dynamiDsService = new DynamicDsService(null as any, project);
-
-    await dynamiDsService.init(getMetadata());
+    blockchainService = new BlockchainService(null as any);
   });
 
   // Cant test this because createDynamicDatasource calls process.exit on error
-  it.skip('Should validate the arguments', async () => {
+  it('Should validate the arguments', async () => {
     await expect(
-      dynamiDsService.createDynamicDatasource({
-        templateName: 'cosmos',
-        startBlock: 100,
-        args: [] as any,
-      }),
+      blockchainService.updateDynamicDs(
+        {
+          startBlock: 100,
+          args: [] as any,
+          templateName: 'cosmos',
+        },
+        getTemplate('cosmos'),
+      ),
     ).rejects.toThrow();
 
     await expect(
-      dynamiDsService.createDynamicDatasource({
-        templateName: 'cosmos',
-        startBlock: 100,
-        args: {
-          notValues: {},
-          attributes: [],
+      blockchainService.updateDynamicDs(
+        {
+          templateName: 'cosmos',
+          startBlock: 100,
+          args: {
+            notValues: {},
+            attributes: [],
+          },
         },
-      }),
+        getTemplate('cosmos'),
+      ),
     ).rejects.toThrow();
   });
 
   it('Should be able to set an address for a cosmwasm contract', async () => {
-    const ds = await dynamiDsService.createDynamicDatasource({
-      templateName: 'cosmos',
-      startBlock: 100,
-      args: {
-        values: { contract: 'cosmos1' },
-        attributes: { _contract_address: 'cosmos_wasm' },
+    const ds = getTemplate('cosmos');
+    await blockchainService.updateDynamicDs(
+      {
+        templateName: 'cosmos',
+        startBlock: 100,
+        args: {
+          values: { contract: 'cosmos1' },
+          attributes: { _contract_address: 'cosmos_wasm' },
+        },
       },
-    });
+      ds,
+    );
 
     expect(ds).toEqual({
       kind: CosmosDatasourceKind.Runtime,
-      startBlock: 100,
+      // startBlock: 100,
       mapping: {
         file: '',
         handlers: [
@@ -163,17 +168,21 @@ describe('Creating dynamic ds', () => {
   });
 
   it('should not add empty properties to dynamic ds', async () => {
-    const ds = await dynamiDsService.createDynamicDatasource({
-      templateName: 'cosmos',
-      startBlock: 100,
-      args: {
-        attributes: { _contract_address: 'cosmos_wasm' },
+    const ds = getTemplate('cosmos');
+    await blockchainService.updateDynamicDs(
+      {
+        templateName: 'cosmos',
+        startBlock: 100,
+        args: {
+          attributes: { _contract_address: 'cosmos_wasm' },
+        },
       },
-    });
+      ds,
+    );
 
     expect(ds).toEqual({
       kind: CosmosDatasourceKind.Runtime,
-      startBlock: 100,
+      // startBlock: 100,
       mapping: {
         file: '',
         handlers: [
@@ -201,17 +210,21 @@ describe('Creating dynamic ds', () => {
       },
     });
 
-    const ds2 = await dynamiDsService.createDynamicDatasource({
-      templateName: 'cosmos',
-      startBlock: 100,
-      args: {
-        values: { contract: 'cosmos1' },
+    const ds2 = getTemplate('cosmos');
+    await blockchainService.updateDynamicDs(
+      {
+        templateName: 'cosmos',
+        startBlock: 100,
+        args: {
+          values: { contract: 'cosmos1' },
+        },
       },
-    });
+      ds2,
+    );
 
     expect(ds2).toEqual({
       kind: CosmosDatasourceKind.Runtime,
-      startBlock: 100,
+      // startBlock: 100,
       mapping: {
         file: '',
         handlers: [
@@ -242,17 +255,21 @@ describe('Creating dynamic ds', () => {
       },
     });
 
-    const ds3 = await dynamiDsService.createDynamicDatasource({
-      templateName: 'cosmos2',
-      startBlock: 100,
-      args: {
-        attributes: { _contract_address: 'cosmos_wasm' },
+    const ds3 = getTemplate('cosmos2');
+    await blockchainService.updateDynamicDs(
+      {
+        templateName: 'cosmos2',
+        startBlock: 100,
+        args: {
+          attributes: { _contract_address: 'cosmos_wasm' },
+        },
       },
-    });
+      ds3,
+    );
 
     expect(ds3).toEqual({
       kind: CosmosDatasourceKind.Runtime,
-      startBlock: 100,
+      // startBlock: 100,
       mapping: {
         file: '',
         handlers: [

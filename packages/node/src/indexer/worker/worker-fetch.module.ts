@@ -6,24 +6,22 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import {
   WorkerCoreModule,
   ConnectionPoolService,
-  WorkerDynamicDsService,
   NodeConfig,
-  WorkerUnfinalizedBlocksService,
+  DsProcessorService,
+  ProjectService,
 } from '@subql/node-core';
+import { BlockchainService } from '../../blockchain.service';
 import { ApiService } from '../api.service';
-import { DsProcessorService } from '../ds-processor.service';
-import { DynamicDsService } from '../dynamic-ds.service';
 import { IndexerManager } from '../indexer.manager';
-import { ProjectService } from '../project.service';
-import { UnfinalizedBlocksService } from '../unfinalizedBlocks.service';
 import { WorkerService } from './worker.service';
 
 @Module({
   imports: [WorkerCoreModule],
   providers: [
+    DsProcessorService,
     IndexerManager,
     {
-      provide: ApiService,
+      provide: 'APIService',
       useFactory: ApiService.create.bind(ApiService),
       inject: [
         'ISubqueryProject',
@@ -32,21 +30,15 @@ import { WorkerService } from './worker.service';
         NodeConfig,
       ],
     },
-    DsProcessorService,
-    {
-      provide: DynamicDsService,
-      useFactory: () => new WorkerDynamicDsService((global as any).host),
-    },
     {
       provide: 'IProjectService',
       useClass: ProjectService,
     },
-    WorkerService,
     {
-      provide: UnfinalizedBlocksService,
-      useFactory: () =>
-        new WorkerUnfinalizedBlocksService((global as any).host),
+      provide: 'IBlockchainService',
+      useClass: BlockchainService,
     },
+    WorkerService,
   ],
 })
 export class WorkerFetchModule {}
