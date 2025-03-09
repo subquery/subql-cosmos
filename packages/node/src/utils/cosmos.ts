@@ -420,7 +420,6 @@ export function wrapEvent(
       try {
         logs = parseRawLog(tx.tx.log) as Log[];
       } catch (e) {
-        console.log('TX LOG', tx.tx.log);
         //parsing fails if transaction had failed.
         logger.debug(
           'Failed to parse raw log, most likely a failed transaction',
