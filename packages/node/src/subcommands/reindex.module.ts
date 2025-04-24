@@ -17,6 +17,7 @@ import {
   DsProcessorService,
   DynamicDsService,
   UnfinalizedBlocksService,
+  MultiChainRewindService,
 } from '@subql/node-core';
 import { Sequelize } from '@subql/x-sequelize';
 import { BlockchainService } from '../blockchain.service';
@@ -60,6 +61,7 @@ import { ApiService } from '../indexer/api.service';
       useClass: BlockchainService,
     },
     SchedulerRegistry,
+    MultiChainRewindService,
   ],
   controllers: [],
 })

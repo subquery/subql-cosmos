@@ -9,9 +9,7 @@ import {
   StoreService,
   PoiSyncService,
   NodeConfig,
-  IStoreModelProvider,
   ConnectionPoolStateManager,
-  IProjectUpgradeService,
   InMemoryCacheService,
   MonitorService,
   ConnectionPoolService,
@@ -21,14 +19,12 @@ import {
   FetchService,
   DsProcessorService,
   DictionaryService,
-  WorkerBlockDispatcher,
-  BlockDispatcher,
+  MultiChainRewindService,
+  blockDispatcherFactory,
 } from '@subql/node-core';
-import { CosmosDatasource } from '@subql/types-cosmos';
 import { BlockchainService } from '../blockchain.service';
 import { SubqueryProject } from '../configure/SubqueryProject';
 import { ApiService } from './api.service';
-import { CosmosClientConnection } from './cosmosClient.connection';
 import { DictionaryService as CosmosDictionaryService } from './dictionary/dictionary.service';
 import { IndexerManager } from './indexer.manager';
 
@@ -50,60 +46,22 @@ import { IndexerManager } from './indexer.manager';
       useClass: BlockchainService,
     },
     IndexerManager,
+    MultiChainRewindService,
     {
       provide: 'IBlockDispatcher',
       useFactory: (
-        nodeConfig: NodeConfig,
-        eventEmitter: EventEmitter2,
-        projectService: ProjectService<CosmosDatasource>,
-        projectUpgradeService: IProjectUpgradeService,
-        cacheService: InMemoryCacheService,
-        storeService: StoreService,
-        storeModelProvider: IStoreModelProvider,
-        poiSyncService: PoiSyncService,
-        project: SubqueryProject,
-        dynamicDsService: DynamicDsService<CosmosDatasource>,
-        unfinalizedBlocks: UnfinalizedBlocksService,
-        connectionPoolState: ConnectionPoolStateManager<CosmosClientConnection>,
-        blockchainService: BlockchainService,
-        indexerManager: IndexerManager,
-        monitorService?: MonitorService,
-      ) =>
-        nodeConfig.workers
-          ? new WorkerBlockDispatcher(
-              nodeConfig,
-              eventEmitter,
-              projectService,
-              projectUpgradeService,
-              storeService,
-              storeModelProvider,
-              cacheService,
-              poiSyncService,
-              dynamicDsService,
-              unfinalizedBlocks,
-              connectionPoolState,
-              project,
-              blockchainService,
-              path.resolve(__dirname, '../../dist/indexer/worker/worker.js'),
-              [],
-              monitorService,
-              {
-                // Needed for kyve
-                tempDir: project.tempDir,
-              },
-            )
-          : new BlockDispatcher(
-              nodeConfig,
-              eventEmitter,
-              projectService,
-              projectUpgradeService,
-              storeService,
-              storeModelProvider,
-              poiSyncService,
-              project,
-              blockchainService,
-              indexerManager,
-            ),
+        ...args: Parameters<ReturnType<typeof blockDispatcherFactory>>
+      ) => {
+        const project = args[8] as SubqueryProject;
+        return blockDispatcherFactory(
+          path.resolve(__dirname, '../../dist/indexer/worker/worker.js'),
+          [],
+          {
+            // Needed for kyve
+            tempDir: project.tempDir,
+          },
+        )(...args);
+      },
       inject: [
         NodeConfig,
         EventEmitter2,
@@ -119,6 +77,7 @@ import { IndexerManager } from './indexer.manager';
         ConnectionPoolStateManager,
         'IBlockchainService',
         IndexerManager,
+        MultiChainRewindService,
         MonitorService,
       ],
     },

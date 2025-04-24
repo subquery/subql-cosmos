@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.0.0] - 2025-04-24
+### Added
+- Support for rewinds and unfinalized blocks with multichain projects (#322)
+
 ## [4.6.0] - 2025-03-10
 ### Changed
 - Update `@subql/node-core` an implement BlockchainService (#318)
@@ -506,7 +510,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Init release
 
-[Unreleased]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/4.6.0...HEAD
+[Unreleased]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/5.0.0...HEAD
+[5.0.0]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/4.6.0...node-cosmos/5.0.0
 [4.6.0]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/4.5.1...node-cosmos/4.6.0
 [4.5.1]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/4.5.0...node-cosmos/4.5.1
 [4.5.0]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/4.4.1...node-cosmos/4.5.0

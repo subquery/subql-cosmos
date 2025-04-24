@@ -1,6 +1,6 @@
 {
   "name": "@subql/types-cosmos",
-  "version": "4.1.0",
+  "version": "4.1.1",
   "description": "",
   "homepage": "https://github.com/subquery/subql-cosmos",
   "repository": "github:subquery/subql-cosmos",
@@ -19,6 +19,6 @@
     "@cosmjs/cosmwasm-stargate": "^0.32.4",
     "@cosmjs/proto-signing": "^0.32.4",
     "@cosmjs/stargate": "npm:@subql/x-cosmjs-stargate@0.33.0",
-    "@subql/types-core": "^2.0.1"
+    "@subql/types-core": "^2.0.2"
   }
 }
