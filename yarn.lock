@@ -3561,27 +3561,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@nestjs/common@npm:^11.0.7":
-  version: 11.0.10
-  resolution: "@nestjs/common@npm:11.0.10"
-  dependencies:
-    iterare: 1.2.1
-    tslib: 2.8.1
-    uid: 2.0.2
-  peerDependencies:
-    class-transformer: "*"
-    class-validator: "*"
-    reflect-metadata: ^0.1.12 || ^0.2.0
-    rxjs: ^7.1.0
-  peerDependenciesMeta:
-    class-transformer:
-      optional: true
-    class-validator:
-      optional: true
-  checksum: d136d0c1fc3f6f01ed73d92eb108340956d1ad7b4cdfac038895665b8eb85777405c7c9396d891fffad4e1a0aafce1f84cfa549cf7a586ff55edf996cb79d476
-  languageName: node
-  linkType: hard
-
 "@nestjs/core@npm:^11.0.10":
   version: 11.0.10
   resolution: "@nestjs/core@npm:11.0.10"
@@ -4365,12 +4344,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@subql/node-core@npm:^18.0.1":
-  version: 18.0.1
-  resolution: "@subql/node-core@npm:18.0.1"
+"@subql/node-core@npm:^18.0.3":
+  version: 18.0.3
+  resolution: "@subql/node-core@npm:18.0.3"
   dependencies:
     "@apollo/client": ^3.11.2
-    "@nestjs/common": ^11.0.7
+    "@nestjs/common": ^11.0.16
     "@nestjs/event-emitter": ^3.0.0
     "@nestjs/schedule": ^5.0.1
     "@subql/common": 5.5.0
@@ -4393,7 +4372,7 @@ __metadata:
     toposort-class: ^1.0.1
     vm2: ^3.9.19
     yargs: ^16.2.0
-  checksum: a921da299fcab0784e0788fc58e19befeb007f9f984b16c50fa2d85dc86d188401a5733dbbfe0cbd55f0b973ad5667b53e1154d146a2a2d1c07f35b4cfc24073
+  checksum: 2b000781f538e326fb5c315e539b1f5e353ba9649074ede56929a28695770789a74e4cc60bdb6cf9121ca8ba156230236c077b9cfd88a17320ea074717cd652c
   languageName: node
   linkType: hard
 
@@ -4415,7 +4394,7 @@ __metadata:
     "@nestjs/testing": ^11.0.10
     "@subql/common": ^5.5.0
     "@subql/common-cosmos": "workspace:*"
-    "@subql/node-core": ^18.0.1
+    "@subql/node-core": ^18.0.3
     "@subql/types-cosmos": "workspace:*"
     "@types/express": ^4.17.13
     "@types/jest": ^27.4.0
