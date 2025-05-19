@@ -25,7 +25,12 @@ export class ConfigureModule {
   }
   static async register(): Promise<DynamicModule> {
     const { nodeConfig, project } = await ConfigureModule.getInstance();
-
+    return this.registerManual(nodeConfig, project);
+  }
+  static registerManual(
+    nodeConfig: NodeConfig,
+    project: SubqueryProject,
+  ): DynamicModule {
     return {
       module: ConfigureModule,
       providers: [
