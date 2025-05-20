@@ -1,11 +1,9 @@
-// // Copyright 2020-2025 SubQuery Pte Ltd authors & contributors
+// Copyright 2020-2025 SubQuery Pte Ltd authors & contributors
 // SPDX-License-Identifier: GPL-3.0
 
 import { Module } from '@nestjs/common';
-import { EventEmitter2, EventEmitterModule } from '@nestjs/event-emitter';
-import { SchedulerRegistry } from '@nestjs/schedule';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import {
-  DbModule,
   ForceCleanService,
   ReindexService,
   StoreService,
@@ -21,7 +19,6 @@ import {
 } from '@subql/node-core';
 import { Sequelize } from '@subql/x-sequelize';
 import { BlockchainService } from '../blockchain.service';
-import { ConfigureModule } from '../configure/configure.module';
 import { ApiService } from '../indexer/api.service';
 
 @Module({
@@ -60,20 +57,8 @@ import { ApiService } from '../indexer/api.service';
       provide: 'IBlockchainService',
       useClass: BlockchainService,
     },
-    SchedulerRegistry,
     MultiChainRewindService,
   ],
   controllers: [],
 })
 export class ReindexFeatureModule {}
-
-@Module({
-  imports: [
-    DbModule.forRoot(),
-    ConfigureModule.register(),
-    ReindexFeatureModule,
-    EventEmitterModule.forRoot(),
-  ],
-  controllers: [],
-})
-export class ReindexModule {}

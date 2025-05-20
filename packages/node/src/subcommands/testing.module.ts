@@ -2,11 +2,9 @@
 // SPDX-License-Identifier: GPL-3.0
 
 import { Module } from '@nestjs/common';
-import { EventEmitter2, EventEmitterModule } from '@nestjs/event-emitter';
-import { ScheduleModule } from '@nestjs/schedule';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import {
   ConnectionPoolService,
-  DbModule,
   NodeConfig,
   TestRunner,
   TestingCoreModule,
@@ -14,9 +12,9 @@ import {
   UnfinalizedBlocksService,
   DsProcessorService,
   DynamicDsService,
+  MultiChainRewindService,
 } from '@subql/node-core';
 import { BlockchainService } from '../blockchain.service';
-import { ConfigureModule } from '../configure/configure.module';
 import { ApiService } from '../indexer/api.service';
 import { IndexerManager } from '../indexer/indexer.manager';
 
@@ -52,20 +50,9 @@ import { IndexerManager } from '../indexer/indexer.manager';
     },
     DsProcessorService,
     DynamicDsService,
+    MultiChainRewindService,
   ],
 
   controllers: [],
 })
 export class TestingFeatureModule {}
-
-@Module({
-  imports: [
-    DbModule.forRoot(),
-    ConfigureModule.register(),
-    EventEmitterModule.forRoot(),
-    ScheduleModule.forRoot(),
-    TestingFeatureModule,
-  ],
-  controllers: [],
-})
-export class TestingModule {}
