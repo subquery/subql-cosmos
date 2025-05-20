@@ -1,6 +1,6 @@
 {
   "name": "@subql/node-cosmos",
-  "version": "5.0.3-0",
+  "version": "5.0.3",
   "description": "",
   "author": "SubQuery Pte Ltd",
   "license": "GPL-3.0",
@@ -31,7 +31,7 @@
     "@nestjs/schedule": "^5.0.1",
     "@subql/common": "^5.6.0",
     "@subql/common-cosmos": "workspace:*",
-    "@subql/node-core": "^18.0.4",
+    "@subql/node-core": "^18.0.6",
     "@subql/types-cosmos": "workspace:*",
     "lodash": "^4.17.21",
     "protobufjs": "^6.11.4",
@@ -57,6 +57,5 @@
   "files": [
     "/dist",
     "/bin"
-  ],
-  "stableVersion": "5.0.2"
+  ]
 }
