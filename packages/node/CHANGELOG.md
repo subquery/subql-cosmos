@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [5.1.1] - 2025-06-23
 ### Changed
 - Update RPC client selection for CometBFT v1.0 (#330)
 
@@ -531,7 +533,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Init release
 
-[Unreleased]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/5.1.0...HEAD
+[Unreleased]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/5.1.1...HEAD
+[5.1.1]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/5.1.0...node-cosmos/5.1.1
 [5.1.0]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/5.0.3...node-cosmos/5.1.0
 [5.0.3]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/5.0.2...node-cosmos/5.0.3
 [5.0.2]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/5.0.1...node-cosmos/5.0.2
