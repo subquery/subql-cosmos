@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Changed
+- Update RPC client selection for CometBFT v1.0 (#330)
 
 ## [5.1.0] - 2025-05-21
 ### Changed
