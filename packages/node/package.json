@@ -1,6 +1,6 @@
 {
   "name": "@subql/node-cosmos",
-  "version": "5.1.2-0",
+  "version": "5.1.2",
   "description": "",
   "author": "SubQuery Pte Ltd",
   "license": "GPL-3.0",
@@ -55,8 +55,17 @@
     "@subql/utils": "*"
   },
   "files": [
+    "/bin",
     "/dist",
-    "/bin"
-  ],
-  "stableVersion": "5.1.1"
+    "!/dist/**/*.spec.js",
+    "!/dist/**/*.spec.d.ts",
+    "!/dist/**/*.spec.js.map",
+    "!/dist/**/*.test.js",
+    "!/dist/**/*.test.d.ts",
+    "!/dist/**/*.test.js.map",
+    "package.json",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ]
 }

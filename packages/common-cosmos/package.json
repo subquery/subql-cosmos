@@ -1,6 +1,6 @@
 {
   "name": "@subql/common-cosmos",
-  "version": "5.4.3-0",
+  "version": "5.4.3",
   "description": "",
   "scripts": {
     "build": "rm -rf dist && tsc -b",
@@ -46,5 +46,17 @@
     "lodash": "4.17.21",
     "rimraf": "^3.0.2"
   },
-  "stableVersion": "5.4.2"
+  "files": [
+    "/dist",
+    "!/dist/**/*.spec.js",
+    "!/dist/**/*.spec.d.ts",
+    "!/dist/**/*.spec.js.map",
+    "!/dist/**/*.test.js",
+    "!/dist/**/*.test.d.ts",
+    "!/dist/**/*.test.js.map",
+    "package.json",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ]
 }

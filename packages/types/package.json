@@ -1,6 +1,6 @@
 {
   "name": "@subql/types-cosmos",
-  "version": "4.1.2-0",
+  "version": "4.1.2",
   "description": "",
   "homepage": "https://github.com/subquery/subql-cosmos",
   "repository": "github:subquery/subql-cosmos",
@@ -13,13 +13,22 @@
   "main": "dist/index.js",
   "license": "GPL-3.0",
   "files": [
-    "/dist"
+    "/dist",
+    "!/dist/**/*.spec.js",
+    "!/dist/**/*.spec.d.ts",
+    "!/dist/**/*.spec.js.map",
+    "!/dist/**/*.test.js",
+    "!/dist/**/*.test.d.ts",
+    "!/dist/**/*.test.js.map",
+    "package.json",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
   ],
   "dependencies": {
     "@cosmjs/cosmwasm-stargate": "^0.32.4",
     "@cosmjs/proto-signing": "^0.32.4",
     "@cosmjs/stargate": "npm:@subql/x-cosmjs-stargate@0.33.0",
     "@subql/types-core": "^2.1.0"
-  },
-  "stableVersion": "4.1.1"
+  }
 }
