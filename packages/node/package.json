@@ -11,7 +11,8 @@
     "start": "nest start",
     "start:dev": "TZ=utc nodemon",
     "start:prod": "TZ=utc node dist/main",
-    "changelog:release": "echo \"Updating changelog $npm_package_version\" && npx chan release $npm_package_version --git-url \"https://github.com/subquery/subql-cosmos\" --release-prefix=\"node-cosmos/\""
+    "changelog:release": "echo \"Updating changelog $npm_package_version\" && npx chan release $npm_package_version --git-url \"https://github.com/subquery/subql-cosmos\" --release-prefix=\"node-cosmos/\"",
+    "gen:celestia": "protoc --plugin=protoc-gen-ts=../../node_modules/.bin/protoc-gen-ts_proto --ts_out=src/utils ./protos/celestia.proto"
   },
   "homepage": "https://github.com/subquery/subql-cosmos",
   "repository": "github:subquery/subql-cosmos",
@@ -49,7 +50,8 @@
     "@types/tar": "^6.1.1",
     "@types/yargs": "^16.0.4",
     "dotenv": "^15.0.1",
-    "nodemon": "^2.0.15"
+    "nodemon": "^2.0.15",
+    "ts-proto": "^2.7.5"
   },
   "peerDependencies": {
     "@subql/utils": "*"
