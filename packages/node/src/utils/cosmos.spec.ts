@@ -524,3 +524,34 @@ describe('Failed transaction events', () => {
     expect(evts.length).toEqual(tx!.tx.events.length);
   });
 });
+
+describe('Celestia support', () => {
+  let api: CosmosClient;
+
+  beforeAll(async () => {
+    const tendermint = await connectComet(
+      'https://celestia-rpc.publicnode.com:443',
+    );
+    const registry = new Registry([...defaultRegistryTypes, ...wasmTypes]);
+    api = new CosmosClient(tendermint, registry);
+  });
+
+  it('can decode a transaction', async () => {
+    const height = await api.getHeight();
+
+    // Go back 100 blocks to ensure the node has the block, we just want a recent block because of pruning
+    const blockHeight = height - 100;
+
+    const [block] = await fetchBlocksBatches(api, [blockHeight]);
+
+    // TODO blocks might not have transactions
+    expect(block.block.transactions.length).toBeGreaterThan(0);
+
+    const tx = block.block.transactions[0];
+
+    // This is a getter function so wrap it in a function to try and catch the error
+    expect(() => tx.decodedTx).not.toThrow();
+
+    expect(tx.hash).toBeDefined();
+  });
+});

@@ -44,6 +44,7 @@ import {
   BlockResponse,
   BlockResultsResponse,
 } from '../indexer/types';
+import { decodeCelestiaTx, unwrapCelestiaTx } from './celestia';
 
 const logger = getLogger('fetch');
 
@@ -275,18 +276,35 @@ export function wrapTx(
         idx,
         block: block,
         tx,
-        hash: toHex(sha256(block.block.txs[idx])).toUpperCase(),
+        get hash() {
+          delete (this as any).hash;
+          let txRaw = block.block.txs[idx];
+
+          // Celestia tx's are wrapped in an outer object so it needs to be unwrapped
+          try {
+            txRaw = unwrapCelestiaTx(block.block.txs[idx]);
+          } catch (e) {
+            // Do nothing, the original txRaw will be used
+          }
+
+          return ((this as any).hash = toHex(sha256(txRaw)).toUpperCase());
+        },
         get decodedTx() {
           delete (this as any).decodedTx;
+          const txRaw = block.block.txs[idx];
           try {
-            return ((this.decodedTx as any) = decodeTxRaw(
-              block.block.txs[idx],
-            ));
+            return ((this as any).decodedTx = decodeTxRaw(txRaw));
           } catch (e) {
-            throw new Error(
-              `Failed to decode transaction idx="${idx}" at height="${block.block.header.height}"`,
-              { cause: e },
-            );
+            try {
+              return ((this as any).decodedTx = decodeCelestiaTx(txRaw));
+            } catch (e) {
+              throw new Error(
+                `Failed to decode transaction idx="${idx}" at height="${block.block.header.height}"`,
+                {
+                  cause: e,
+                },
+              );
+            }
           }
         },
       }))

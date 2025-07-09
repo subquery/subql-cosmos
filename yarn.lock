@@ -2247,6 +2247,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@bufbuild/protobuf@npm:^2.0.0":
+  version: 2.6.0
+  resolution: "@bufbuild/protobuf@npm:2.6.0"
+  checksum: 9337e89052a0e4b6a1ca099f09801243055c7027a9ecb2e2d22ae25926f8730d32f5e2e8222214155de2847324b0f07fee0318621147f229da8f2fb595ff6802
+  languageName: node
+  linkType: hard
+
 "@confio/ics23@npm:^0.6.8":
   version: 0.6.8
   resolution: "@confio/ics23@npm:0.6.8"
@@ -4408,6 +4415,7 @@ __metadata:
     protobufjs: ^6.11.4
     reflect-metadata: ^0.1.13
     rimraf: ^3.0.2
+    ts-proto: ^2.7.5
     yargs: ^16.2.0
   peerDependencies:
     "@subql/utils": "*"
@@ -6446,6 +6454,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"case-anything@npm:^2.1.13":
+  version: 2.1.13
+  resolution: "case-anything@npm:2.1.13"
+  checksum: c39c69d7e418337b6006a9692f13c2b257e907e867149a102e9beb7e9d2d52da14e754da1f4e4ce82a866d86d93047e522f64360bda54e7d7c308f4cdd736c3d
+  languageName: node
+  linkType: hard
+
 "case@npm:1.6.3":
   version: 1.6.3
   resolution: "case@npm:1.6.3"
@@ -7328,6 +7343,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"detect-libc@npm:^1.0.3":
+  version: 1.0.3
+  resolution: "detect-libc@npm:1.0.3"
+  bin:
+    detect-libc: ./bin/detect-libc.js
+  checksum: daaaed925ffa7889bd91d56e9624e6c8033911bb60f3a50a74a87500680652969dbaab9526d1e200a4c94acf80fc862a22131841145a0a8482d60a99c24f4a3e
+  languageName: node
+  linkType: hard
+
 "detect-newline@npm:^3.0.0":
   version: 3.1.0
   resolution: "detect-newline@npm:3.1.0"
@@ -7423,6 +7447,15 @@ __metadata:
   version: 0.1.2
   resolution: "dotty@npm:0.1.2"
   checksum: 164fb116036b0e582637fdb38ac6a56758713467d1d07d05f5a841ac1b62f1f882ca1260d5fb0546941bb5f6d333d954ff0d513e45be25af7fbf73d57be313de
+  languageName: node
+  linkType: hard
+
+"dprint-node@npm:^1.0.8":
+  version: 1.0.8
+  resolution: "dprint-node@npm:1.0.8"
+  dependencies:
+    detect-libc: ^1.0.3
+  checksum: ac53b71296d155664319877f0e8c9fe94e084457ce9aae68081b9dd7165916f2829222923c59b1399d95680362f18a8da5994e7f76a8f52035e02bbd14ba76bc
   languageName: node
   linkType: hard
 
@@ -14410,6 +14443,38 @@ __metadata:
     ts-node-transpile-only: dist/bin-transpile.js
     ts-script: dist/bin-script-deprecated.js
   checksum: 090adff1302ab20bd3486e6b4799e90f97726ed39e02b39e566f8ab674fd5bd5f727f43615debbfc580d33c6d9d1c6b1b3ce7d8e3cca3e20530a145ffa232c35
+  languageName: node
+  linkType: hard
+
+"ts-poet@npm:^6.12.0":
+  version: 6.12.0
+  resolution: "ts-poet@npm:6.12.0"
+  dependencies:
+    dprint-node: ^1.0.8
+  checksum: 05fec86d188a0727433ae2deea950161c43ee433526702b75cc19858b90a20642b075d99e1029efcafccb59d9e98492c8e41fbbc945615bbff0e58922f820e1c
+  languageName: node
+  linkType: hard
+
+"ts-proto-descriptors@npm:2.0.0":
+  version: 2.0.0
+  resolution: "ts-proto-descriptors@npm:2.0.0"
+  dependencies:
+    "@bufbuild/protobuf": ^2.0.0
+  checksum: 7b268c0bdab7b24236aecb125c33502575790f69f4f384cad3423ff05a7999abe381bd1331e1ab2793dbcac687eb8411ae7d73676e8adcff26666cc4a1cece99
+  languageName: node
+  linkType: hard
+
+"ts-proto@npm:^2.7.5":
+  version: 2.7.5
+  resolution: "ts-proto@npm:2.7.5"
+  dependencies:
+    "@bufbuild/protobuf": ^2.0.0
+    case-anything: ^2.1.13
+    ts-poet: ^6.12.0
+    ts-proto-descriptors: 2.0.0
+  bin:
+    protoc-gen-ts_proto: protoc-gen-ts_proto
+  checksum: 2057ddbe492856adf78a4e615663944af7bd261d5135eb2fd5e86cb93df054230b25a65de29558a55c127a9fd86581299651be87248cc47b29ec27682e929f3a
   languageName: node
   linkType: hard
 
