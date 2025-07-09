@@ -293,7 +293,7 @@ export function wrapTx(
           delete (this as any).decodedTx;
           const txRaw = block.block.txs[idx];
           try {
-            return ((this.decodedTx as any) = decodeTxRaw(txRaw));
+            return ((this as any).decodedTx = decodeTxRaw(txRaw));
           } catch (e) {
             try {
               return ((this as any).decodedTx = decodeCelestiaTx(txRaw));

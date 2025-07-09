@@ -549,7 +549,7 @@ describe('Celestia support', () => {
 
     const tx = block.block.transactions[0];
 
-    // This is a getter function so wrap it in a functino to try and catch the error
+    // This is a getter function so wrap it in a function to try and catch the error
     expect(() => tx.decodedTx).not.toThrow();
 
     expect(tx.hash).toBeDefined();
