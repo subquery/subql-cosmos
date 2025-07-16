@@ -30,7 +30,6 @@
     "@nestjs/event-emitter": "^2.0.0",
     "@nestjs/platform-express": "^11.0.10",
     "@nestjs/schedule": "^5.0.1",
-    "@subql/common": "^5.7.1",
     "@subql/common-cosmos": "workspace:*",
     "@subql/node-core": "^18.2.0",
     "@subql/types-cosmos": "workspace:*",
