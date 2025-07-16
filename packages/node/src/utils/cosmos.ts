@@ -281,10 +281,18 @@ export function wrapTx(
           let txRaw = block.block.txs[idx];
 
           // Celestia tx's are wrapped in an outer object so it needs to be unwrapped
-          try {
-            txRaw = unwrapCelestiaTx(block.block.txs[idx]);
-          } catch (e) {
-            // Do nothing, the original txRaw will be used
+          // This doesn't throw for other networks so we need to explicitly check for Celestia networks
+          // Networks are listed here https://docs.celestia.org/how-to-guides/participate
+          if (
+            ['celestia', 'mocha-4', 'arabica-11', 'mamo-1'].includes(
+              block.header.chainId,
+            )
+          ) {
+            try {
+              txRaw = unwrapCelestiaTx(block.block.txs[idx]);
+            } catch (e) {
+              // Do nothing, the original txRaw will be used
+            }
           }
 
           return ((this as any).hash = toHex(sha256(txRaw)).toUpperCase());
