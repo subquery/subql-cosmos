@@ -1,6 +1,6 @@
 {
   "name": "@subql/common-cosmos",
-  "version": "5.4.3",
+  "version": "5.4.4-0",
   "description": "",
   "scripts": {
     "build": "rm -rf dist && tsc -b",
@@ -58,5 +58,6 @@
     "README.md",
     "CHANGELOG.md",
     "LICENSE"
-  ]
+  ],
+  "stableVersion": "5.4.3"
 }
