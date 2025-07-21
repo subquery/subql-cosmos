@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [5.4.5] - 2025-07-22
 ### Fixed
 - Templates not being included in the published package (#339)
 
@@ -213,7 +215,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix chainTypes not being in deployments
 
 ## [0.0.5] - 2022-06-15
-[Unreleased]: https://github.com/subquery/subql-cosmos/compare/common-cosmos/5.4.4...HEAD
+[Unreleased]: https://github.com/subquery/subql-cosmos/compare/common-cosmos/5.4.5...HEAD
+[5.4.5]: https://github.com/subquery/subql-cosmos/compare/common-cosmos/5.4.4...common-cosmos/5.4.5
 [5.4.4]: https://github.com/subquery/subql-cosmos/compare/common-cosmos/5.4.3...common-cosmos/5.4.4
 [5.4.3]: https://github.com/subquery/subql-cosmos/compare/common-cosmos/5.4.2...common-cosmos/5.4.3
 [5.4.2]: https://github.com/subquery/subql-cosmos/compare/common-cosmos/5.4.1...common-cosmos/5.4.2
