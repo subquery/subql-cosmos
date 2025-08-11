@@ -4,6 +4,7 @@
 import fs from 'fs';
 import path from 'path';
 import cosmwasmCodegen from '@cosmwasm/ts-codegen';
+import telescope from '@hyperweb/telescope';
 import {makeTempDir} from '@subql/common';
 import {ProjectManifestV1_0_0} from '@subql/types-core/dist/project/versioned/v1_0_0/types';
 import {
@@ -12,7 +13,6 @@ import {
   CosmosRuntimeDatasource,
   CosmosProjectManifestV1_0_0,
 } from '@subql/types-cosmos';
-import telescope from '@subql/x-cosmology-telescope';
 import {Data} from 'ejs';
 import {copySync} from 'fs-extra';
 import {upperFirst} from 'lodash';

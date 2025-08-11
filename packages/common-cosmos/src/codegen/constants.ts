@@ -1,8 +1,8 @@
 // // Copyright 2020-2025 SubQuery Pte Ltd authors & contributors
 // SPDX-License-Identifier: GPL-3.0
 
+import {TelescopeOptions} from '@cosmology/types';
 import {TSBuilderInput, ContractFile} from '@cosmwasm/ts-codegen';
-import {TelescopeOptions} from '@subql/x-cosmology-types';
 
 export const TELESCOPE_OPTS: TelescopeOptions = {
   removeUnusedImports: true,
