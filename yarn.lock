@@ -4311,7 +4311,7 @@ __metadata:
     "@protobufs/google": ^0.0.10
     "@protobufs/ibc": ^0.1.0
     "@protobufs/tendermint": ^0.0.10
-    "@subql/common": ^5.7.2
+    "@subql/common": ^5.7.3
     "@subql/types-cosmos": "workspace:*"
     "@subql/x-cosmology-telescope": ^1.4.14
     "@types/bn.js": 4.11.6
@@ -4334,35 +4334,35 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@subql/common@npm:^5.7.2, @subql/common@npm:~5.7.2":
-  version: 5.7.2
-  resolution: "@subql/common@npm:5.7.2"
+"@subql/common@npm:^5.7.3, @subql/common@npm:~5.7.3":
+  version: 5.7.3
+  resolution: "@subql/common@npm:5.7.3"
   dependencies:
     "@subql/types-core": ~2.1.1
     axios: ^1.9.0
     class-transformer: ^0.5.1
     class-validator: 0.14.1
-    form-data: ^4.0.1
+    form-data: ^4.0.4
     js-yaml: ^4.1.0
     reflect-metadata: ^0.2.2
     semver: ^7.6.3
     update-notifier: ^5.1.0
-  checksum: 747872af3a354ead5d94252a23add5520334f4d1aae34d744267f68eccb8c3a1ff420beb65d91ac1b0ee53d3f1335b5256cb61c8512121831f5b22b7a30631c2
+  checksum: 195f9128afb8b801ef6d8c55530e9f5261b435b23ccc8c677671554d1cb350487f74cf9563c0caeede7f900fdf215db17b13fb92067bde0a6ec00959bfe36ebf
   languageName: node
   linkType: hard
 
-"@subql/node-core@npm:^18.2.1":
-  version: 18.2.1
-  resolution: "@subql/node-core@npm:18.2.1"
+"@subql/node-core@npm:^18.3.1":
+  version: 18.3.1
+  resolution: "@subql/node-core@npm:18.3.1"
   dependencies:
     "@apollo/client": ^3.11.2
     "@nestjs/common": ^11.0.16
     "@nestjs/event-emitter": ^3.0.0
     "@nestjs/schedule": ^5.0.1
-    "@subql/common": ~5.7.2
+    "@subql/common": ~5.7.3
     "@subql/testing": ~2.3.0
     "@subql/types": ~3.14.1
-    "@subql/utils": ~2.21.1-1
+    "@subql/utils": ~2.21.1
     "@willsoto/nestjs-prometheus": ^6.0.2
     async-mutex: ^0.5.0
     cron-converter: ^2.0.1
@@ -4379,7 +4379,7 @@ __metadata:
     toposort-class: ^1.0.1
     vm2: ^3.9.19
     yargs: ^16.2.0
-  checksum: 77e5cd657813adb4faeb453c7320a6e14c65b957a9e9d038b8c11b3f3d875da69710347ba70ec966bc2a0622084499e9deb69a792fec3f1f54684b937b9d33db
+  checksum: af648fbabaa631acc835e5280acdac8e3028a37657196bd711366830aa6e761f98ecc048bfb96a18c5092763f21e4372c4615fe1ebcaa946439b6b84b15ca30a
   languageName: node
   linkType: hard
 
@@ -4400,7 +4400,7 @@ __metadata:
     "@nestjs/schematics": ^11.0.1
     "@nestjs/testing": ^11.0.10
     "@subql/common-cosmos": "workspace:*"
-    "@subql/node-core": ^18.2.1
+    "@subql/node-core": ^18.3.1
     "@subql/types-cosmos": "workspace:*"
     "@types/express": ^4.17.13
     "@types/jest": ^27.4.0
@@ -4471,9 +4471,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@subql/utils@npm:~2.21.1-1":
-  version: 2.21.1-1
-  resolution: "@subql/utils@npm:2.21.1-1"
+"@subql/utils@npm:~2.21.1":
+  version: 2.21.1
+  resolution: "@subql/utils@npm:2.21.1"
   dependencies:
     "@polkadot/util": ^13.5.3
     "@polkadot/util-crypto": ^13.5.3
@@ -4486,7 +4486,7 @@ __metadata:
     lodash: ^4.17.21
     pino: ^6.13.3
     rotating-file-stream: ^3.2.3
-  checksum: 33892f33c1de23864ec74503d5fbe4eb536b509a63683cb820f90a6f8f9db25afcd5068a2d07d5eff5d2478a8ace5adc55cb0c157ab5bd79c8bfd581920051fb
+  checksum: 805d6fa302f1366c097c97560cb94c1167de633ca2a62db4cd30f6b83fce1c14dfc6d0e07100e4fa4b129e23a91a01f9e2339ba88eaf4880a76a0e40eebf69be
   languageName: node
   linkType: hard
 
@@ -8522,7 +8522,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"form-data@npm:^4.0.0, form-data@npm:^4.0.1":
+"form-data@npm:^4.0.0":
   version: 4.0.1
   resolution: "form-data@npm:4.0.1"
   dependencies:
@@ -8530,6 +8530,19 @@ __metadata:
     combined-stream: ^1.0.8
     mime-types: ^2.1.12
   checksum: ccee458cd5baf234d6b57f349fe9cc5f9a2ea8fd1af5ecda501a18fd1572a6dd3bf08a49f00568afd995b6a65af34cb8dec083cf9d582c4e621836499498dd84
+  languageName: node
+  linkType: hard
+
+"form-data@npm:^4.0.4":
+  version: 4.0.4
+  resolution: "form-data@npm:4.0.4"
+  dependencies:
+    asynckit: ^0.4.0
+    combined-stream: ^1.0.8
+    es-set-tostringtag: ^2.1.0
+    hasown: ^2.0.2
+    mime-types: ^2.1.12
+  checksum: 9b7788836df9fa5a6999e0c02515b001946b2a868cfe53f026c69e2c537a2ff9fbfb8e9d2b678744628f3dc7a2d6e14e4e45dfaf68aa6239727f0bdb8ce0abf2
   languageName: node
   linkType: hard
 
