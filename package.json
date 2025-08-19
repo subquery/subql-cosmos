@@ -34,16 +34,7 @@
     "typescript": "^5.5.4"
   },
   "resolutions": {
-    "node-fetch": "2.6.7",
-    "@noble/hashes": "1.8.0",
-    "@noble/curves": "1.9.7",
-    "@cosmjs/tendermint-rpc": "^0.36.0",
-    "@cosmjs/proto-signing": "^0.36.0",
-    "@cosmjs/stargate": "^0.36.0",
-    "@cosmjs/cosmwasm-stargate": "^0.36.0",
-    "bitcoinjs-lib": "^6.0.0",
-    "bs58": "^5.0.0",
-    "bs58check": "^2.1.2"
+    "node-fetch": "2.6.7"
   },
   "scripts": {
     "build": "yarn workspaces foreach -ptA run build",
