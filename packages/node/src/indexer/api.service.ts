@@ -18,6 +18,7 @@ import {
   NodeConfig,
 } from '@subql/node-core';
 import { CosmWasmSafeClient } from '@subql/types-cosmos/interfaces';
+
 import {
   MsgClearAdmin,
   MsgExecuteContract,

@@ -19,7 +19,7 @@ import {
   MsgStoreCode,
   MsgUpdateAdmin,
 } from 'cosmjs-types/cosmwasm/wasm/v1/tx';
-import { fromInt } from 'long';
+import Long from 'long';
 import { CosmosClient } from '../indexer/api.service';
 import { BlockContent } from '../indexer/types';
 import {
@@ -199,7 +199,7 @@ describe('CosmosUtils', () => {
         msg: {
           typeUrl: '/cosmwasm.wasm.v1.MsgInstantiateContract',
           decodedMsg: {
-            codeId: fromInt(4),
+            codeId: Long.fromInt(4),
           },
         },
       } as unknown as CosmosMessage;
@@ -222,7 +222,7 @@ describe('CosmosUtils', () => {
         msg: {
           typeUrl: '/cosmwasm.wasm.v1.MsgInstantiateContract',
           decodedMsg: {
-            codeId: fromInt(4),
+            codeId: Long.fromInt(4),
           },
         },
       } as unknown as CosmosMessage;
@@ -245,7 +245,7 @@ describe('CosmosUtils', () => {
         msg: {
           typeUrl: '/cosmwasm.wasm.v1.MsgInstantiateContract',
           decodedMsg: {
-            codeId: fromInt(4),
+            codeId: Long.fromInt(4),
           },
         },
       } as unknown as CosmosMessage;
