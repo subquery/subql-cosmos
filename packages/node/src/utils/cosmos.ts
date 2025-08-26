@@ -36,7 +36,7 @@ import {
   CosmosTxFilter,
 } from '@subql/types-cosmos';
 import { isObjectLike, omit } from 'lodash';
-import { isLong } from 'long';
+import Long from 'long';
 import { SubqlProjectBlockFilter } from '../configure/SubqueryProject';
 import { CosmosClient } from '../indexer/api.service';
 import {
@@ -134,7 +134,7 @@ export function filterMessageData(
       }
 
       //stringify Long for equality check
-      if (isLong(decodedMsgData)) {
+      if (Long.isLong(decodedMsgData)) {
         decodedMsgData =
           typeof filter.values[key] === 'number'
             ? decodedMsgData.toNumber()

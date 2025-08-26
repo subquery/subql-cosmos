@@ -1,7 +1,6 @@
 // // Copyright 2020-2025 SubQuery Pte Ltd authors & contributors
 // SPDX-License-Identifier: GPL-3.0
 
-import {CosmWasmClient} from '@cosmjs/cosmwasm-stargate';
 import {DecodedTxRaw} from '@cosmjs/proto-signing';
 import {Log} from '@cosmjs/stargate/build/logs';
 import type {tendermint34, tendermint37, comet38} from '@cosmjs/tendermint-rpc';
@@ -14,7 +13,7 @@ export type TxData = tendermint34.TxData | tendermint37.TxData | comet38.TxData;
 export type TxEvent = tendermint34.Event | tendermint37.Event | comet38.Event;
 export type Header = tendermint34.Header | tendermint37.Header | comet38.Header;
 
-export interface CosmWasmSafeClient extends CosmWasmClient {
+export interface CosmWasmSafeClient {
   validators: () => Promise<readonly Validator[]>;
 }
 
