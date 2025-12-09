@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Changed
 - Calculate block interval from block data rather than hard coded value (#355)
+- Updated `@subql/node-core` (#356)
 
 ## [5.3.0] - 2025-08-26
 ### Changed
