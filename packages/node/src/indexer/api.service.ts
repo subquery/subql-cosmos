@@ -6,7 +6,12 @@ import { CosmWasmClient, IndexedTx } from '@cosmjs/cosmwasm-stargate';
 import { toHex } from '@cosmjs/encoding';
 import { GeneratedType, Registry } from '@cosmjs/proto-signing';
 import { defaultRegistryTypes, SearchTxQuery } from '@cosmjs/stargate';
-import { CometClient } from '@cosmjs/tendermint-rpc';
+import {
+  Comet38Client,
+  CometClient,
+  Tendermint34Client,
+  Tendermint37Client,
+} from '@cosmjs/tendermint-rpc';
 import { Injectable, OnApplicationShutdown } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { CosmosProjectNetConfig } from '@subql/common-cosmos';
@@ -201,6 +206,17 @@ export class CosmosClient extends CosmWasmClient {
     // Types have diverged with our fork of tendermint-rpc
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     super(_cometClient as any);
+  }
+
+  async getBlockInterval(): Promise<number> {
+    const headers = await this._cometClient.blockchain();
+
+    const timestamps = headers.blockMetas.map((h) => h.header.time.getTime());
+
+    return Math.abs(
+      timestamps.slice(1).reduce((sum, v, i) => sum + (v - timestamps[i]), 0) /
+        (timestamps.length - 1),
+    );
   }
 
   // eslint-disable-next-line @typescript-eslint/require-await

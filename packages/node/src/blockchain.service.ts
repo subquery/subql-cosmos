@@ -12,6 +12,7 @@ import {
 } from '@subql/common-cosmos';
 import {
   DatasourceParams,
+  getLogger,
   Header,
   IBlock,
   IBlockchainService,
@@ -27,13 +28,10 @@ import { SubqueryProject } from './configure/SubqueryProject';
 import { ApiService, CosmosSafeClient } from './indexer/api.service';
 import { BlockContent, getBlockSize } from './indexer/types';
 import { IIndexerWorker } from './indexer/worker/worker';
-import {
-  cosmosBlockToHeader,
-  getBlockTimestamp,
-  calcInterval,
-} from './utils/cosmos';
+import { cosmosBlockToHeader, getBlockTimestamp } from './utils/cosmos';
 
 const { version: packageVersion } = require('../package.json');
+const logger = getLogger('blockchain-service');
 
 const BLOCK_TIME_VARIANCE = 5000; //ms
 const INTERVAL_PERCENT = 0.9;
@@ -95,8 +93,13 @@ export class BlockchainService
 
   // eslint-disable-next-line @typescript-eslint/require-await
   async getChainInterval(): Promise<number> {
-    const chainInterval =
-      calcInterval(this.apiService.unsafeApi) * INTERVAL_PERCENT;
+    const interval = await this.apiService.unsafeApi
+      .getBlockInterval()
+      .catch((e) => {
+        logger.error(e, 'Failed to get chain interval');
+        return BLOCK_TIME_VARIANCE;
+      });
+    const chainInterval = interval * INTERVAL_PERCENT;
 
     return Math.min(BLOCK_TIME_VARIANCE, chainInterval);
   }

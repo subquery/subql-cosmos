@@ -100,6 +100,19 @@ describe('ApiService', () => {
       tmpPath = await makeTempDir();
     });
 
+    it('can get the block time interval', async () => {
+      const endpoint = 'https://dymension.api.onfinality.io/tendermint/public';
+      const chainId = 'dymension_1100-1';
+
+      await prepareApiService(endpoint, chainId, tmpPath);
+      const interval = await apiService.api.getBlockInterval();
+
+      console.log('INTERVAL', interval);
+
+      expect(interval).toBeGreaterThan(0);
+      expect(interval).toBeLessThan(20_000); // 20 seconds
+    });
+
     it('Falls back on rpc if kyve fails', async () => {
       const endpoint = 'https://rpc.mainnet.archway.io:443';
       const chainId = 'archway-1';

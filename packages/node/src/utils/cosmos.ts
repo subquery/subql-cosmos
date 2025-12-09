@@ -670,8 +670,3 @@ export class LazyBlockContent implements BlockContent {
     return this._wrappedFinalizedBlockEvents;
   }
 }
-
-export function calcInterval(api: CosmosClient): number {
-  // TODO find a way to get this from the blockchain
-  return 6000;
-}
