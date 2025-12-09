@@ -209,9 +209,17 @@ export class CosmosClient extends CosmWasmClient {
   }
 
   async getBlockInterval(): Promise<number> {
-    const headers = await this._cometClient.blockchain();
+    const { blockMetas } = await this._cometClient.blockchain();
 
-    const timestamps = headers.blockMetas.map((h) => h.header.time.getTime());
+    if (!blockMetas || blockMetas.length < 2) {
+      throw new Error(
+        `Insufficient block headers to calculate interval: ${
+          blockMetas?.length ?? 0
+        } headers available`,
+      );
+    }
+
+    const timestamps = blockMetas.map((h) => h.header.time.getTime());
 
     return Math.abs(
       timestamps.slice(1).reduce((sum, v, i) => sum + (v - timestamps[i]), 0) /
