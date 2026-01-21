@@ -35,6 +35,8 @@ async function connectComet(
   client: WebsocketClient | HttpClient,
 ): Promise<CometClient> {
   // Tendermint/CometBFT 0.34/0.37/0.38 auto-detection. Starting with 0.37 we seem to get reliable versions again 🎉
+  // SEI network uses 0.35.0-unreleased which supports finalize_block_events (Comet38 feature)
+  // See: https://github.com/sei-protocol/sei-tendermint/blob/4776b0013503fe8bfb25e207d2e37d274df0b5d2/rpc/coretypes/responses.go#L70
   // Using 0.34 as the fallback.
   let out: CometClient;
   const tm37Client = Tendermint37Client.create(client);
@@ -42,7 +44,11 @@ async function connectComet(
   if (version.startsWith('0.37.')) {
     logger.debug(`Using Tendermint 37 Client`);
     out = tm37Client;
-  } else if (version.startsWith('0.38.') || version.startsWith('1.0.')) {
+  } else if (
+    version.startsWith('0.38.') ||
+    version.startsWith('1.0.') ||
+    version.startsWith('0.35.0-unreleased')
+  ) {
     tm37Client.disconnect();
     logger.debug(`Using Comet 38 Client`);
     out = Comet38Client.create(client);
