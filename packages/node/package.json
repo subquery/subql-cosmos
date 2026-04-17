@@ -36,7 +36,7 @@
     "@subql/types-cosmos": "workspace:*",
     "bitcoinjs-lib": "^6.0.0",
     "lodash": "^4.17.21",
-    "protobufjs": "^6.11.4",
+    "protobufjs": "^7.5.5",
     "reflect-metadata": "^0.1.13",
     "rimraf": "^3.0.2",
     "yargs": "^16.2.0"
